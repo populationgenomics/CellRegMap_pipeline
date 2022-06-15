@@ -18,4 +18,15 @@ workflow RunCellRegMap {
     output {
         File interaction_results.txt
     }
+    call CreateBetaFvf {
+        input 
+            File interaction_results.txt
+        ouput 
+            File beta_fvf
+    }
+    call EstimateBetas {
+        input {
+            File beta_fvf
+        }
+    }
 }
