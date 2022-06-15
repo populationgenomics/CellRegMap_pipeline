@@ -10,14 +10,21 @@ workflow RunCellRegMap {
         File sampleMappingFile
         File featureVariantFile
     }
-    call RunInteraction {
-        conda activate my_conda_env
-        python run_interaction.py
+
+    scatter (chrom_gene in ChromGenePairs) {
+        call RunInteraction {
+            inputs: chrom, i
+            conda activate my_conda_env
+            python run_interaction.py chrom i
+        }
     }
 
-    output {
-        File interaction_results.txt
+    call AggregateIntegrationResults {
+        inputs:
+        listOfFiles=RunInteraction.out
+
     }
+
     call CreateBetaFvf {
         input 
             File interaction_results.txt
