@@ -10,11 +10,12 @@ workflow RunCellRegMap {
         File sampleMappingFile
         File featureVariantFile
     }
-    command {
-        activate cellregmap_notebook
-        python ~{pythonScript}
+    call RunInteraction {
+        conda activate my_conda_env
+        python run_interaction.py
     }
+
     output {
-        File results.txt
+        File interaction_results.txt
     }
 }
