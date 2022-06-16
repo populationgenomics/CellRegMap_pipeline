@@ -1,0 +1,15 @@
+{
+  "hello.joined_out": "Hello; World",
+  "hello.outs": [
+    "/Users/anncuo/Documents/github_repos/CellRegMap_pipeline/20220616_111932_hello/out/outs/0/stdout.txt",
+    "/Users/anncuo/Documents/github_repos/CellRegMap_pipeline/20220616_111932_hello/out/outs/1/stdout.txt"
+  ],
+  "hello.out_txt_md5s": [
+    "/Users/anncuo/Documents/github_repos/CellRegMap_pipeline/20220616_111932_hello/out/out_txt_md5s/0/c8af054bccf79c41947112375d836c4b.txt.md5",
+    "/Users/anncuo/Documents/github_repos/CellRegMap_pipeline/20220616_111932_hello/out/out_txt_md5s/1/441e4e96dae6e840bf9e760b553705a1.txt.md5"
+  ],
+  "hello.out_txts": [
+    "/Users/anncuo/Documents/github_repos/CellRegMap_pipeline/20220616_111932_hello/out/out_txts/0/c8af054bccf79c41947112375d836c4b.txt",
+    "/Users/anncuo/Documents/github_repos/CellRegMap_pipeline/20220616_111932_hello/out/out_txts/1/441e4e96dae6e840bf9e760b553705a1.txt"
+  ]
+}

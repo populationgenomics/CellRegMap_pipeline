@@ -1,0 +1,4 @@
+md5=$(echo 'Has secondary: Hello' | md5sum | awk '{ print $1 }')
+echo 'Has secondary: Hello' > "$md5.txt"
+echo "$md5" > "$md5.txt.md5"
+   
