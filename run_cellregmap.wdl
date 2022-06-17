@@ -36,4 +36,15 @@ workflow RunCellRegMap {
             File beta_fvf
         }
     }
+
+    runtime {
+    memory: memory_requirements
+    cpus: 4
+    container: "limix/cellregmap:v1.0.0"
+    }
+
+    output {
+        File out = stdout()
+    }
+
 }
