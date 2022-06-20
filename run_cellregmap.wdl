@@ -13,15 +13,17 @@ workflow RunCellRegMap {
 
     scatter (chrom_gene in ChromGenePairs) {
         call RunInteraction {
-            inputs: chrom, i
+            input: 
+                Int chrom
+                Int i
             conda activate my_conda_env
             python run_interaction.py chrom i
         }
     }
 
     call AggregateIntegrationResults {
-        inputs:
-        listOfFiles=RunInteraction.out
+        input:
+            listOfFiles=RunInteraction.out
 
     }
 
