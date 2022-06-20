@@ -9,13 +9,20 @@ workflow RunCellRegMap {
         File kinshipFile
         File sampleMappingFile
         File featureVariantFile
+        Array[File] outputFiles
+    }
+
+    call GetScatter {
+        input:
+            File featureVariantFile
+        python get_scatter.py featureVariantFile
     }
 
     scatter (chrom_gene in ChromGenePairs) {
         call RunInteraction {
             input: 
-                Int chrom
-                Int i
+                Int chrom=GetScatter.out[0]
+                Int i=GetScatter.out[1]
             conda activate my_conda_env
             python run_interaction.py chrom i
         }
@@ -40,13 +47,14 @@ workflow RunCellRegMap {
     }
 
     runtime {
-    memory: memory_requirements
-    cpus: 4
-    container: "limix/cellregmap:v1.0.0"
+        memory: memory_requirements
+        cpus: 4
+        container: "limix/cellregmap:v1.0.0"
     }
 
     output {
-        File out = stdout()
+        File out_interaction = AggregateIntegrationResults.out
+        File out_betas = AggregateBetaResults.out
     }
 
 }
