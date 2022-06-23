@@ -51,13 +51,42 @@ task RunInteraction {
     }
 }
 
-task AggregateIntegrationResults {
+task AggregateInteractionResults {
+    input {
+        Array[File] listOfFiles
+        Float FDR_threshold
+    }
+
+    command {
+        python summarise.py --geneFiles {join(" ", listOfFiles)}
+    }
+
+    output {
+        File all_results
+        File significant_results_only
+    }
+}
+
+
+task EstimateBetas {
+    input {}
+
+    command {}
+
+    output {}
+
+    runtime {
+
+    }
+}
+
+task AggregateBetasResults {
     input {
         Array[File] listOfFiles
     }
 
     command {
-        python summarise.py --geneFiles {join(" ", listOfFiles)}
+        python summarise_betas.py --geneFiles {join(" ", listOfFiles)}
     }
 }
 
@@ -91,7 +120,7 @@ workflow RunCellRegMap {
         }
     }
 
-    call AggregateIntegrationResults {
+    call AggregateInteractionResults {
         input:
         # geneOutput is implicitly a Array[File]
             listOfFiles=RunInteraction.geneOutput
