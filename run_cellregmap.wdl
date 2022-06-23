@@ -1,21 +1,84 @@
 version development
 
+task GetScatter {
+
+    input {
+        File featureVariantFile
+        String outputName
+    }
+
+    command {
+        # bash environment
+        python get_scatter.py ${featureVariantFile} --outputName "${outputName}"
+    }
+
+    runtime {
+        memory: ""
+    }
+
+    output {
+        File thisIsMyOutputFile = "this is the output name.txt"
+    }
+}
+
+task RunInteraction {
+    input {
+        Int chrom
+        File interval
+        File inputFile
+
+        String memory
+        String geneGame
+    }
+
+
+    command {
+        conda activate my_conda_env
+        python run_interaction.py chrom i --outputFile ${geneName + ".txt"}
+    }
+
+    output {
+        File geneOutput = geneName + ".txt"
+    }
+
+    runtime {
+        # static
+        memory: "4Gb"
+        # calculated
+        memory: size(inputFile) + size(interval)
+        # passed in
+        memory: memory # from input
+    }
+}
+
+task AggregateIntegrationResults {
+    input {
+        Array[File] listOfFiles
+    }
+
+    command {
+        python summarise.py --geneFiles {join(" ", listOfFiles)}
+    }
+}
+
 workflow RunCellRegMap {
     input {
-        File genotypeFile
-        File phenotypeFile
+        File [genotypeFile]
+        File [phenotypeFile]
         File contextFile
         File covariateFile
         File kinshipFile
         File sampleMappingFile
         File featureVariantFile
         Array[File] outputFiles
+
+
+        Array[File] intervals
     }
 
     call GetScatter {
         input:
-            File featureVariantFile
-        python get_scatter.py featureVariantFile
+            featureVariantFile=featureVariantFile
     }
 
     scatter (chrom_gene in ChromGenePairs) {
@@ -30,7 +93,8 @@ workflow RunCellRegMap {
 
     call AggregateIntegrationResults {
         input:
-            listOfFiles=RunInteraction.out
+        # geneOutput is implicitly a Array[File]
+            listOfFiles=RunInteraction.geneOutput
 
     }
 
