@@ -61,7 +61,7 @@ task AggregateInteractionResults {
     }
 
     command {
-        python summarise.py --geneFiles {join(" ", listOfFiles)}
+        python summarise.py pathResults --geneFiles {join(" ", listOfFiles)} 
     }
 
     output {
