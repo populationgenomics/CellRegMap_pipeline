@@ -11,16 +11,16 @@ from limix.qc import quantile_gaussianize
 
 from cellregmap import run_interaction 
 
-@click.Click()
-@click.parameter('--chrom', flag=True)
-@click.parameter('--gene-index', flag=True)
-@click.parameter('--sample-mapping-file', required=True)
-@click.parameter('--genotype-file', required=True)
-@click.parameter('--phenotype-file', required=True)
-@click.parameter('--context-file', required=True)
-@click.parameter('--kinship-file', required=True)
-@click.parameter('--feature-variant-file', required=True)
-@click.parameter('--n_contexts', required=False)
+@click.command()
+@click.option('--chrom', required=True)
+@click.option('--gene-index', required=True)
+@click.option('--sample-mapping-file', required=True)
+@click.option('--genotype-file', required=True)
+@click.option('--phenotype-file', required=True)
+@click.option('--context-file', required=True)
+@click.option('--kinship-file', required=True)
+@click.option('--feature-variant-file', required=True)
+@click.option('--n-contexts', required=False)
 
 def main(chrom, gene_index, sample_mapping_file, genotype_file, phenotype_file, context_file, kinship_file, feature_variant_file, n_contexts=10):
     
