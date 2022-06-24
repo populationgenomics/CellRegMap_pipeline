@@ -11,8 +11,9 @@ def smartAppend(table,name,value):
 
 @click.command()
 @click.option('--list-of-files', required=True)
+@click.option('--path-results', required=True)
 
-def main(list_of_files):
+def main(list_of_files, path_results):
 
     x = 0
     table = {}

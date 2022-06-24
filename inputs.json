@@ -1,3 +1,8 @@
 {
-    "RunCellRegMap.featureVariantsFile": "/path/to/variants.vcf"
+    "RunCellRegMap.sampleMappingFile": "/share/ScratchGeneral/anncuo/OneK1K/input_files_CellRegMap/smf_Bcells.csv",
+    "RunCellRegMap.featureVariantFile": "/share/ScratchGeneral/anncuo/OneK1K/input_files_CellRegMap/fvf_Bcell_eqtls.csv",
+    "RunCellRegMap.kinshipFile": "/share/ScratchGeneral/anncuo/OneK1K/input_files_CellRegMap/grm_wide.csv",
+    "RunCellRegMap.genotypeFile": "/share/ScratchGeneral/anncuo/OneK1K/plink_files/plink_chr{chrom}.bed",
+    "RunCellRegMap.phenotypeFile": "/share/ScratchGeneral/anncuo/OneK1K/expression_objects/sce{chrom}.h5ad",
+    "RunCellRegMap.contextFile": "/share/ScratchGeneral/anncuo/OneK1K/input_files_CellRegMap/PCs_Bcells.csv.pkl"
 }
