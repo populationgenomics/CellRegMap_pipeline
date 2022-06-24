@@ -13,7 +13,7 @@ from cellregmap import run_interaction
 
 @click.command()
 @click.option('--chrom', required=True)
-@click.option('--gene-index', required=True)
+@click.option('--gene-name', required=True)
 @click.option('--sample-mapping-file', required=True)
 @click.option('--genotype-file', required=True)
 @click.option('--phenotype-file', required=True)
@@ -23,7 +23,7 @@ from cellregmap import run_interaction
 @click.option('--output-folder', required=True)
 @click.option('--n-contexts', required=False)
 
-def main(chrom, gene_index, sample_mapping_file, genotype_file, phenotype_file, context_file, kinship_file, feature_variant_file, output_folder, n_contexts=10):
+def main(chrom, gene_name, sample_mapping_file, genotype_file, phenotype_file, context_file, kinship_file, feature_variant_file, output_folder, n_contexts=10):
     
     ######################################
     ###### sample mapping file (SMF) #####
@@ -41,10 +41,6 @@ def main(chrom, gene_index, sample_mapping_file, genotype_file, phenotype_file, 
     ###### check if gene output file already exists ######
     ######################################################
 
-    fvf = pd.read_csv(feature_variant_file, index_col = 0)
-    genes = fvf[fvf['chrom']==int(chrom)]['feature'].unique()
-    gene_name = genes[gene_index]
-    
     outfilename = f"{output_folder}{gene_name}.tsv"
 
     if os.path.exists(outfilename):
@@ -92,6 +88,8 @@ def main(chrom, gene_index, sample_mapping_file, genotype_file, phenotype_file, 
     ## read in genotype file (plink format)
     G = read_plink1_bin(genotype_file)
 
+    ## select relavant SNPs based on feature variant filter file 
+    fvf = pd.read_csv(feature_variant_file, index_col = 0)
     leads = fvf[fvf['feature']==gene_name]['snp_id'].unique()
     G_sel = G[:,G['snp'].isin(leads)]
 

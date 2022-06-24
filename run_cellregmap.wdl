@@ -1,7 +1,5 @@
 version development
 
-# for i in [1,2,3,4]: == scatter i in [1,2,3,4]
-
 task GetScatter {
 
     input {
@@ -26,18 +24,20 @@ task GetScatter {
 task RunInteraction {
     input {
         Int chrom
-        File interval
-        File inputFile
-
-        String memory
-        String geneGame
+        Float geneName
+        File sampleMappingFile
+        File genotypeFile
+        File phenotypeFile
+        File contextFile
+        File kinshipFile
+        File featureVariantFile
+        Int nContexts = 10
     }
 
 
     command {
         conda activate my_conda_env
-        
-        python run_interaction.py chrom i --outputFile ${geneName + ".txt"}
+        python run_interaction.py chrom geneName --outputFile ${geneName + ".tsv"}
     }
 
     output {
