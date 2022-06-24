@@ -1,4 +1,0 @@
-md5=$(echo 'Has secondary: World' | md5sum | awk '{ print $1 }')
-echo 'Has secondary: World' > "$md5.txt"
-echo "$md5" > "$md5.txt.md5"
-   
