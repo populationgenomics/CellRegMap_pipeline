@@ -1,16 +1,15 @@
 import click
-# import os
-# import sys
-# import scanpy as sc
+import os
+import sys
+import scanpy as sc
 import pandas as pd
 import xarray as xr
-# from numpy import ones
-# from pandas_plink import read_plink1_bin
+from numpy import ones
+from pandas_plink import read_plink1_bin
 from numpy.linalg import cholesky
-# import time
-# from limix.qc import quantile_gaussianize
+from limix.qc import quantile_gaussianize
 
-# from cellregmap import run_interaction 
+from cellregmap import run_interaction 
 
 @click.Click()
 @click.parameter('--chrom', flag=True)
