@@ -37,20 +37,20 @@ task RunInteraction {
 
     command {
         conda activate my_conda_env
-        python run_interaction.py chrom geneName --outputFile ${geneName + ".tsv"}
+        python run_interaction.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile featureVariantFile nContexts --outputFile ${geneName + ".tsv"}
     }
 
     output {
-        File geneOutput = geneName + ".txt"
+        File geneOutput = geneName + ".tsv"
     }
 
     runtime {
         # static
-        memory: "4Gb"
-        # calculated
-        memory: size(inputFile) + size(interval)
-        # passed in
-        memory: memory # from input
+        memory: "400Gb"
+        # # calculated
+        # memory: size(inputFile) + size(interval)
+        # # passed in
+        # memory: memory # from input
     }
 }
 
