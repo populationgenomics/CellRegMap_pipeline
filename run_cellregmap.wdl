@@ -1,5 +1,7 @@
 version development
 
+# for i in [1,2,3,4]: == scatter i in [1,2,3,4]
+
 task GetScatter {
 
     input {
@@ -34,6 +36,7 @@ task RunInteraction {
 
     command {
         conda activate my_conda_env
+        
         python run_interaction.py chrom i --outputFile ${geneName + ".txt"}
     }
 
@@ -90,6 +93,26 @@ task AggregateBetasResults {
     }
 }
 
+task GetGeneChrPairs {
+    input {
+        File featureVariantsFile
+    }
+
+    command {
+        # does a thing
+        # write a TSV
+        echo 'chr1  BRCA1' > output.tsv
+    }
+
+    output {
+        Array[Array[String, String]] outputPairs = read_tsv("output.tsv")
+    }
+
+}
+
+
+# { WorkflowName.inputName: "value" }
+# { RunCellRegMap.contextFile: "" }
 workflow RunCellRegMap {
     input {
         File [genotypeFile]
@@ -102,12 +125,45 @@ workflow RunCellRegMap {
         Array[File] outputFiles
 
 
+        # how to determine which genes to run
+        Array[String] genes
+
+
         Array[File] intervals
     }
 
-    call GetScatter {
+    if not is_defined(genes) {
+        call GetGeneList...
+    }
+
+    call UseGeneList {
+        geneList=select_first([genes, GetGeneList.genes])
+    }
+
+    call GetGeneChrPairs {
         input:
             featureVariantFile=featureVariantFile
+    }
+
+    call FeatureDoes {
+        input:
+            file=featureVariantFile
+    }
+
+
+    scatter ((chr, gene) in GetGeneChrPairs.outputPairs) {
+
+        call RunInteraction {
+            input:
+                # smallFile is a couple of genes
+                inputFile=inputFile,
+                chr=chr,
+                gene=gene,
+                featureVariantFile
+
+        }
+        }
+
     }
 
     scatter (chrom_gene in ChromGenePairs) {
