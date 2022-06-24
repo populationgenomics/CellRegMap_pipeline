@@ -1,2 +1,2 @@
 # CellRegMap_pipeline
-pipeline / workflow to facilitate running CellRegMap
+Pipeline / workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
