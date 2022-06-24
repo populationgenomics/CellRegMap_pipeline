@@ -20,9 +20,10 @@ from cellregmap import run_interaction
 @click.option('--context-file', required=True)
 @click.option('--kinship-file', required=True)
 @click.option('--feature-variant-file', required=True)
+@click.option('--output-folder', required=True)
 @click.option('--n-contexts', required=False)
 
-def main(chrom, gene_index, sample_mapping_file, genotype_file, phenotype_file, context_file, kinship_file, feature_variant_file, n_contexts=10):
+def main(chrom, gene_index, sample_mapping_file, genotype_file, phenotype_file, context_file, kinship_file, feature_variant_file, output_folder, n_contexts=10):
     
     ######################################
     ###### sample mapping file (SMF) #####
@@ -44,7 +45,7 @@ def main(chrom, gene_index, sample_mapping_file, genotype_file, phenotype_file, 
     genes = fvf[fvf['chrom']==int(chrom)]['feature'].unique()
     gene_name = genes[gene_index]
     
-    outfilename = f"{gene_name}.tsv"
+    outfilename = f"{output_folder}{gene_name}.tsv"
 
     if os.path.exists(outfilename):
         print("File already exists, exiting")
