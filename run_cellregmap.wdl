@@ -13,17 +13,17 @@ task GetScatter {
     }
 
     runtime {
-        memory: ""
+        memory: "" # I have no sense how much memory would be needed for this - I think very little? Just needs to open a not-very-long txt file and make a new one
     }
 
     output {
-        File thisIsMyOutputFile = "this is the output name.txt"
+        File thisIsMyOutputFile = "GeneChromosomePairs.txt"
     }
 }
 
 task RunInteraction {
     input {
-        Int chrom
+        Int chrom # how do I go from the GeneChromosomePairs file to getting a specific chrom geneName pair for this task?
         Float geneName
         File sampleMappingFile
         File genotypeFile
@@ -36,12 +36,12 @@ task RunInteraction {
 
 
     command {
-        conda activate my_conda_env
-        python run_interaction.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile featureVariantFile nContexts --outputFile ${geneName + ".tsv"}
+        conda activate cellregmap_notebook
+        python run_interaction.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile featureVariantFile nContexts --outputFile ${geneName + ".csv"}
     }
 
     output {
-        File geneOutput = geneName + ".tsv"
+        File geneOutput = geneName + ".csv"
     }
 
     runtime {

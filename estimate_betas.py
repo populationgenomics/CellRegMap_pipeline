@@ -41,9 +41,10 @@ def main(chrom, gene_name, sample_mapping_file, genotype_file, phenotype_file, c
     ###### check if gene output file already exists ######
     ######################################################
 
-    outfilename = f"{output_folder}{gene_name}.csv"
+    outfilename = f"{output_folder}{gene_name}"
+    outfilename_betaGxC = outfilename+"_betaGxC.csv"
 
-    if os.path.exists(outfilename):
+    if os.path.exists(outfilename_betaGxC):
         print("File already exists, exiting")
         sys.exit()
 
@@ -151,9 +152,18 @@ def main(chrom, gene_name, sample_mapping_file, genotype_file, phenotype_file, c
 
     print("Running for gene {}".format(gene_name))
 
-    pvals = run_interaction(y=y, W=W, E=C.values[:,0:n_contexts], G=GG, hK=hK_expanded)[0]
+    betas = estimate_betas(y=y, W=W, E=C.values[:,0:10], G=GG, hK=hK_expanded)
+    beta_G = betas[0]
+    beta_GxC = betas[1][0]
 
-    pv = pd.DataFrame({"chrom":G_expanded.chrom.values,
-                "pv":pvals,
+    beta_G_df = pd.DataFrame({"chrom":G_expanded.chrom.values,
+                "betaG":beta_G,
                 "variant":G_expanded.snp.values})
-    pv.to_csv(outfilename)
+
+    beta_G_df.to_csv(outfilename+"_betaG.csv")
+
+    cells = phenotype["cell"].values
+    snps = G_expanded["variant"].values
+
+    beta_GxC_df = pd.DataFrame(data = beta_GxC, columns=snps, index=cells)
+    beta_GxC_df.to_csv(outfilename_betaGxC)
