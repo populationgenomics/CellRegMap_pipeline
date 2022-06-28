@@ -47,8 +47,13 @@ task RunInteraction {
     runtime {
         # static
         memory: "400Gb"
+        
         # # calculated
+        ## Unable to allocate 9.78 GiB for an array with shape (133716, 9820)
+        ## shape is number of cells X (numbers of donors X number of contexts)
+        ## here, 133,716 cells across 982 individuals, 10 contexts
         # memory: size(inputFile) + size(interval)
+        
         # # passed in
         # memory: memory # from input
     }
