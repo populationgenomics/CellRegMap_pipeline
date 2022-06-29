@@ -13,7 +13,7 @@ task GetScatter {
     }
 
     runtime {
-        memory: "" # I have no sense how much memory would be needed for this - I think very little? Just needs to open a not-very-long txt file and make a new one
+        memory: "20Gb" # I have no sense how much memory would be needed for this - I think very little? Just needs to open a not-very-long txt file and make a new one
     }
 
     output {
@@ -75,16 +75,40 @@ task AggregateInteractionResults {
     }
 }
 
-
+# here I need GetScatter again but with a new fvf? significant_results_only from above, can i reuse task from above?
 task EstimateBetas {
-    input {}
+    input {
+        Int chrom # how do I go from the GeneChromosomePairs file to getting a specific chrom geneName pair for this task?
+        Float geneName
+        File sampleMappingFile
+        File genotypeFile
+        File phenotypeFile
+        File contextFile
+        File kinshipFile
+        File significant_results_only
+        Int nContexts = 10
+    }
 
-    command {}
 
-    output {}
+    command {
+        conda activate cellregmap_notebook
+        python estimateBetas.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile featureVariantFile nContexts --outputFile ${geneName + ".csv"}
+    }
+
+    output {
+        File geneOutput2 = geneName + "_betaG.csv"
+        File geneOutput2 = geneName + "_betaGxC.csv"
+    }
 
     runtime {
-
+        # static
+        memory: "400Gb"
+        
+        # # calculated
+        # memory: size(inputFile) + size(interval)
+        
+        # # passed in
+        # memory: memory # from input
     }
 }
 
@@ -96,24 +120,13 @@ task AggregateBetasResults {
     command {
         python summarise_betas.py --geneFiles {join(" ", listOfFiles)}
     }
-}
-
-task GetGeneChrPairs {
-    input {
-        File featureVariantsFile
-    }
-
-    command {
-        # does a thing
-        # write a TSV
-        echo 'chr1  BRCA1' > output.tsv
-    }
 
     output {
-        Array[Array[String, String]] outputPairs = read_tsv("output.tsv")
+        File all_betaG_s
+        File all_betaGxC_s
     }
-
 }
+
 
 
 # { WorkflowName.inputName: "value" }
