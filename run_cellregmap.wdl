@@ -1,6 +1,6 @@
-version development
+version development # what is this again?
 
-task GetScatter {
+task GetGeneChrPairs {
 
     input {
         File featureVariantFile
@@ -68,7 +68,7 @@ task AggregateInteractionResults {
     command {
         python summarise.py pathResults --geneFiles {join(" ", listOfFiles)} 
     }
-
+    
     output {
         File all_results
         File significant_results_only
@@ -131,9 +131,9 @@ task AggregateBetasResults {
 
 # { WorkflowName.inputName: "value" }
 # { RunCellRegMap.contextFile: "" }
-workflow RunCellRegMap {
+workflow RunCellRegMap { # I am confused, does this just effectively call the tasks in the right order?
     input {
-        File [genotypeFile]
+        File [genotypeFile] # again need to sort out how to deal with this (one file per chromsome)
         File [phenotypeFile]
         File contextFile
         File covariateFile
@@ -150,23 +150,23 @@ workflow RunCellRegMap {
         Array[File] intervals
     }
 
-    if not is_defined(genes) {
-        call GetGeneList...
-    }
+    # if not is_defined(genes) {
+    #     call GetGeneList...
+    # }
 
-    call UseGeneList {
-        geneList=select_first([genes, GetGeneList.genes])
-    }
+    # call UseGeneList {
+    #     geneList=select_first([genes, GetGeneList.genes])
+    # }
 
     call GetGeneChrPairs {
         input:
             featureVariantFile=featureVariantFile
     }
 
-    call FeatureDoes {
-        input:
-            file=featureVariantFile
-    }
+    # call FeatureDoes {
+    #     input:
+    #         file=featureVariantFile
+    # }
 
 
     scatter ((chr, gene) in GetGeneChrPairs.outputPairs) {
@@ -177,7 +177,10 @@ workflow RunCellRegMap {
                 inputFile=inputFile,
                 chr=chr,
                 gene=gene,
-                featureVariantFile
+                featureVariantFile,
+                sampleMappingFile,
+                phenotypeFile,
+                genotypeFile,
 
         }
         }
