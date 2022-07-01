@@ -1,4 +1,4 @@
-version development # what is this again?
+version development # tells WDL to use most recent version
 
 task GetGeneChrPairs {
 
@@ -10,30 +10,34 @@ task GetGeneChrPairs {
     command {
         # bash environment
         python get_scatter.py ${featureVariantFile} --outputName "${outputName}"
+
+        # for output_pairs
+        echo 'chr1\tGeneName\nchr2\tGeneName2' > outputPairs.tsv
     }
 
     runtime {
-        memory: "20Gb" # I have no sense how much memory would be needed for this - I think very little? Just needs to open a not-very-long txt file and make a new one
+        memory: "2Gb" # I have no sense how much memory would be needed for this - I think very little? Just needs to open a not-very-long txt file and make a new one
     }
 
     output {
-        File thisIsMyOutputFile = "GeneChromosomePairs.txt"
+        # File thisIsMyOutputFile = "GeneChromosomePairs.txt"
+        # [["chr1", "GeneName"], ["chr2", "GeneName2"]]
+        Array[Array[String]] output_pairs = read_tsv("./outputPairs.tsv")
     }
 }
 
 task RunInteraction {
     input {
-        Int chrom # how do I go from the GeneChromosomePairs file to getting a specific chrom geneName pair for this task?
-        Float geneName
+        String chrom # how do I go from the GeneChromosomePairs file to getting a specific chrom geneName pair for this task?
+        String geneName
         File sampleMappingFile
         File genotypeFile
         File phenotypeFile
         File contextFile
         File kinshipFile
-        File featureVariantFile
+        File featureVariantFile # still need this to select specific SNPs
         Int nContexts = 10
     }
-
 
     command {
         conda activate cellregmap_notebook
@@ -61,12 +65,18 @@ task RunInteraction {
 
 task AggregateInteractionResults {
     input {
-        Array[File] listOfFiles
+        Array[File] listOfFiles # to figure out (how to get these files)
         Float FDR_threshold
     }
 
     command {
         python summarise.py pathResults --geneFiles {join(" ", listOfFiles)} 
+
+        # inputs:
+        #   ../inputs/1231239/geneName.txt
+        #   ../inputs/5126313/geneName2.txt
+
+        # summarise.py --geneFiles file1 file2 file3
     }
     
     output {
@@ -96,7 +106,7 @@ task EstimateBetas {
     }
 
     output {
-        File geneOutput2 = geneName + "_betaG.csv"
+        File geneOutput1 = geneName + "_betaG.csv"
         File geneOutput2 = geneName + "_betaGxC.csv"
     }
 
@@ -131,71 +141,41 @@ task AggregateBetasResults {
 
 # { WorkflowName.inputName: "value" }
 # { RunCellRegMap.contextFile: "" }
-workflow RunCellRegMap { # I am confused, does this just effectively call the tasks in the right order?
+workflow RunCellRegMap {
     input {
-        File [genotypeFile] # again need to sort out how to deal with this (one file per chromsome)
-        File [phenotypeFile]
+        Map[String, File] genotypeFiles # one file per chromsome
+        Map[String, File] phenotypeFiles
         File contextFile
-        File covariateFile
         File kinshipFile
         File sampleMappingFile
         File featureVariantFile
-        Array[File] outputFiles
-
-
-        # how to determine which genes to run
-        Array[String] genes
-
-
-        Array[File] intervals
+        Array[File] outputFiles # what is this? do I need one for betas results too?
     }
-
-    # if not is_defined(genes) {
-    #     call GetGeneList...
-    # }
-
-    # call UseGeneList {
-    #     geneList=select_first([genes, GetGeneList.genes])
-    # }
 
     call GetGeneChrPairs {
         input:
             featureVariantFile=featureVariantFile
     }
 
-    # call FeatureDoes {
-    #     input:
-    #         file=featureVariantFile
-    # }
-
-
-    scatter ((chr, gene) in GetGeneChrPairs.outputPairs) {
+    scatter (outputPair in GetGeneChrPairs.outputPairs) {
 
         call RunInteraction {
             input:
-                # smallFile is a couple of genes
                 inputFile=inputFile,
-                chr=chr,
-                gene=gene,
+                chr=outputPair[0],
+                gene=outputPair[1],
                 featureVariantFile,
                 sampleMappingFile,
-                phenotypeFile,
-                genotypeFile,
+                phenotypeFile=phenotypeFiles[outputPair[0]],
+                genotypeFile=genotypeFiles[outputPair[0]],
+                kinshipFile,
+                contextFile,
 
         }
         }
 
     }
 
-    scatter (chrom_gene in ChromGenePairs) {
-        call RunInteraction {
-            input: 
-                Int chrom=GetScatter.out[0]
-                Int i=GetScatter.out[1]
-            conda activate my_conda_env
-            python run_interaction.py chrom i
-        }
-    }
 
     call AggregateInteractionResults {
         input:
