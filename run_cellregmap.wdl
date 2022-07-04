@@ -53,7 +53,14 @@ workflow RunCellRegMap {
 
     call C.EstimateBetas as EstimateBetas{
         input {
-            File beta_fvf
+            Map[String, File] genotypeFiles # one file per chromsome
+            Map[String, File] phenotypeFiles
+            File contextFile
+            File kinshipFile
+            File sampleMappingFile
+            File betaFeatureVariantFile
+            Array[File] betaOutputFiles
+            Map[String, File] mafFiles
         }
     }
 

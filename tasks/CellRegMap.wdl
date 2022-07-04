@@ -46,14 +46,15 @@ task EstimateBetas {
         File phenotypeFile
         File contextFile
         File kinshipFile
-        File significant_results_only
+        File betaFeatureVariantFile
         Int nContexts = 10
+        File mafFile
     }
 
 
     command {
         conda activate cellregmap_notebook
-        python estimateBetas.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile featureVariantFile nContexts --outputFile ${geneName + ".csv"}
+        python estimateBetas.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile betaFeatureVariantFile nContexts mafFile --outputFile ${geneName}
     }
 
     output {
