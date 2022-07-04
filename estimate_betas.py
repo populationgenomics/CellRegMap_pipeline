@@ -1,6 +1,7 @@
 import click
 import os
 import sys
+import numpy as np
 import scanpy as sc
 import pandas as pd
 import xarray as xr
@@ -22,8 +23,9 @@ from cellregmap import run_interaction
 @click.option('--feature-variant-file', required=True)
 @click.option('--output-folder', required=True)
 @click.option('--n-contexts', required=False)
+@click.option('--maf-file', required=False)
 
-def main(chrom, gene_name, sample_mapping_file, genotype_file, phenotype_file, context_file, kinship_file, feature_variant_file, output_folder, n_contexts=10):
+def main(chrom, gene_name, sample_mapping_file, genotype_file, phenotype_file, context_file, kinship_file, feature_variant_file, output_folder, n_contexts=10, maf_file):
     
     ######################################
     ###### sample mapping file (SMF) #####
@@ -143,8 +145,16 @@ def main(chrom, gene_name, sample_mapping_file, genotype_file, phenotype_file, c
     del phenotype
 
     GG = G_expanded.values
+    snps = G_expanded["snp"].values
 
     del G_sel
+
+    # get MAF
+    df_maf = pd.read_csv(maf_file, sep="\t")
+
+    mafs = np.array([])
+    for snp in snps:
+        mafs = np.append(mafs, df_maf[df_maf["SNP"] == snp]["MAF"].values)
 
     ##################################
     ########### Run model ############
@@ -152,7 +162,7 @@ def main(chrom, gene_name, sample_mapping_file, genotype_file, phenotype_file, c
 
     print("Running for gene {}".format(gene_name))
 
-    betas = estimate_betas(y=y, W=W, E=C.values[:,0:10], G=GG, hK=hK_expanded)
+    betas = estimate_betas(y=y, W=W, E=C.values[:,0:10], G=GG, hK=hK_expanded, maf=mafs)
     beta_G = betas[0]
     beta_GxC = betas[1][0]
 

@@ -50,5 +50,29 @@
         "chr20": "/share/ScratchGeneral/anncuo/OneK1K/expression_objects/sce20.h5ad",
         "chr21": "/share/ScratchGeneral/anncuo/OneK1K/expression_objects/sce21.h5ad",
         "chr22": "/share/ScratchGeneral/anncuo/OneK1K/expression_objects/sce22.h5ad"
+    },
+    "RunCellRegMap.mafFiles": {
+        "chr1": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr1.SNPs.txt",
+        "chr2": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr2.SNPs.txt",
+        "chr3": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr3.SNPs.txt",
+        "chr4": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr4.SNPs.txt",
+        "chr5": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr5.SNPs.txt",
+        "chr6": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr6.SNPs.txt",
+        "chr7": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr7.SNPs.txt",
+        "chr8": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr8.SNPs.txt",
+        "chr9": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr9.SNPs.txt",
+        "chr10": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr10.SNPs.txt",
+        "chr11": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr11.SNPs.txt",
+        "chr12": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr12.SNPs.txt",
+        "chr13": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr13.SNPs.txt",
+        "chr14": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr14.SNPs.txt",
+        "chr15": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr15.SNPs.txt",
+        "chr16": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr16.SNPs.txt",
+        "chr17": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr17.SNPs.txt",
+        "chr18": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr18.SNPs.txt",
+        "chr19": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr19.SNPs.txt",
+        "chr20": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr20.SNPs.txt",
+        "chr21": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr21.SNPs.txt",
+        "chr22": "/share/ScratchGeneral/anncuo/OneK1K/snps_with_maf_greaterthan0.05/chr22.SNPs.txt"
     }
 }
