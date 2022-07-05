@@ -16,7 +16,7 @@ task GetGeneChrPairs {
     }
 
     runtime {
-        memory: "2Gb" # I have no sense how much memory would be needed for this - I think very little? Just needs to open a not-very-long txt file and make a new one
+        memory: "2Gb" 
     }
 
     output {
@@ -26,6 +26,9 @@ task GetGeneChrPairs {
     }
 }
 
-task CreateBetaFvf{
-    
-}
+# task CreateBetaFvf{ # this may not actually be needed - just use the "significant only results" output from aggregate interactions
+
+#     input {
+#         File AggregateInteractionResults.out
+#     }
+# }

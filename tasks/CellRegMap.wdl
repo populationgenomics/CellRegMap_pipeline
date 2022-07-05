@@ -10,11 +10,11 @@ task RunInteraction {
         File contextFile
         File kinshipFile
         File featureVariantFile # still need this to select specific SNPs
-        Int nContexts = 10
+        Int nContexts = 10 # add additional flag for cases when the contexts tested and those in the background aren't the same
     }
 
     command {
-        conda activate cellregmap_notebook
+        conda activate cellregmap_notebook 
         python run_interaction.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile featureVariantFile nContexts --outputFile ${geneName + ".csv"}
     }
 
@@ -39,7 +39,7 @@ task RunInteraction {
 
 task EstimateBetas {
     input {
-        Int chrom # how do I go from the GeneChromosomePairs file to getting a specific chrom geneName pair for this task?
+        Int chrom 
         Float geneName
         File sampleMappingFile
         File genotypeFile
@@ -48,13 +48,13 @@ task EstimateBetas {
         File kinshipFile
         File betaFeatureVariantFile
         Int nContexts = 10
-        File mafFile
+        File mafFile # if MAFs are known / pre-calculated they should be given as inputs
     }
 
 
     command {
         conda activate cellregmap_notebook
-        python estimateBetas.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile betaFeatureVariantFile nContexts mafFile --outputFile ${geneName}
+        python estimate_betas.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile betaFeatureVariantFile nContexts mafFile --outputFile ${geneName}
     }
 
     output {

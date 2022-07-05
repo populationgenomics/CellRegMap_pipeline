@@ -44,12 +44,12 @@ workflow RunCellRegMap {
 
     }
 
-    call u.CreateBetaFvf as CreateBetaFvf {
-        input 
-            File interaction_results.txt
-        ouput 
-            File beta_fvf
-    }
+    # call u.CreateBetaFvf as CreateBetaFvf { # not needed hopefully
+    #     input 
+    #         File interaction_results.txt
+    #     ouput 
+    #         File beta_fvf
+    # }
 
     call C.EstimateBetas as EstimateBetas{
         input {
@@ -58,17 +58,17 @@ workflow RunCellRegMap {
             File contextFile
             File kinshipFile
             File sampleMappingFile
-            File betaFeatureVariantFile
+            File betaFeatureVariantFile = AggregateIntegrationResults.out[1] #syntax ok?
             Array[File] betaOutputFiles
             Map[String, File] mafFiles
         }
     }
 
-    runtime { # do we need to specify a runtime for the entire workflow?
-        memory: memory_requirements
-        cpus: 4
-        container: "limix/cellregmap:v1.0.0"
-    }
+    # runtime { # do we need to specify a runtime for the entire workflow?
+    #     memory: memory_requirements
+    #     cpus: 4
+    #     container: "limix/cellregmap:v1.0.0"
+    # }
 
     output {
         File out_interaction = AggregateIntegrationResults.out
