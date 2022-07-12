@@ -11,7 +11,6 @@ task RunInteraction {
         File kinshipFile
         File featureVariantFile # still need this to select specific SNPs
         Int nContexts = 10 # add additional flag for cases when the contexts tested and those in the background aren't the same
-
     }
 
     String outputFilename = geneName + ".csv"
@@ -69,6 +68,8 @@ task EstimateBetas {
         File mafFile # if MAFs are known / pre-calculated they should be given as inputs
     }
 
+    String outputFilename1 = geneName + "_betaG.csv"
+    String outputFilename2 = geneName + "_betaGxC.csv"
 
     command <<<
         # leave this until containers are used
@@ -85,12 +86,13 @@ task EstimateBetas {
             --beta-feature-variant-file ~{betaFeatureVariantFile} \
             --n-context ~{nContexts} \
             --maf-file ~{mafFile} \
-            --outputFile ${geneName}
+            --outputFile1 ${outputFilename1} \
+            --outputFile2 ${outputFilename2}
     >>>
 
     output {
-        File geneOutput1 = geneName + "_betaG.csv"
-        File geneOutput2 = geneName + "_betaGxC.csv"
+        File geneOutput1 = outputFilename1
+        File geneOutput2 = outputFilename2
     }
 
     runtime {
