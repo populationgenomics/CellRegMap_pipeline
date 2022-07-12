@@ -32,7 +32,7 @@ task AggregateBetasResults {
     >>>
 
     output {
-        File all_betaG_s = "output1.txt"
-        File all_betaGxC_s = "output2.txt"
+        File all_betaG = "summary_betaG.csv"
+        File all_betaGxC = "summary_betaGxC.csv"
     }
 }

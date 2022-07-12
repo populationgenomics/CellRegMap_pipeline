@@ -10,15 +10,18 @@ def smartAppend(table,name,value):
     table[name].append(value)
 
 @click.command()
-@click.option('--list-of-files', required=True)
-@click.option('--path-results', required=True)
+@click.option('--file-with-filenames-1', required=True)
+@click.option('--file-with-filenames-2', required=True)
 
-def main(list_of_files1, list_of_files2, path_results):
+def main(file_with_filenames_1, file_with_filenames_2):
 
+    # betaG
     x = 0
     table = {}
 
-    # betaG
+    with open(file_with_filenames_1, encoding='utf-8') as f:
+        list_of_files1 = f.readlines()
+
     for file in list_of_files1:
         x += 1
         if x % 500 == 0: 
@@ -36,7 +39,7 @@ def main(list_of_files1, list_of_files2, path_results):
             temp['gene'] = gene
             temp['n_snps'] = nsnps
             temp['snp_id'] = df['variant'].values[i]
-        
+            temp['betaG'] = df['betaG'].values[i]
 
         for key in temp.keys():
             smartAppend(table, key, temp[key])
@@ -51,6 +54,12 @@ def main(list_of_files1, list_of_files2, path_results):
     df.to_csv(myp)
 
     # betaGxC
+    x = 0
+    table = {}
+    
+    with open(file_with_filenames_2, encoding='utf-8') as f:
+        list_of_files2 = f.readlines()
+
     for file in list_of_files2:
         x += 1
         if x % 500 == 0: 
@@ -84,3 +93,6 @@ def main(list_of_files1, list_of_files2, path_results):
     outfile = "summary_betaGxC.csv" 
     myp = os.path.join(path_results, outfile)
     df.to_csv(myp)
+
+    if __name__ == '__main__':
+    main()

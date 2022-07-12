@@ -78,7 +78,8 @@ workflow RunCellRegMap {
     output {
         File out_interaction_all_results = AggregateIntegrationResults.all_results
         File out_interaction_significant_results = AggregateIntegrationResults.significant_results
-        File out_betas = AggregateBetaResults.out
+        File out_betaG = AggregateBetaResults.all_betaG
+        File out_betaGxC = AggregateBetaResults.all_betaGxC
     }
 
 }

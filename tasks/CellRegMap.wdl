@@ -25,8 +25,13 @@ task RunInteraction {
             --chrom ~{chrom} \
             --gene-name ~{geneName} \
             --sample-mapping-file ~{sampleMappingFile} \
-             genotypeFile phenotypeFile contextFile kinshipFile featureVariantFile nContexts \
-             --outputFile ~{outputFilename}
+            --genotype-file ~{genotypeFile} \ 
+            --phenotype-file ~{phenotypeFile} \
+            --context-file ~{contextFile} \
+            --kinship-file ~{kinshipFile} \
+            --feature-variant-file ~{featureVariantFile} \
+            --n-context ~{nContexts} \
+            --outputFile ~{outputFilename}
     >>>
 
     output {
@@ -65,14 +70,23 @@ task EstimateBetas {
     }
 
 
-    command {
+    command <<<
         # leave this until containers are used
         conda activate cellregmap_notebook
 
         python /Shared/annacuomo/scripts/estimate_betas.py \
             --chrom ~{chrom} \
-            geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile betaFeatureVariantFile nContexts mafFile --outputFile ${geneName}
-    }
+            --gene-name ~{geneName} \
+            --sample-mapping-file ~{sampleMappingFile} \
+            --genotype-file ~{genotypeFile} \ 
+            --phenotype-file ~{phenotypeFile} \
+            --context-file ~{contextFile} \
+            --kinship-file ~{kinshipFile} \
+            --beta-feature-variant-file ~{betaFeatureVariantFile} \
+            --n-context ~{nContexts} \
+            --maf-file ~{mafFile} \
+            --outputFile ${geneName}
+    >>>
 
     output {
         File geneOutput1 = geneName + "_betaG.csv"
