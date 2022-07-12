@@ -52,17 +52,17 @@ workflow RunCellRegMap {
     }
 
     scatter (outputPair in GetGeneChrPairsBetas.output_pairs) { 
-        
+
         call C.EstimateBetas as EstimateBetas {
             input:
-                genotypeFiles=genotypeFiles,
-                phenotypeFiles=phenotypeFiles,
-                contextFile=contextFile,
-                kinshipFile=kinshipFile,
+                genotypeFile=genotypeFiles[outputPair[0]],
+                phenotypeFile=phenotypeFiles[outputPair[0]],
+                contextFile,
+                kinshipFile,
                 betaFeatureVariantFile=AggregateInteractionResults.out[1],
                 chr=outputPair[0],
                 gene=outputPair[1],
-                mafFiles=mafFiles,
+                mafFile=mafFiles[outputPair[0]],
 
             # Map[String, File] genotypeFiles # one file per chromsome
             # Map[String, File] phenotypeFiles
