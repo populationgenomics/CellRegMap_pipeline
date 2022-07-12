@@ -1,15 +1,16 @@
-import click
 import os
 import sys
-import scanpy as sc
-import pandas as pd
-import xarray as xr
-from numpy import ones
-from pandas_plink import read_plink1_bin
-from numpy.linalg import cholesky
-from limix.qc import quantile_gaussianize
 
-from cellregmap import run_interaction
+import click
+# import scanpy as sc
+# import pandas as pd
+# import xarray as xr
+# from numpy import ones
+# from pandas_plink import read_plink1_bin
+# from numpy.linalg import cholesky
+# from limix.qc import quantile_gaussianize
+
+# from cellregmap import run_interaction
 
 
 @click.command()
@@ -210,3 +211,8 @@ def main(
         }
     )
     pv.to_csv(outfilename)
+    
+
+if __name__ == '__main__':
+    main()  # pylint disable=no-value-for-argument
+

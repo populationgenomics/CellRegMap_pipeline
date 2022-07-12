@@ -10,13 +10,14 @@ def smartAppend(table,name,value):
     table[name].append(value)
 
 @click.command()
-@click.option('--list-of-files', required=True)
-@click.option('--path-results', required=True)
-
-def main(list_of_files, path_results):
+@click.option('--file-with-filenames', required=True)
+def main(file_with_filenames):
 
     x = 0
     table = {}
+
+    with open(file_with_filenames, encoding='utf-8') as f:
+        list_of_files = f.readlines()
 
     for file in list_of_files:
         x += 1
@@ -51,3 +52,7 @@ def main(list_of_files, path_results):
     outfile = "summary.csv" 
     myp = os.path.join(path_results, outfile)
     df.to_csv(myp)
+
+
+if __name__ == '__main__':
+    main()
