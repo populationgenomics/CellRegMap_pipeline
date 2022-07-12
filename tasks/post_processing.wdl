@@ -8,13 +8,13 @@ task AggregateInteractionResults {
 
     command <<<
         # michael: to work out how to more cleanly pass these files in
-        cat << EOF >> path-results.txt
-~{sep("\n", listOfFiles)}
-EOF
+    cat << EOF >> path-results.txt
+    ~{sep("\n", listOfFiles)}
+    EOF
 
-        python summarise.py \
-            --fdr-threshold ~{FDR_threshold} \
-            --fileWithFilenames path-results.txt
+    python summarise.py \
+        --fdr-threshold ~{FDR_threshold} \
+        --fileWithFilenames path-results.txt
     >>>
     
     output {
@@ -31,17 +31,30 @@ task AggregateBetaResults {
 
     command <<<
 
-        cat << EOF >> path-results-betaG.txt
-~{sep("\n", listOfFiles1)}
-EOF
-        cat << EOF >> path-results-betaGxC.txt
-~{sep("\n", listOfFiles2)}
-EOF
+    cat << EOF >> path-results-betaG.txt
+    ~{sep("\n", listOfFiles1)}
+    EOF
+    cat << EOF >> path-results-betaGxC.txt
+    ~{sep("\n", listOfFiles2)}
+    EOF
 
-        python summarise_betas.py \
+    python summarise_betas.py \
         --fileWithFilenames1 path-results-betaG.txt \
         --fileWithFilenames2 path-results-betaGxC.txt
     >>>
+#     command <<<
+
+#         cat << EOF >> path-results-betaG.txt
+# ~{sep("\n", listOfFiles1)}
+# EOF
+#         cat << EOF >> path-results-betaGxC.txt
+# ~{sep("\n", listOfFiles2)}
+# EOF
+
+#         python summarise_betas.py \
+#         --fileWithFilenames1 path-results-betaG.txt \
+#         --fileWithFilenames2 path-results-betaGxC.txt
+#     >>>
 
     output {
         File all_betaG = "summary_betaG.csv"
