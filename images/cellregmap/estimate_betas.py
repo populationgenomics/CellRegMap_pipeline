@@ -25,7 +25,18 @@ from cellregmap import run_interaction
 @click.option('--n-contexts', required=False)
 @click.option('--maf-file', required=False)
 
-def main(chrom, gene_name, sample_mapping_file, genotype_file, phenotype_file, context_file, kinship_file, feature_variant_file, output_folder, n_contexts=10, maf_file):
+def main(
+    chrom, 
+    gene_name, 
+    sample_mapping_file, 
+    genotype_file, 
+    phenotype_file, 
+    context_file, 
+    kinship_file, 
+    feature_variant_file, 
+    output_folder, 
+    n_contexts=10, 
+    maf_file):
     
     ######################################
     ###### sample mapping file (SMF) #####

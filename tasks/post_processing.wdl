@@ -23,7 +23,7 @@ EOF
     }
 }
 
-task AggregateBetasResults {
+task AggregateBetaResults {
     input {
         Array[File] listOfFiles1
         Array[File] listOfFiles2

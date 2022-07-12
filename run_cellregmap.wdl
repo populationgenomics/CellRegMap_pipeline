@@ -10,6 +10,7 @@ workflow RunCellRegMap {
     input {
         Map[String, File] genotypeFiles # one file per chromsome
         Map[String, File] phenotypeFiles
+        Map[String, File] mafFiles
         File contextFile
         File kinshipFile
         File sampleMappingFile
@@ -26,7 +27,7 @@ workflow RunCellRegMap {
 
         call C.RunInteraction as RunInteraction {
             input:
-                inputFile=inputFile,
+                inputFile=inputFile, # what is this??
                 chr=outputPair[0],
                 gene=outputPair[1],
                 featureVariantFile,
@@ -45,19 +46,23 @@ workflow RunCellRegMap {
 
     }
 
-    # call u.CreateBetaFvf as CreateBetaFvf { # not needed hopefully
-    #     input 
-    #         File interaction_results.txt
-    #     ouput 
-    #         File beta_fvf
-    # }
-
-    call C.EstimateBetas as EstimateBetas {
+    call u.GetGeneChrPairs as GetGeneChrPairsBetas {
         input:
-            genotypeFiles=genotypeFiles,
-            phenotypeFiles=phenotypeFiles,
+            betaFeatureVariantFile=AggregateInteractionResults.out[1]
+    }
 
-
+    scatter (outputPair in GetGeneChrPairsBetas.output_pairs) { 
+        
+        call C.EstimateBetas as EstimateBetas {
+            input:
+                genotypeFiles=genotypeFiles,
+                phenotypeFiles=phenotypeFiles,
+                contextFile=contextFile,
+                kinshipFile=kinshipFile,
+                betaFeatureVariantFile=AggregateInteractionResults.out[1],
+                chr=outputPair[0],
+                gene=outputPair[1],
+                mafFiles=mafFiles,
 
             # Map[String, File] genotypeFiles # one file per chromsome
             # Map[String, File] phenotypeFiles
@@ -67,13 +72,15 @@ workflow RunCellRegMap {
             # File betaFeatureVariantFile = AggregateIntegrationResults.out[1] #syntax ok?
             # Array[File] betaOutputFiles
             # Map[String, File] mafFiles
+        }
     }
 
-    # runtime { # do we need to specify a runtime for the entire workflow?
-    #     memory: memory_requirements
-    #     cpus: 4
-    #     container: "limix/cellregmap:v1.0.0"
-    # }
+    call pp.AggregateBetaResults as AggregateBetaResults{
+        input:
+            listOfFiles1=EstimateBetas.geneOutput1,
+            listOfFiles2=EstimateBetas.geneOutput2
+
+    }
 
     output {
         File out_interaction_all_results = AggregateIntegrationResults.all_results
