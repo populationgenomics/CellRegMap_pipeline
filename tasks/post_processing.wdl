@@ -6,19 +6,19 @@ task AggregateInteractionResults {
         Float FDR_threshold
     }
 
-    command {
-        python summarise.py pathResults --geneFiles {join(" ", listOfFiles)} 
+    command <<<
+        # michael: to work out how to more cleanly pass these files in
+        cat << EOF >> path-results.txt
+~{sep("\n", listOfFiles)}
+EOF
 
-        # inputs:
-        #   ../inputs/1231239/geneName.txt
-        #   ../inputs/5126313/geneName2.txt
-
-        # summarise.py --geneFiles file1 file2 file3
-    }
+        python summarise.py \
+            --fileWithFilenames path-results.txt
+    >>>
     
     output {
-        File all_results
-        File significant_results_only
+        File all_results = "file.txt"
+        File significant_results = "significant_results.csv"
     }
 }
 
@@ -27,12 +27,12 @@ task AggregateBetasResults {
         Array[File] listOfFiles
     }
 
-    command {
-        python summarise_betas.py --geneFiles {join(" ", listOfFiles)}
-    }
+    command <<<
+        python summarise_betas.py --geneFiles ~{sep(" ", listOfFiles)}
+    >>>
 
     output {
-        File all_betaG_s
-        File all_betaGxC_s
+        File all_betaG_s = "output1.txt"
+        File all_betaGxC_s = "output2.txt"
     }
 }

@@ -1,4 +1,5 @@
-version development # tells WDL to use most recent version
+# tells WDL to use most recent version
+version development
 
 import "tasks/CellRegMap.wdl" as C
 import "tasks/utils.wdl" as u
@@ -21,7 +22,7 @@ workflow RunCellRegMap {
             featureVariantFile=featureVariantFile
     }
 
-    scatter (outputPair in GetGeneChrPairs.outputPairs) {
+    scatter (outputPair in GetGeneChrPairs.output_pairs) {
 
         call C.RunInteraction as RunInteraction {
             input:
@@ -39,7 +40,7 @@ workflow RunCellRegMap {
 
     call pp.AggregateInteractionResults as AggregateIntegrationResults{
         input:
-        # geneOutput is implicitly a Array[File]
+            # geneOutput is implicitly a Array[File]
             listOfFiles=RunInteraction.geneOutput
 
     }
@@ -51,17 +52,21 @@ workflow RunCellRegMap {
     #         File beta_fvf
     # }
 
-    call C.EstimateBetas as EstimateBetas{
-        input {
-            Map[String, File] genotypeFiles # one file per chromsome
-            Map[String, File] phenotypeFiles
-            File contextFile
-            File kinshipFile
-            File sampleMappingFile
-            File betaFeatureVariantFile = AggregateIntegrationResults.out[1] #syntax ok?
-            Array[File] betaOutputFiles
-            Map[String, File] mafFiles
-        }
+    call C.EstimateBetas as EstimateBetas {
+        input:
+            genotypeFiles=genotypeFiles,
+            phenotypeFiles=phenotypeFiles,
+
+
+
+            # Map[String, File] genotypeFiles # one file per chromsome
+            # Map[String, File] phenotypeFiles
+            # File contextFile
+            # File kinshipFile
+            # File sampleMappingFile
+            # File betaFeatureVariantFile = AggregateIntegrationResults.out[1] #syntax ok?
+            # Array[File] betaOutputFiles
+            # Map[String, File] mafFiles
     }
 
     # runtime { # do we need to specify a runtime for the entire workflow?
@@ -71,7 +76,8 @@ workflow RunCellRegMap {
     # }
 
     output {
-        File out_interaction = AggregateIntegrationResults.out
+        File out_interaction_all_results = AggregateIntegrationResults.all_results
+        File out_interaction_significant_results = AggregateIntegrationResults.significant_results
         File out_betas = AggregateBetaResults.out
     }
 

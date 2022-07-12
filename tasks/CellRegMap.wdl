@@ -11,18 +11,31 @@ task RunInteraction {
         File kinshipFile
         File featureVariantFile # still need this to select specific SNPs
         Int nContexts = 10 # add additional flag for cases when the contexts tested and those in the background aren't the same
+
     }
 
-    command {
+    String outputFilename = geneName + ".csv"
+
+    command <<<
+        # for now, use conda, but when we're closer,
+        # remove this in favor of 'container' in the runtime section
         conda activate cellregmap_notebook 
-        python run_interaction.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile featureVariantFile nContexts --outputFile ${geneName + ".csv"}
-    }
+
+        python /Shared/annacuomo/scripts/run_interaction.py \
+            --chrom ~{chrom} \
+            --gene-name ~{geneName} \
+            --sample-mapping-file ~{sampleMappingFile} \
+             genotypeFile phenotypeFile contextFile kinshipFile featureVariantFile nContexts \
+             --outputFile ~{outputFilename}
+    >>>
 
     output {
-        File geneOutput = geneName + ".csv"
+        File geneOutput = outputFilename
     }
 
     runtime {
+        # container: "annacuomo/limix:dev"
+
         # static
         memory: "400Gb"
         
@@ -40,7 +53,7 @@ task RunInteraction {
 task EstimateBetas {
     input {
         Int chrom 
-        Float geneName
+        String geneName
         File sampleMappingFile
         File genotypeFile
         File phenotypeFile
@@ -53,8 +66,12 @@ task EstimateBetas {
 
 
     command {
+        # leave this until containers are used
         conda activate cellregmap_notebook
-        python estimate_betas.py chrom geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile betaFeatureVariantFile nContexts mafFile --outputFile ${geneName}
+
+        python /Shared/annacuomo/scripts/estimate_betas.py \
+            --chrom ~{chrom} \
+            geneName sampleMappingFile genotypeFile phenotypeFile contextFile kinshipFile betaFeatureVariantFile nContexts mafFile --outputFile ${geneName}
     }
 
     output {
