@@ -21,7 +21,7 @@ workflow RunCellRegMap {
 
     call u.GetGeneChrPairs as GetGeneChrPairs {
         input:
-            featureVariantFile=featureVariantFile
+            featureVariantFile=featureVariantFile,
     }
 
     scatter (outputPair in GetGeneChrPairs.output_pairs) {
@@ -29,8 +29,8 @@ workflow RunCellRegMap {
         call C.RunInteraction as RunInteraction {
             input:
                 # inputFile=inputFile, # what is this??
-                chr=outputPair[0],
-                gene=outputPair[1],
+                chrom=outputPair[0],
+                geneName=outputPair[1],
                 sampleMappingFile,
                 genotypeFile=genotypeFiles[outputPair[0]],
                 phenotypeFile=phenotypeFiles[outputPair[0]],
@@ -50,15 +50,16 @@ workflow RunCellRegMap {
 
     call u.GetGeneChrPairs as GetGeneChrPairsBetas {
         input:
-            betaFeatureVariantFile=AggregateInteractionResults.significant_results
+            featureVariantFile=AggregateInteractionResults.significant_results,
+
     }
 
     scatter (outputPair in GetGeneChrPairsBetas.output_pairs) { 
 
         call C.EstimateBetas as EstimateBetas {
             input:
-                chr=outputPair[0],
-                gene=outputPair[1],
+                chrom=outputPair[0],
+                geneName=outputPair[1],
                 sampleMappingFile,
                 genotypeFile=genotypeFiles[outputPair[0]],
                 phenotypeFile=phenotypeFiles[outputPair[0]],

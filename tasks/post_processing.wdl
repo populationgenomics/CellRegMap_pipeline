@@ -42,19 +42,6 @@ task AggregateBetaResults {
         --fileWithFilenames1 path-results-betaG.txt \
         --fileWithFilenames2 path-results-betaGxC.txt
     >>>
-#     command <<<
-
-#         cat << EOF >> path-results-betaG.txt
-# ~{sep("\n", listOfFiles1)}
-# EOF
-#         cat << EOF >> path-results-betaGxC.txt
-# ~{sep("\n", listOfFiles2)}
-# EOF
-
-#         python summarise_betas.py \
-#         --fileWithFilenames1 path-results-betaG.txt \
-#         --fileWithFilenames2 path-results-betaGxC.txt
-#     >>>
 
     output {
         File all_betaG = "summary_betaG.csv"

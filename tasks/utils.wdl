@@ -7,13 +7,13 @@ task GetGeneChrPairs {
         String outputName
     }
 
-    command {
+    command <<<
         # bash environment
         python get_scatter.py ${featureVariantFile} --outputName "${outputName}"
 
         # for output_pairs
         echo 'chr1\tGeneName\nchr2\tGeneName2' > outputPairs.tsv
-    }
+    >>>
 
     runtime {
         memory: "2Gb" 
