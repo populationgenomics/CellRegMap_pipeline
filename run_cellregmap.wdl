@@ -15,6 +15,7 @@ workflow RunCellRegMap {
         File kinshipFile
         File sampleMappingFile
         File featureVariantFile
+        Int nContexts
         Array[File] outputFiles # what is this? do I need one for betas results too?
     }
 
@@ -27,19 +28,20 @@ workflow RunCellRegMap {
 
         call C.RunInteraction as RunInteraction {
             input:
-                inputFile=inputFile, # what is this??
+                # inputFile=inputFile, # what is this??
                 chr=outputPair[0],
                 gene=outputPair[1],
-                featureVariantFile,
                 sampleMappingFile,
-                phenotypeFile=phenotypeFiles[outputPair[0]],
                 genotypeFile=genotypeFiles[outputPair[0]],
-                kinshipFile,
+                phenotypeFile=phenotypeFiles[outputPair[0]],
                 contextFile,
+                kinshipFile,
+                featureVariantFile,
+                nContexts,
         }
     }
 
-    call pp.AggregateInteractionResults as AggregateIntegrationResults{
+    call pp.AggregateInteractionResults as AggregateInteractionResults{
         input:
             # geneOutput is implicitly a Array[File]
             listOfFiles=RunInteraction.geneOutput
@@ -48,23 +50,25 @@ workflow RunCellRegMap {
 
     call u.GetGeneChrPairs as GetGeneChrPairsBetas {
         input:
-            betaFeatureVariantFile=AggregateInteractionResults.out[1]
+            betaFeatureVariantFile=AggregateInteractionResults.significant_results
     }
 
     scatter (outputPair in GetGeneChrPairsBetas.output_pairs) { 
 
         call C.EstimateBetas as EstimateBetas {
             input:
+                chr=outputPair[0],
+                gene=outputPair[1],
+                sampleMappingFile,
                 genotypeFile=genotypeFiles[outputPair[0]],
                 phenotypeFile=phenotypeFiles[outputPair[0]],
                 contextFile,
                 kinshipFile,
-                betaFeatureVariantFile=AggregateInteractionResults.out[1],
-                chr=outputPair[0],
-                gene=outputPair[1],
+                betaFeatureVariantFile=AggregateInteractionResults.significant_results,
+                nContexts,
                 mafFile=mafFiles[outputPair[0]],
 
-            # Map[String, File] genotypeFiles # one file per chromsome
+            # Map[String, File] genotypeFiles # one file per chromosome
             # Map[String, File] phenotypeFiles
             # File contextFile
             # File kinshipFile
@@ -83,8 +87,8 @@ workflow RunCellRegMap {
     }
 
     output {
-        File out_interaction_all_results = AggregateIntegrationResults.all_results
-        File out_interaction_significant_results = AggregateIntegrationResults.significant_results
+        File out_interaction_all_results = AggregateInteractionResults.all_results
+        File out_interaction_significant_results = AggregateInteractionResults.significant_results
         File out_betaG = AggregateBetaResults.all_betaG
         File out_betaGxC = AggregateBetaResults.all_betaGxC
     }

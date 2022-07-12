@@ -26,6 +26,7 @@ import click
     "--output-folder", required=False, default=""
 )  # by default current directory, where you are running your script from
 @click.option("--n-contexts", required=False)
+
 def main(
     chrom,
     gene_name,
