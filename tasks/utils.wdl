@@ -4,14 +4,12 @@ task GetGeneChrPairs {
 
     input {
         File featureVariantFile
-        # String outputName # do I need this??
     }
 
     command <<<
         # bash environment
-        # delimiter=comma, select 2nd and 4th columnd, omit first line
-        cut -d "," -f 2,4 ~{featureVariantFile | tail -n +2 | sort | uniq > outputPairs.csv
-        # python get_scatter.py ${featureVariantFile} --outputName "${outputName}"
+        # delimiter=comma, select 2nd and 4th columnd, omit first line, unique rows
+        cut -d "," -f 2,4 ~{featureVariantFile} | tail -n +2 | sort | uniq > outputPairs.csv
     >>>
 
     runtime {

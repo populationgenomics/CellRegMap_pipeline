@@ -16,7 +16,7 @@ workflow RunCellRegMap {
         File sampleMappingFile
         File featureVariantFile
         Int nContexts
-        Array[File] outputFiles # what is this? do I need one for betas results too?
+        # Array[File] outputFiles # what is this? do I need one for betas results too?
     }
 
     call u.GetGeneChrPairs as GetGeneChrPairs {
