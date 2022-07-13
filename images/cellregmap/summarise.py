@@ -11,7 +11,11 @@ def smartAppend(table,name,value):
 
 @click.command()
 @click.option('--file-with-filenames', required=True)
-def main(file_with_filenames):
+@click.option(
+    "--output-folder", required=False, default=""
+)  # by default current directory, where you are running your script from
+
+def main(file_with_filenames, output_folder):
 
     x = 0
     table = {}

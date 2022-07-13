@@ -12,8 +12,11 @@ def smartAppend(table,name,value):
 @click.command()
 @click.option('--file-with-filenames-1', required=True)
 @click.option('--file-with-filenames-2', required=True)
+@click.option(
+    "--output-folder", required=False, default=""
+)  # by default current directory, where you are running your script from
 
-def main(file_with_filenames_1, file_with_filenames_2):
+def main(file_with_filenames_1, file_with_filenames_2, output_folder):
 
     # betaG
     x = 0
@@ -50,7 +53,7 @@ def main(file_with_filenames_1, file_with_filenames_2):
 
     df = pd.DataFrame.from_dict(table)
     outfile = "summary_betaG.csv" 
-    myp = os.path.join(path_results, outfile)
+    myp = os.path.join(output_folder, outfile)
     df.to_csv(myp)
 
     # betaGxC
@@ -91,7 +94,7 @@ def main(file_with_filenames_1, file_with_filenames_2):
 
     df = pd.DataFrame.from_dict(table)
     outfile = "summary_betaGxC.csv" 
-    myp = os.path.join(path_results, outfile)
+    myp = os.path.join(output_folder, outfile)
     df.to_csv(myp)
 
     if __name__ == '__main__':

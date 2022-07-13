@@ -7,6 +7,7 @@ task GetGeneChrPairs {
     }
 
 	command <<<
+
 cat << EOF > script.py
 import csv
 
@@ -25,7 +26,6 @@ python script.py
     runtime {
         memory: "2G"
 		container: "python:3.10"
-
     }
 
     output {
