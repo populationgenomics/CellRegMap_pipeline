@@ -59,7 +59,7 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
 
     # betaGxC
     x = 0
-    df_all = []
+    df_all = pd.DataFrame()
     
     with open(file_with_filenames_2, encoding='utf-8') as f:
         list_of_files2 = f.readlines()
@@ -72,7 +72,7 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
         nsnps = int(len(df))
         if nsnps==0:
             continue
-        gene = re.sub("_betaG","",os.path.splitext(os.path.basename(file))[0])
+        gene = re.sub("_betaGxC","",os.path.splitext(os.path.basename(file))[0])
         # print(gene)
         df.columns = gene + "_" + df.columns
         df_all = pd.concat([df_all, df], axis=1)
