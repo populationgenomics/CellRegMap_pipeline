@@ -1,4 +1,5 @@
 import os
+import re
 import click
 import pandas as pd
 import numpy as np
@@ -33,7 +34,7 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
         nsnps = int(len(df))
         if nsnps==0:
             continue
-        gene = os.path.splitext(os.path.basename(file))[0] 
+        gene = re.sub("_betaG","",os.path.splitext(os.path.basename(file))[0])
         # print(gene)
         chrom = df['chrom'].values[0]
         # print(chrom)
@@ -58,7 +59,7 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
 
     # betaGxC
     x = 0
-    table = {}
+    df_all = []
     
     with open(file_with_filenames_2, encoding='utf-8') as f:
         list_of_files2 = f.readlines()
@@ -71,31 +72,15 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
         nsnps = int(len(df))
         if nsnps==0:
             continue
-        gene = os.path.splitext(os.path.basename(file))[0] 
+        gene = re.sub("_betaG","",os.path.splitext(os.path.basename(file))[0])
         # print(gene)
-        chrom = df['chrom'].values[0]
-        # print(chrom)
-        for i in range(nsnps):
-            temp = {}
-            temp['gene'] = gene
-            temp['n_snps'] = nsnps
-            temp['snp_id'] = df['variant'].values[i]
-            temp['pv_raw'] = df['pv'].values[i]
-            temp['pv_Bonf'] = nsnps * temp['pv_raw']
-            if temp['pv_Bonf']>1: temp['pv_Bonf'] = 1
-            if temp['pv_Bonf']<0: temp['pv_Bonf'] = 0
+        df.columns = gene + "_" + df.columns
+        df_all = pd.concat([df_all, df], axis=1)
+        
 
-        for key in temp.keys():
-            smartAppend(table, key, temp[key])
-
-    print(x)
-    for key in table.keys():
-        table[key] = np.array(table[key])
-
-    df = pd.DataFrame.from_dict(table)
     outfile = "summary_betaGxC.csv" 
     myp = os.path.join(output_folder, outfile)
-    df.to_csv(myp)
+    df_all.to_csv(myp)
 
     if __name__ == '__main__':
     main()
