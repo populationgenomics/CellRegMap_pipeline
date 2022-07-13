@@ -6,19 +6,30 @@ task GetGeneChrPairs {
         File featureVariantFile
     }
 
-    command <<<
-        # bash environment
-        # delimiter=comma, select 2nd and 4th columnd, omit first line, unique rows
-        cut -d "," -f 2,4 ~{featureVariantFile} | tail -n +2 | sort | uniq > outputPairs.csv
-    >>>
+	command <<<
+cat << EOF > script.py
+import csv
+
+with open("~{featureVariantFile}") as f, open("outputPairs.tsv", "w+") as w:
+    f.readline()
+    cut_lines = [(l[1], l[3]) for l in csv.reader(f)]
+    unique_lines = set('\t'.join(l) for l in cut_lines)
+    w.write("\n".join(sorted(unique_lines)))
+
+EOF
+
+python script.py
+
+	>>>
 
     runtime {
-        memory: "2Gb" 
+        memory: "2G"
+		container: "python:3.10"
+
     }
 
     output {
-        # File thisIsMyOutputFile = "GeneChromosomePairs.txt"
-        # [["chr1", "GeneName"], ["chr2", "GeneName2"]]
-        Array[Array[String]] output_pairs = read_tsv("./outputPairs.csv")
+        # [["GeneName1", "chr1"], ["GeneName2","chr2"]]
+        Array[Array[String]] output_pairs = read_tsv("outputPairs.tsv")
     }
 }
