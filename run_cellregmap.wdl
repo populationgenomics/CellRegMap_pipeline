@@ -16,6 +16,7 @@ workflow RunCellRegMap {
         File sampleMappingFile
         File featureVariantFile
         Int nContexts
+        Int FDR_threshold
         # Array[File] outputFiles # what is this? do I need one for betas results too?
     }
 
@@ -44,7 +45,8 @@ workflow RunCellRegMap {
     call pp.AggregateInteractionResults as AggregateInteractionResults{
         input:
             # geneOutput is implicitly a Array[File]
-            listOfFiles=RunInteraction.geneOutput
+            listOfFiles=RunInteraction.geneOutput,
+            FDR_threshold=FDR_threshold,
 
     }
 
