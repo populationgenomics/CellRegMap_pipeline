@@ -2,15 +2,15 @@ import os
 import sys
 
 import click
-# import scanpy as sc
-# import pandas as pd
-# import xarray as xr
-# from numpy import ones
-# from pandas_plink import read_plink1_bin
-# from numpy.linalg import cholesky
-# from limix.qc import quantile_gaussianize
+import scanpy as sc
+import pandas as pd
+import xarray as xr
+from numpy import ones
+from pandas_plink import read_plink1_bin
+from numpy.linalg import cholesky
+from limix.qc import quantile_gaussianize
 
-# from cellregmap import run_interaction
+from cellregmap import run_interaction
 
 
 @click.command()

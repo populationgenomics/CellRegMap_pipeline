@@ -21,7 +21,9 @@ from cellregmap import run_interaction
 @click.option('--context-file', required=True)
 @click.option('--kinship-file', required=True)
 @click.option('--feature-variant-file', required=True)
-@click.option('--output-folder', required=True)
+@click.option(
+    "--output-folder", required=False, default=""
+)  # by default current directory, where you are running your script from
 @click.option('--n-contexts', required=False)
 @click.option('--maf-file', required=False)
 

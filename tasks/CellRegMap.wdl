@@ -13,8 +13,6 @@ task RunInteraction {
         Int nContexts = 10 # add additional flag for cases when the contexts tested and those in the background aren't the same
     }
 
-    String outputFilename = geneName + ".csv"
-
     command <<<
         # for now, use conda, but when we're closer,
         # remove this in favor of 'container' in the runtime section
@@ -30,12 +28,11 @@ task RunInteraction {
             --context-file ~{contextFile} \
             --kinship-file ~{kinshipFile} \
             --feature-variant-file ~{featureVariantFile} \
-            --n-contexts ~{nContexts} \
-            --outputFile ~{outputFilename}
+            --n-contexts ~{nContexts} 
     >>>
 
     output {
-        File geneOutput = outputFilename
+        File geneOutput = geneName + ".csv"
     }
 
     runtime {
@@ -69,9 +66,6 @@ task EstimateBetas {
         File mafFile # if MAFs are known / pre-calculated they should be given as inputs
     }
 
-    String outputFilename1 = geneName + "_betaG.csv"
-    String outputFilename2 = geneName + "_betaGxC.csv"
-
     command <<<
         # leave this until containers are used
         eval "$(conda shell.bash hook)" 
@@ -87,14 +81,12 @@ task EstimateBetas {
             --kinship-file ~{kinshipFile} \
             --beta-feature-variant-file ~{betaFeatureVariantFile} \
             --n-contexts ~{nContexts} \
-            --maf-file ~{mafFile} \
-            --outputFile1 ~{outputFilename1} \
-            --outputFile2 ~{outputFilename2}
+            --maf-file ~{mafFile}
     >>>
 
     output {
-        File geneOutput1 = outputFilename1
-        File geneOutput2 = outputFilename2
+        File geneOutput1 = geneName + "_betaG.csv"
+        File geneOutput2 = geneName + "_betaGxC.csv"
     }
 
     runtime {

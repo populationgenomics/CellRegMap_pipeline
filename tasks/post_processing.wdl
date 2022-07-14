@@ -17,7 +17,7 @@ task AggregateInteractionResults {
 
     python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/summarise.py \
         --fdr-threshold ~{FDR_threshold} \
-        --fileWithFilenames path-results.txt
+        --file-with-filenames path-results.txt
     >>>
     
     output {
@@ -45,8 +45,8 @@ task AggregateBetaResults {
     conda activate cellregmap_notebook
 
     python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/summarise_betas.py \
-        --fileWithFilenames1 path-results-betaG.txt \
-        --fileWithFilenames2 path-results-betaGxC.txt
+        --file-with-filenames-1 path-results-betaG.txt \
+        --file-with-filenames-2 path-results-betaGxC.txt
     >>>
 
     output {
