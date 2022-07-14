@@ -27,18 +27,20 @@ workflow RunCellRegMap {
 
     scatter (outputPair in GetGeneChrPairs.output_pairs) {
 
+        String RunInteractionChr = outputPair[0]
+
         call C.RunInteraction as RunInteraction {
             input:
                 # inputFile=inputFile, # what is this??
-                chrom=outputPair[0],
+                chrom=RunInteractionChr,
                 geneName=outputPair[1],
-                sampleMappingFile,
-                genotypeFile=genotypeFiles[outputPair[0]],
-                phenotypeFile=phenotypeFiles[outputPair[0]],
-                contextFile,
-                kinshipFile,
-                featureVariantFile,
-                nContexts,
+                sampleMappingFile=sampleMappingFile,
+                genotypeFile=genotypeFiles[RunInteractionChr],
+                phenotypeFile=phenotypeFiles[RunInteractionChr],
+                contextFile=contextFile,
+                kinshipFile=kinshipFile,
+                featureVariantFile=featureVariantFile,
+                nContexts=nContexts,
         }
     }
 
@@ -58,18 +60,20 @@ workflow RunCellRegMap {
 
     scatter (outputPair in GetGeneChrPairsBetas.output_pairs) { 
 
+        String EstimateBetaChr = outputPair[0]
+
         call C.EstimateBetas as EstimateBetas {
             input:
-                chrom=outputPair[0],
+                chrom=EstimateBetaChr,
                 geneName=outputPair[1],
-                sampleMappingFile,
-                genotypeFile=genotypeFiles[outputPair[0]],
-                phenotypeFile=phenotypeFiles[outputPair[0]],
-                contextFile,
-                kinshipFile,
+                sampleMappingFile=sampleMappingFile,
+                genotypeFile=genotypeFiles[EstimateBetaChr],
+                phenotypeFile=phenotypeFiles[EstimateBetaChr],
+                contextFile=contextFile,
+                kinshipFile=kinshipFile,
                 betaFeatureVariantFile=AggregateInteractionResults.significant_results,
-                nContexts,
-                mafFile=mafFiles[outputPair[0]],
+                nContexts=nContexts,
+                mafFile=mafFiles[EstimateBetaChr],
 
             # Map[String, File] genotypeFiles # one file per chromosome
             # Map[String, File] phenotypeFiles
