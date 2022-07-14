@@ -18,6 +18,7 @@ task RunInteraction {
     command <<<
         # for now, use conda, but when we're closer,
         # remove this in favor of 'container' in the runtime section
+        eval "$(conda shell.bash hook)" 
         conda activate cellregmap_notebook 
 
         python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/run_interaction.py \
@@ -73,6 +74,7 @@ task EstimateBetas {
 
     command <<<
         # leave this until containers are used
+        eval "$(conda shell.bash hook)" 
         conda activate cellregmap_notebook
 
         python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/estimate_betas.py \

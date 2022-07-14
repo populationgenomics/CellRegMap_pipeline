@@ -12,6 +12,7 @@ task AggregateInteractionResults {
     ~{sep("\n", listOfFiles)}
     EOF
 
+    eval "$(conda shell.bash hook)" 
     conda activate cellregmap_notebook
 
     python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/summarise.py \
@@ -40,6 +41,7 @@ task AggregateBetaResults {
     ~{sep("\n", listOfFiles2)}
     EOF
 
+    eval "$(conda shell.bash hook)" 
     conda activate cellregmap_notebook
 
     python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/summarise_betas.py \
