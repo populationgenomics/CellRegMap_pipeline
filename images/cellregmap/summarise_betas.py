@@ -24,7 +24,7 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
     table = {}
 
     with open(file_with_filenames_1, encoding='utf-8') as f:
-        list_of_files1 = f.readlines()
+        list_of_files1 = [line.strip() for line in f.readlines() if line.strip()]
 
     for file in list_of_files1:
         x += 1
