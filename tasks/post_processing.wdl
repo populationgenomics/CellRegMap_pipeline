@@ -8,9 +8,9 @@ task AggregateInteractionResults {
 
     command <<<
         # michael: to work out how to more cleanly pass these files in
-    cat << EOF >> path-results.txt
-    ~{sep("\n", listOfFiles)}
-    EOF
+cat << EOF >> path-results.txt
+~{sep("\n", listOfFiles)}
+EOF
 
     eval "$(conda shell.bash hook)" 
     conda activate cellregmap_notebook
@@ -34,12 +34,12 @@ task AggregateBetaResults {
 
     command <<<
 
-    cat << EOF >> path-results-betaG.txt
-    ~{sep("\n", listOfFiles1)}
-    EOF
-    cat << EOF >> path-results-betaGxC.txt
-    ~{sep("\n", listOfFiles2)}
-    EOF
+cat << EOF >> path-results-betaG.txt
+~{sep("\n", listOfFiles1)}
+EOF
+cat << EOF >> path-results-betaGxC.txt
+~{sep("\n", listOfFiles2)}
+EOF
 
     eval "$(conda shell.bash hook)" 
     conda activate cellregmap_notebook
