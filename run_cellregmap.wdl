@@ -27,13 +27,13 @@ workflow RunCellRegMap {
 
     scatter (outputPair in GetGeneChrPairs.output_pairs) {
 
-        String RunInteractionChr = outputPair[0]
+        String RunInteractionChr = outputPair[1]
 
         call C.RunInteraction as RunInteraction {
             input:
                 # inputFile=inputFile, # what is this??
                 chrom=RunInteractionChr,
-                geneName=outputPair[1],
+                geneName=outputPair[0],
                 sampleMappingFile=sampleMappingFile,
                 genotypeFile=genotypeFiles[RunInteractionChr],
                 phenotypeFile=phenotypeFiles[RunInteractionChr],
@@ -60,12 +60,12 @@ workflow RunCellRegMap {
 
     scatter (outputPair in GetGeneChrPairsBetas.output_pairs) { 
 
-        String EstimateBetaChr = outputPair[0]
+        String EstimateBetaChr = outputPair[1]
 
         call C.EstimateBetas as EstimateBetas {
             input:
                 chrom=EstimateBetaChr,
-                geneName=outputPair[1],
+                geneName=outputPair[0],
                 sampleMappingFile=sampleMappingFile,
                 genotypeFile=genotypeFiles[EstimateBetaChr],
                 phenotypeFile=phenotypeFiles[EstimateBetaChr],
