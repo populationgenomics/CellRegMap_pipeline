@@ -30,7 +30,7 @@ task RunInteraction {
             --context-file ~{contextFile} \
             --kinship-file ~{kinshipFile} \
             --feature-variant-file ~{featureVariantFile} \
-            --n-context ~{nContexts} \
+            --n-contexts ~{nContexts} \
             --outputFile ~{outputFilename}
     >>>
 
@@ -86,7 +86,7 @@ task EstimateBetas {
             --context-file ~{contextFile} \
             --kinship-file ~{kinshipFile} \
             --beta-feature-variant-file ~{betaFeatureVariantFile} \
-            --n-context ~{nContexts} \
+            --n-contexts ~{nContexts} \
             --maf-file ~{mafFile} \
             --outputFile1 ~{outputFilename1} \
             --outputFile2 ~{outputFilename2}
