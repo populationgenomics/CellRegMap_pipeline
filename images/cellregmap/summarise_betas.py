@@ -62,7 +62,7 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
     df_all = pd.DataFrame()
     
     with open(file_with_filenames_2, encoding='utf-8') as f:
-        list_of_files2 = f.readlines()
+        list_of_files2 = [line.strip() for line in f.readlines() if line.strip()]
 
     for file in list_of_files2:
         x += 1

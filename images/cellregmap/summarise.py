@@ -114,7 +114,7 @@ def main(file_with_filenames, fdr_threshold, output_folder):
     table = {}
 
     with open(file_with_filenames, encoding='utf-8') as f:
-        list_of_files = f.readlines()
+        list_of_files = [line.strip() for line in f.readlines() if line.strip()]
 
     for file in list_of_files:
         x += 1
