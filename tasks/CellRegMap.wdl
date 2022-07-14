@@ -24,7 +24,7 @@ task RunInteraction {
             --chrom ~{chrom} \
             --gene-name ~{geneName} \
             --sample-mapping-file ~{sampleMappingFile} \
-            --genotype-file ~{genotypeFile} \ 
+            --genotype-file ~{genotypeFile} \
             --phenotype-file ~{phenotypeFile} \
             --context-file ~{contextFile} \
             --kinship-file ~{kinshipFile} \
@@ -79,15 +79,15 @@ task EstimateBetas {
             --chrom ~{chrom} \
             --gene-name ~{geneName} \
             --sample-mapping-file ~{sampleMappingFile} \
-            --genotype-file ~{genotypeFile} \ 
+            --genotype-file ~{genotypeFile} \
             --phenotype-file ~{phenotypeFile} \
             --context-file ~{contextFile} \
             --kinship-file ~{kinshipFile} \
             --beta-feature-variant-file ~{betaFeatureVariantFile} \
             --n-context ~{nContexts} \
             --maf-file ~{mafFile} \
-            --outputFile1 ${outputFilename1} \
-            --outputFile2 ${outputFilename2}
+            --outputFile1 ~{outputFilename1} \
+            --outputFile2 ~{outputFilename2}
     >>>
 
     output {
