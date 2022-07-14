@@ -9,6 +9,8 @@ import "tasks/post_processing.wdl" as pp
 workflow RunCellRegMap {
     input {
         Map[String, File] genotypeFiles # one file per chromosome
+        Map[String, File] genotypeFilesBims
+        Map[String, File] genotypeFilesFams
         Map[String, File] phenotypeFiles
         Map[String, File] mafFiles
         File contextFile
@@ -36,6 +38,8 @@ workflow RunCellRegMap {
                 geneName=outputPair[0],
                 sampleMappingFile=sampleMappingFile,
                 genotypeFile=genotypeFiles[RunInteractionChr],
+                genotypeFilesBim=genotypeFilesBims[RunInteractionChr],
+                genotypeFilesFam=genotypeFilesFams[RunInteractionChr],
                 phenotypeFile=phenotypeFiles[RunInteractionChr],
                 contextFile=contextFile,
                 kinshipFile=kinshipFile,
@@ -68,21 +72,14 @@ workflow RunCellRegMap {
                 geneName=outputPair[0],
                 sampleMappingFile=sampleMappingFile,
                 genotypeFile=genotypeFiles[EstimateBetaChr],
+                genotypeFilesBim=genotypeFilesBims[EstimateBetaChr],
+                genotypeFilesFam=genotypeFilesFams[EstimateBetaChr],
                 phenotypeFile=phenotypeFiles[EstimateBetaChr],
                 contextFile=contextFile,
                 kinshipFile=kinshipFile,
                 betaFeatureVariantFile=AggregateInteractionResults.significant_results,
                 nContexts=nContexts,
                 mafFile=mafFiles[EstimateBetaChr],
-
-            # Map[String, File] genotypeFiles # one file per chromosome
-            # Map[String, File] phenotypeFiles
-            # File contextFile
-            # File kinshipFile
-            # File sampleMappingFile
-            # File betaFeatureVariantFile = AggregateIntegrationResults.out[1] #syntax ok?
-            # Array[File] betaOutputFiles
-            # Map[String, File] mafFiles
         }
     }
 

@@ -6,6 +6,8 @@ task RunInteraction {
         String geneName
         File sampleMappingFile
         File genotypeFile
+        File genotypeFilesBim
+        File genotypeFilesFam
         File phenotypeFile
         File contextFile
         File kinshipFile
@@ -14,6 +16,11 @@ task RunInteraction {
     }
 
     command <<<
+        # make sure secondaries are paired together
+        cp -f '~{genotypeFilesBim}' "$(echo '~{genotypeFile}' | sed 's/\.[^.]*$//').bim"
+        cp -f '~{genotypeFilesFam}' "$(echo '~{genotypeFile}' | sed 's/\.[^.]*$//').fam"
+
+
         # for now, use conda, but when we're closer,
         # remove this in favor of 'container' in the runtime section
         eval "$(conda shell.bash hook)" 
@@ -58,6 +65,8 @@ task EstimateBetas {
         String geneName
         File sampleMappingFile
         File genotypeFile
+        File genotypeFilesBim
+        File genotypeFilesFam
         File phenotypeFile
         File contextFile
         File kinshipFile
@@ -67,6 +76,10 @@ task EstimateBetas {
     }
 
     command <<<
+        # make sure secondaries are paired together
+        cp -f '~{genotypeFilesBim}' "$(echo '~{genotypeFile}' | sed 's/\.[^.]*$//').bim"
+        cp -f '~{genotypeFilesFam}' "$(echo '~{genotypeFile}' | sed 's/\.[^.]*$//').fam"
+        
         # leave this until containers are used
         eval "$(conda shell.bash hook)" 
         conda activate cellregmap_notebook
