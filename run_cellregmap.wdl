@@ -8,7 +8,7 @@ import "tasks/post_processing.wdl" as pp
 
 workflow RunCellRegMap {
     input {
-        Map[String, File] genotypeFiles # one file per chromsome
+        Map[String, File] genotypeFiles # one file per chromosome
         Map[String, File] phenotypeFiles
         Map[String, File] mafFiles
         File contextFile

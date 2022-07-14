@@ -20,7 +20,7 @@ task RunInteraction {
         # remove this in favor of 'container' in the runtime section
         conda activate cellregmap_notebook 
 
-        python /Shared/annacuomo/scripts/run_interaction.py \
+        python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/run_interaction.py \
             --chrom ~{chrom} \
             --gene-name ~{geneName} \
             --sample-mapping-file ~{sampleMappingFile} \
@@ -75,7 +75,7 @@ task EstimateBetas {
         # leave this until containers are used
         conda activate cellregmap_notebook
 
-        python /Shared/annacuomo/scripts/estimate_betas.py \
+        python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/estimate_betas.py \
             --chrom ~{chrom} \
             --gene-name ~{geneName} \
             --sample-mapping-file ~{sampleMappingFile} \
