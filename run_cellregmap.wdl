@@ -18,7 +18,7 @@ workflow RunCellRegMap {
         File sampleMappingFile
         File featureVariantFile
         Int nContexts=10
-        Float FDR_threshold=0.05
+        Float FDR_threshold=1
         # Array[File] outputFiles # what is this? do I need one for betas results too?
     }
 
