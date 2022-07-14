@@ -25,7 +25,7 @@ from cellregmap import run_interaction
 @click.option(
     "--output-folder", required=False, default=""
 )  # by default current directory, where you are running your script from
-@click.option("--n-contexts", required=False)
+@click.option("--n-contexts", required=False, type=int)
 
 def main(
     chrom,
