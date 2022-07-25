@@ -37,8 +37,8 @@ def main(
     kinship_file, 
     feature_variant_file, 
     output_folder, 
-    n_contexts=10, 
-    maf_file):
+    maf_file,
+    n_contexts=10):
     
     ######################################
     ###### sample mapping file (SMF) #####
