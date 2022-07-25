@@ -84,4 +84,4 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
     df_all.to_csv(myp)
 
     if __name__ == '__main__':
-    main()
+        main()
