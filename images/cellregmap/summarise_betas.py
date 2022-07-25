@@ -54,6 +54,9 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
         table[key] = np.array(table[key])
 
     df = pd.DataFrame.from_dict(table)
+
+    print(df.head())
+
     outfile = "summary_betaG.csv" 
     myp = os.path.join(output_folder, outfile)
     df.to_csv(myp)
@@ -77,7 +80,8 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
         # print(gene)
         df.columns = gene + "_" + df.columns
         df_all = pd.concat([df_all, df], axis=1)
-        
+    
+    print(df_all.head())
 
     outfile = "summary_betaGxC.csv" 
     myp = os.path.join(output_folder, outfile)
