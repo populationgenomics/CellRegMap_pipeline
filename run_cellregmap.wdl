@@ -25,6 +25,7 @@ workflow RunCellRegMap {
     call u.GetGeneChrPairs as GetGeneChrPairs {
         input:
             featureVariantFile=featureVariantFile,
+            columnsToSelect=["chrom", "gene"],
     }
 
     scatter (outputPair in GetGeneChrPairs.output_pairs) {
@@ -59,7 +60,7 @@ workflow RunCellRegMap {
     call u.GetGeneChrPairs as GetGeneChrPairsBetas {
         input:
             featureVariantFile=AggregateInteractionResults.significant_results,
-
+            columnsToSelect=["chrom", "gene"],
     }
 
     scatter (outputPair in GetGeneChrPairsBetas.output_pairs) { 
