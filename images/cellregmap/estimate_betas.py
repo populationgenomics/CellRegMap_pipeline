@@ -190,3 +190,7 @@ def main(
 
     beta_GxC_df = pd.DataFrame(data = beta_GxC, columns=snps, index=cells)
     beta_GxC_df.to_csv(outfilename_betaGxC)
+
+
+if __name__ == '__main__':
+    main()  # pylint disable=no-value-for-argument
