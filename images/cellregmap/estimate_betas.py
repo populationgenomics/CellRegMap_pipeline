@@ -111,7 +111,6 @@ def main(
 
     # expand out genotypes from cells to donors (and select relevant donors in the same step)
     G_expanded = G_sel.sel(sample=sample_mapping["individual_long"].values)
-    #assert all(hK_expanded.sample.values == G_expanded.sample.values)
 
     del G
 
@@ -191,4 +190,4 @@ def main(
 
 
 if __name__ == '__main__':
-    main()  # pylint disable=no-value-for-argument
+    main()  

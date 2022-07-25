@@ -2,7 +2,7 @@ version development
 
 task AggregateInteractionResults {
     input {
-        Array[File] listOfFiles # to figure out (how to get these files)
+        Array[File] listOfFiles 
         Float FDR_threshold
     }
 

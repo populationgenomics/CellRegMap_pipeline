@@ -41,7 +41,6 @@ python script.py
     }
 
     output {
-        # [["GeneName1", "chr1"], ["GeneName2","chr2"]]
         Array[Array[String]] output_pairs = read_tsv("outputPairs.tsv")
     }
 }

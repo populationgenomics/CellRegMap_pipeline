@@ -11,15 +11,14 @@ task RunInteraction {
         File phenotypeFile
         File contextFile
         File kinshipFile
-        File featureVariantFile # still need this to select specific SNPs
-        Int nContexts = 10 # add additional flag for cases when the contexts tested and those in the background aren't the same
+        File featureVariantFile 
+        Int nContexts = 10 
     }
 
     command <<<
         # make sure secondaries are paired together
         cp -f '~{genotypeFilesBim}' "$(echo '~{genotypeFile}' | sed 's/\.[^.]*$//').bim"
         cp -f '~{genotypeFilesFam}' "$(echo '~{genotypeFile}' | sed 's/\.[^.]*$//').fam"
-
 
         # for now, use conda, but when we're closer,
         # remove this in favor of 'container' in the runtime section
@@ -105,11 +104,5 @@ task EstimateBetas {
     runtime {
         # static
         memory: "400Gb"
-        
-        # # calculated
-        # memory: size(inputFile) + size(interval)
-        
-        # # passed in
-        # memory: memory # from input
     }
 }

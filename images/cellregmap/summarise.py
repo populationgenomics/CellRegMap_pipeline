@@ -135,24 +135,18 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
 
 def main(file_with_filenames, fdr_threshold, output_folder):
 
-    x = 0
     table = {}
 
     with open(file_with_filenames, encoding='utf-8') as f:
         list_of_files = [line.strip() for line in f.readlines() if line.strip()]
 
     for file in list_of_files:
-        x += 1
-        if x % 500 == 0: 
-            print(x)
         df = pd.read_csv(file, index_col=0)
         nsnps = int(len(df))
         if nsnps==0:
             continue
         gene = os.path.splitext(os.path.basename(file))[0] 
-        # print(gene)
         chrom = df['chrom'].values[0]
-        # print(chrom)
         for i in range(nsnps):
             temp = {}
             temp['chrom'] = chrom
@@ -178,7 +172,7 @@ def main(file_with_filenames, fdr_threshold, output_folder):
 
     # apply multiple testing correction (q-value)
     df["qv"] = qv_estimate(df["pv_Bonf"])
-    # select only significant results (at given threshold)
+    # select only significant results (at given FDR threshold)
     df_sign = df[df["qv"]<=fdr_threshold]
     outfile = "significant_results.csv" 
     myp = os.path.join(output_folder, outfile)

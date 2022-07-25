@@ -1,5 +1,4 @@
-# tells WDL to use most recent version
-version development
+version development # tells WDL to use most recent version
 
 import "tasks/CellRegMap.wdl" as C
 import "tasks/utils.wdl" as u
@@ -19,10 +18,9 @@ workflow RunCellRegMap {
         File featureVariantFile
         Int nContexts=10
         Float FDR_threshold=1
-        # Array[File] outputFiles # what is this? do I need one for betas results too?
     }
 
-    call u.GetGeneChrPairs as GetGeneChrPairs {
+    call u.GetGeneChrPairs as GetGeneChrPairs { # returns [chrom, gene] pairs
         input:
             featureVariantFile=featureVariantFile,
             columnsToSelect=["chrom", "gene"],
@@ -34,7 +32,6 @@ workflow RunCellRegMap {
 
         call C.RunInteraction as RunInteraction {
             input:
-                # inputFile=inputFile, # what is this??
                 chrom=RunInteractionChr,
                 geneName=outputPair[1],
                 sampleMappingFile=sampleMappingFile,
@@ -51,7 +48,6 @@ workflow RunCellRegMap {
 
     call pp.AggregateInteractionResults as AggregateInteractionResults{
         input:
-            # geneOutput is implicitly a Array[File]
             listOfFiles=RunInteraction.geneOutput,
             FDR_threshold=FDR_threshold,
 
