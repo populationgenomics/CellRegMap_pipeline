@@ -16,10 +16,10 @@ columns_to_select = '~{sep(",", columnsToSelect)}'.split(",")
 # we expect output PAIRS, so make sure there are 2 columns to select
 assert len(columns_to_select) == 2
 with open("~{featureVariantFile}") as f, open("outputPairs.tsv", "w+") as w:
-    # probably a bad way to split to get the headers
     reader = csv.reader(f)
+
+    # get headers list to get a header to indices 
     headers = next(reader)
-    print(headers)
     # this will fail if column isn't in the header
     indices_to_select = [headers.index(h) for h in columns_to_select]
 
