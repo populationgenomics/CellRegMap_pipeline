@@ -105,7 +105,7 @@ def main(
     G = read_plink1_bin(genotype_file)
 
     ## select relavant SNPs based on feature variant filter file 
-    fvf = pd.read_csv(feature_variant_file, index_col = 0)
+    fvf = pd.read_csv(beta_feature_variant_file, index_col = 0)
     leads = fvf[fvf['feature']==gene_name]['snp_id'].unique()
     G_sel = G[:,G['snp'].isin(leads)]
 
