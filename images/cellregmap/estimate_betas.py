@@ -10,7 +10,7 @@ from pandas_plink import read_plink1_bin
 from numpy.linalg import cholesky
 from limix.qc import quantile_gaussianize
 
-from cellregmap import run_interaction 
+from cellregmap import estimate_betas
 
 @click.command()
 @click.option('--chrom', required=True)
