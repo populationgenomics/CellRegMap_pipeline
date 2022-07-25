@@ -175,7 +175,7 @@ def main(
 
     print("Running for gene {}".format(gene_name))
 
-    betas = estimate_betas(y=y, W=W, E=C.values[:,0:10], G=GG, hK=hK_expanded, maf=mafs)
+    betas = estimate_betas(y=y, W=W, E=C.values[:,0:10], G=GG, maf=mafs, hK=hK_expanded)
     beta_G = betas[0]
     beta_GxC = betas[1][0]
 
