@@ -13,6 +13,8 @@ cat << EOF > script.py
 import csv
 
 columns_to_select = '~{sep(",", columnsToSelect)}'.split(",")
+# we expect output PAIRS, so make sure there are 2 columns to select
+assert len(columns_to_select) == 2
 with open("~{featureVariantFile}") as f, open("outputPairs.tsv", "w+") as w:
     # probably a bad way to split to get the headers
     headers = f.readline().split(",")
