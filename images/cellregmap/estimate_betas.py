@@ -20,7 +20,7 @@ from cellregmap import run_interaction
 @click.option('--phenotype-file', required=True)
 @click.option('--context-file', required=True)
 @click.option('--kinship-file', required=True)
-@click.option('--feature-variant-file', required=True)
+@click.option('--beta-feature-variant-file', required=True)
 @click.option(
     "--output-folder", required=False, default=""
 )  # by default current directory, where you are running your script from
@@ -35,7 +35,7 @@ def main(
     phenotype_file, 
     context_file, 
     kinship_file, 
-    feature_variant_file, 
+    beta_feature_variant_file, 
     output_folder, 
     maf_file,
     n_contexts=10):
