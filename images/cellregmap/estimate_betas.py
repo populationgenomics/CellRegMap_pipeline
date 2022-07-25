@@ -106,7 +106,7 @@ def main(
 
     ## select relavant SNPs based on feature variant filter file 
     fvf = pd.read_csv(beta_feature_variant_file, index_col = 0)
-    leads = fvf[fvf['feature']==gene_name]['snp_id'].unique()
+    leads = fvf[fvf['gene']==gene_name]['snp_id'].unique()
     G_sel = G[:,G['snp'].isin(leads)]
 
     # expand out genotypes from cells to donors (and select relevant donors in the same step)
