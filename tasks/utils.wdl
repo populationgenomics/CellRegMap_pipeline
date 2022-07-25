@@ -12,7 +12,7 @@ task GetGeneChrPairs {
 cat << EOF > script.py
 import csv
 
-columns_to_select = '~{sep(columnsToSelect, ",")}'.split(",")
+columns_to_select = '~{sep(",", columnsToSelect)}'.split(",")
 with open("~{featureVariantFile}") as f, open("outputPairs.tsv", "w+") as w:
     # probably a bad way to split to get the headers
     headers = f.readline().split(",")
