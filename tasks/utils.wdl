@@ -15,7 +15,9 @@ with open("~{featureVariantFile}") as f, open("outputPairs.tsv", "w+") as w:
     f.readline()
     cut_lines = [(l[1], l[3]) for l in csv.reader(f)]
     unique_lines = set('\t'.join(l) for l in cut_lines)
-    w.write("\n".join(sorted(unique_lines)))
+    if unique_lines:
+    # this should leave an empty fails
+        w.write("\n".join(sorted(unique_lines)))
 
 EOF
 
