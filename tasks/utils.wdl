@@ -17,11 +17,13 @@ columns_to_select = '~{sep(",", columnsToSelect)}'.split(",")
 assert len(columns_to_select) == 2
 with open("~{featureVariantFile}") as f, open("outputPairs.tsv", "w+") as w:
     # probably a bad way to split to get the headers
-    headers = f.readline().split(",")
+    reader = csv.reader(f)
+    headers = next(reader)
+    print(headers)
     # this will fail if column isn't in the header
     indices_to_select = [headers.index(h) for h in columns_to_select]
 
-    cut_lines = [[l[i] for i in indices_to_select] for l in csv.reader(f)]
+    cut_lines = [[l[i] for i in indices_to_select] for l in reader]
     unique_lines = set('\t'.join(l) for l in cut_lines)
     if unique_lines:
     # this should leave an empty fails
