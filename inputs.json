@@ -1,5 +1,5 @@
 {
-    "RunCellRegMap.sampleMappingFile": "/share/ScratchGeneral/anncuo/OneK1K/input_files_CellRegMap/test_inputs/head_smf_Bcells.csv",
+    "RunCellRegMap.sampleMappingFile": "/share/ScratchGeneral/anncuo/OneK1K/input_files_CellRegMap/test_inputs/head_100_smf_Bcells.csv",
     "RunCellRegMap.featureVariantFile": "/share/ScratchGeneral/anncuo/OneK1K/input_files_CellRegMap/test_inputs/head_fvf_Bcell_eqtls.csv",
     "RunCellRegMap.kinshipFile": "/share/ScratchGeneral/anncuo/OneK1K/input_files_CellRegMap/grm_wide.csv",
     "RunCellRegMap.contextFile": "/share/ScratchGeneral/anncuo/OneK1K/input_files_CellRegMap/PCs_Bcells.csv.pkl",
