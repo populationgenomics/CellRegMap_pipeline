@@ -155,6 +155,7 @@ def main(
     y = quantile_gaussianize(y)
     y = y.values.reshape(y.shape[0],1)
 
+    cells = phenotype["cell"].values
     del phenotype
 
     GG = G_expanded.values
@@ -184,9 +185,6 @@ def main(
                 "variant":G_expanded.snp.values})
 
     beta_G_df.to_csv(outfilename+"_betaG.csv")
-
-    cells = phenotype["cell"].values
-    snps = G_expanded["variant"].values
 
     beta_GxC_df = pd.DataFrame(data = beta_GxC, columns=snps, index=cells)
     beta_GxC_df.to_csv(outfilename_betaGxC)
