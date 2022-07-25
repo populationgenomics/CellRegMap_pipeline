@@ -40,6 +40,7 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
         # print(chrom)
         for i in range(nsnps):
             temp = {}
+            temo['chrom'] = chrom
             temp['gene'] = gene
             temp['n_snps'] = nsnps
             temp['snp_id'] = df['variant'].values[i]

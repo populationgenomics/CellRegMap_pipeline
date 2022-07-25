@@ -155,6 +155,7 @@ def main(file_with_filenames, fdr_threshold, output_folder):
         # print(chrom)
         for i in range(nsnps):
             temp = {}
+            temp['chrom'] = chrom
             temp['gene'] = gene
             temp['n_snps'] = nsnps
             temp['snp_id'] = df['variant'].values[i]
