@@ -1,10 +1,14 @@
 version development
 
+'''
+additional useful tasks
+'''
+
 task GetGeneChrPairs {
 
     input {
         File featureVariantFile
-        Array[String]+ columnsToSelect
+        Array[String]+ columnsToSelect # chrom, gene
     }
 
 	command <<<

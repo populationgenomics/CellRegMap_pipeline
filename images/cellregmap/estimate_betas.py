@@ -45,8 +45,15 @@ def main(
     ######################################
 
     ## this file will map cells to donors 
-    sample_mapping = pd.read_csv(sample_mapping_file, dtype={"individual_long": str, "genotype_individual_id": str, "phenotype_sample_id": str}, index_col=0)
-
+    sample_mapping = pd.read_csv(
+        sample_mapping_file,
+        dtype={
+            "individual_long": str,
+            "genotype_individual_id": str,
+            "phenotype_sample_id": str,
+        },
+        index_col=0,
+    )
     ## extract unique individuals
     donors0 = sample_mapping["genotype_individual_id"].unique()
     donors0.sort()
@@ -72,7 +79,11 @@ def main(
     K.index = K.index.astype('str')
     assert all(K.columns == K.index) #symmetric matrix, donors x donors
 
-    K = xr.DataArray(K.values, dims=["sample_0", "sample_1"], coords={"sample_0": K.columns, "sample_1": K.index})
+    K = xr.DataArray(
+        K.values,
+        dims=["sample_0", "sample_1"],
+        coords={"sample_0": K.columns, "sample_1": K.index},
+    )
     K = K.sortby("sample_0").sortby("sample_1")
     donors = sorted(set(list(K.sample_0.values)).intersection(donors0))
     print("Number of donors after kinship intersection: {}".format(len(donors)))

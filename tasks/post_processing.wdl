@@ -1,9 +1,17 @@
 version development
 
-task AggregateInteractionResults {
+''' 
+Tasks to aggregate results from multiple scatters 
+(chromosome-gene pairs) each running CellRegMap functions
+'''
+
+# takes as input one file per scatter, returns both 
+# all results and all significant results (at a given FDR)
+
+task AggregateInteractionResults { # results from RunInteraction
     input {
         Array[File] listOfFiles 
-        Float FDR_threshold
+        Float FDR_threshold # false discovery rate
     }
 
     command <<<
@@ -26,7 +34,10 @@ EOF
     }
 }
 
-task AggregateBetaResults {
+# takes as input one file per scatter, returns both 
+# two sets of parameters (betaG and betaGxC) across all scatters
+
+task AggregateBetaResults { # results from EstimateBetas
     input {
         Array[File] listOfFiles1
         Array[File] listOfFiles2

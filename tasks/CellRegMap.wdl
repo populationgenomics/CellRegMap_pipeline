@@ -1,6 +1,11 @@
 version development
 
-task RunInteraction {
+'''
+Tasks to intersect all input files and perform CellRegMap 
+functions for a specific chromosome-gene pair
+'''
+
+task RunInteraction { # CellRegMap's run_interaction()
     input {
         String chrom 
         String geneName
@@ -58,7 +63,7 @@ task RunInteraction {
     }
 }
 
-task EstimateBetas {
+task EstimateBetas { # CellRegMap's estimate_betas()
     input {
         Int chrom 
         String geneName
