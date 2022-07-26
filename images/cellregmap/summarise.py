@@ -1,10 +1,14 @@
 import os
+import logging
 import click
 import pandas as pd
 import numpy as np
 import scipy as sp
 from scipy import interpolate
 from collections import defaultdict
+
+# use logging to print statements, display at info level
+logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
 # def smartAppend(table, name, value):
 #     """helper function for appending in a dictionary"""
@@ -84,11 +88,17 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
         tck = interpolate.splrep(lam, pi0, k=3)
         pi0 = interpolate.splev(lam[-1], tck)
         if verbose:
-            print("qvalues pi0=%.3f, estimated proportion of null features " % pi0)
+            # print("qvalues pi0=%.3f, estimated proportion of null features " % pi0)
+            logging.info(
+                "qvalues pi0=%.3f, estimated proportion of null features " % pi0
+            )
 
         if pi0 > 1:
             if verbose:
-                print(
+                # print(
+                #     "got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0
+                # )
+                logging.info(
                     "got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0
                 )
             pi0 = 1.0
@@ -168,7 +178,6 @@ def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
             # smartAppend(table, key, temp[key])
             table[key].append(temp[key])
 
-    print(x)
     for key in table.keys():
         table[key] = np.array(table[key])
 
