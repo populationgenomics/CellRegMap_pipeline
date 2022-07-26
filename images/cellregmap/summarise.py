@@ -2,6 +2,8 @@ import os
 import click
 import pandas as pd
 import numpy as np
+import scipy as sp
+from scipy import interpolate
 
 def smartAppend(table,name,value):
     """ helper function for appending in a dictionary """
@@ -49,9 +51,6 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     """
-
-    import scipy as sp
-    from scipy import interpolate
 
     assert(pv.min() >= 0 and pv.max() <= 1), "p-values should be between 0 and 1"
 

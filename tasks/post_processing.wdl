@@ -1,9 +1,7 @@
 version development
-
-''' 
-Tasks to aggregate results from multiple scatters 
-(chromosome-gene pairs) each running CellRegMap functions
-'''
+ 
+# Tasks to aggregate results from multiple scatters 
+# (chromosome-gene pairs) each running CellRegMap functions
 
 # takes as input one file per scatter, returns both 
 # all results and all significant results (at a given FDR)
@@ -11,11 +9,11 @@ Tasks to aggregate results from multiple scatters
 task AggregateInteractionResults { # results from RunInteraction
     input {
         Array[File] listOfFiles 
-        Float FDR_threshold # false discovery rate
+        Float fdrThreshold # false discovery rate
     }
 
     command <<<
-        # michael: to work out how to more cleanly pass these files in
+    # pass files to the task, there can be a lot of files which would break the command line
 cat << EOF >> path-results.txt
 ~{sep("\n", listOfFiles)}
 EOF
@@ -24,7 +22,7 @@ EOF
     conda activate cellregmap_notebook
 
     python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/summarise.py \
-        --fdr-threshold ~{FDR_threshold} \
+        --fdr-threshold ~{fdrThreshold} \
         --file-with-filenames path-results.txt
     >>>
     

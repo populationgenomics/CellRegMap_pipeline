@@ -28,8 +28,8 @@ from cellregmap import run_interaction
 @click.option("--n-contexts", required=False, type=int)
 
 def main(
-    chrom,
-    gene_name,
+    chrom: str,
+    gene_name: str,
     sample_mapping_file,
     genotype_file,
     phenotype_file,
@@ -98,7 +98,7 @@ def main(
     hK = xr.DataArray(hK, dims=["sample", "col"], coords={"sample": K.sample_0.values})
     assert all(hK.sample.values == K.sample_0.values)
 
-    del K
+    del K # delete K to free up memory
     print(
         "Sample mapping number of rows BEFORE intersection: {}".format(
             sample_mapping.shape[0]
@@ -136,7 +136,7 @@ def main(
     G_expanded = G_sel.sel(sample=sample_mapping["individual_long"].values)
     # assert all(hK_expanded.sample.values == G_expanded.sample.values)
 
-    del G
+    del G # delete original G to free up memory
 
     ######################################
     ############ context file ############

@@ -1,9 +1,8 @@
 version development
 
-'''
-Tasks to intersect all input files and perform CellRegMap 
-functions for a specific chromosome-gene pair
-'''
+# Tasks to intersect all input files and perform CellRegMap 
+# functions for a specific chromosome-gene pair
+
 
 task RunInteraction { # CellRegMap's run_interaction()
     input {
@@ -43,23 +42,13 @@ task RunInteraction { # CellRegMap's run_interaction()
     >>>
 
     output {
-        File geneOutput = geneName + ".csv"
+        File geneOutputPvalues = geneName + ".csv"
     }
 
     runtime {
         # container: "annacuomo/limix:dev"
 
-        # static
-        memory: "400Gb"
-        
-        # # calculated
-        ## Unable to allocate 9.78 GiB for an array with shape (133716, 9820)
-        ## shape is number of cells X (numbers of donors X number of contexts)
-        ## here, 133,716 cells across 982 individuals, 10 contexts
-        # memory: size(inputFile) + size(interval)
-        
-        # # passed in
-        # memory: memory # from input
+        memory: "400Gb" # static
     }
 }
 
@@ -76,7 +65,7 @@ task EstimateBetas { # CellRegMap's estimate_betas()
         File kinshipFile
         File betaFeatureVariantFile
         Int nContexts = 10
-        File mafFile # if MAFs are known / pre-calculated they should be given as inputs
+        File? mafFile # if MAFs are known / pre-calculated they should be given as inputs
     }
 
     command <<<
@@ -102,8 +91,8 @@ task EstimateBetas { # CellRegMap's estimate_betas()
     >>>
 
     output {
-        File geneOutput1 = geneName + "_betaG.csv"
-        File geneOutput2 = geneName + "_betaGxC.csv"
+        File geneOutputBetaG = geneName + "_betaG.csv"
+        File geneOutputBetaGxC = geneName + "_betaGxC.csv"
     }
 
     runtime {

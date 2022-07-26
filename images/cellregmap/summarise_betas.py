@@ -1,5 +1,4 @@
 import os
-import re
 import click
 import pandas as pd
 import numpy as np
@@ -30,7 +29,8 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
         nsnps = int(len(df))
         if nsnps==0:
             continue
-        gene = re.sub("_betaG","",os.path.splitext(os.path.basename(file))[0])
+        filename = os.path.splitext(os.path.basename(file))[0]
+        gene = filename.replace("_betaG", "")
         chrom = df['chrom'].values[0]
         for i in range(nsnps):
             temp = {}
@@ -64,7 +64,8 @@ def main(file_with_filenames_1, file_with_filenames_2, output_folder):
         nsnps = int(len(df))
         if nsnps==0:
             continue
-        gene = re.sub("_betaGxC","",os.path.splitext(os.path.basename(file))[0])
+        filename = os.path.splitext(os.path.basename(file))[0]
+        gene = filename.replace("_betaGxC", "")
         df.columns = gene + "_" + df.columns
         df_all = pd.concat([df_all, df], axis=1)
 

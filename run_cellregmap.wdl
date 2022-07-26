@@ -1,4 +1,5 @@
-version development # tells WDL to use most recent version
+# tells WDL to use most recent version
+version development 
 
 import "tasks/CellRegMap.wdl" as C
 import "tasks/utils.wdl" as u
@@ -17,12 +18,12 @@ workflow RunCellRegMap {
         File sampleMappingFile
         File featureVariantFile
         Int nContexts=10
-        Float FDR_threshold=1
+        Float fdrThreshold=0.05
     }
 
-    call u.GetGeneChrPairs as GetGeneChrPairs { # returns [chrom, gene] pairs
+    call u.CsvPairExtractor as GetGeneChrPairs { # returns [chrom, gene] pairs
         input:
-            featureVariantFile=featureVariantFile,
+            csvFile=featureVariantFile,
             columnsToSelect=["chrom", "gene"],
     }
 
@@ -46,16 +47,16 @@ workflow RunCellRegMap {
         }
     }
 
-    call pp.AggregateInteractionResults as AggregateInteractionResults{
+    call pp.AggregateInteractionResults as AggregateInteractionResults {
         input:
-            listOfFiles=RunInteraction.geneOutput,
-            FDR_threshold=FDR_threshold,
+            listOfFiles=RunInteraction.geneOutputPvalues,
+            fdrThreshold=fdrThreshold,
 
     }
 
-    call u.GetGeneChrPairs as GetGeneChrPairsBetas {
+    call u.CsvPairExtractor as GetGeneChrPairsBetas {
         input:
-            featureVariantFile=AggregateInteractionResults.significant_results,
+            csvFile=AggregateInteractionResults.significant_results,
             columnsToSelect=["chrom", "gene"],
     }
 
@@ -80,10 +81,10 @@ workflow RunCellRegMap {
         }
     }
 
-    call pp.AggregateBetaResults as AggregateBetaResults{
+    call pp.AggregateBetaResults as AggregateBetaResults {
         input:
-            listOfFiles1=EstimateBetas.geneOutput1,
-            listOfFiles2=EstimateBetas.geneOutput2
+            listOfFiles1=EstimateBetas.geneOutputBetaG,
+            listOfFiles2=EstimateBetas.geneOutputBetaGxC
 
     }
 
