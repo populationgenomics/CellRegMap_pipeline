@@ -4,11 +4,11 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict
 
-def smartAppend(table, name, value):
-    """helper function for appending in a dictionary"""
-    if name not in table.keys():
-        table[name] = []
-    table[name].append(value)
+# def smartAppend(table, name, value):
+#     """helper function for appending in a dictionary"""
+#     if name not in table.keys():
+#         table[name] = []
+#     table[name].append(value)
 
 
 @click.command()

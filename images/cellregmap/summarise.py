@@ -4,13 +4,13 @@ import pandas as pd
 import numpy as np
 import scipy as sp
 from scipy import interpolate
+from collections import defaultdict
 
-
-def smartAppend(table, name, value):
-    """helper function for appending in a dictionary"""
-    if name not in table.keys():
-        table[name] = []
-    table[name].append(value)
+# def smartAppend(table, name, value):
+#     """helper function for appending in a dictionary"""
+#     if name not in table.keys():
+#         table[name] = []
+#     table[name].append(value)
 
 
 def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
@@ -138,7 +138,8 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
 )  # by default current directory, where you are running your script from
 def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
 
-    table = {}
+    # table = {}
+    table: Dict[str, List[any]] = defaultdict(list)
 
     with open(file_with_filenames, encoding="utf-8") as f:
         list_of_files = [line.strip() for line in f.readlines() if line.strip()]
@@ -164,7 +165,8 @@ def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
                 temp["pv_Bonf"] = 0
 
         for key in temp.keys():
-            smartAppend(table, key, temp[key])
+            # smartAppend(table, key, temp[key])
+            table[key].append(temp[key])
 
     print(x)
     for key in table.keys():
