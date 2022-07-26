@@ -26,18 +26,17 @@ from cellregmap import run_interaction
     "--output-folder", required=False, default=""
 )  # by default current directory, where you are running your script from
 @click.option("--n-contexts", required=False, type=int)
-
 def main(
     chrom: str,
     gene_name: str,
-    sample_mapping_file,
-    genotype_file,
-    phenotype_file,
-    context_file,
-    kinship_file,
-    feature_variant_file,
-    output_folder,
-    n_contexts=10,
+    sample_mapping_file: str,
+    genotype_file: str,
+    phenotype_file: str,
+    context_file: str,
+    kinship_file: str,
+    feature_variant_file: str,
+    output_folder: str,
+    n_contexts: int = 10,
 ):
 
     ######################################
@@ -98,7 +97,7 @@ def main(
     hK = xr.DataArray(hK, dims=["sample", "col"], coords={"sample": K.sample_0.values})
     assert all(hK.sample.values == K.sample_0.values)
 
-    del K # delete K to free up memory
+    del K  # delete K to free up memory
     print(
         "Sample mapping number of rows BEFORE intersection: {}".format(
             sample_mapping.shape[0]
@@ -136,7 +135,9 @@ def main(
     G_expanded = G_sel.sel(sample=sample_mapping["individual_long"].values)
     # assert all(hK_expanded.sample.values == G_expanded.sample.values)
 
-    del G # delete original G to free up memory
+    # delete large files to free up memory
+    del G  
+    del G_sel
 
     ######################################
     ############ context file ############
@@ -171,7 +172,8 @@ def main(
         coords={"trait": mat_df.index.values, "cell": mat_df.columns.values},
     )
     phenotype = phenotype.sel(cell=sample_mapping["phenotype_sample_id"].values)
-
+    
+    # delete large files to free up memory
     del mat
     del mat_df
 
@@ -188,11 +190,9 @@ def main(
     y = quantile_gaussianize(y)
     y = y.values.reshape(y.shape[0], 1)
 
-    del phenotype
+    del phenotype # delete to free up memory
 
     GG = G_expanded.values
-
-    del G_sel
 
     ##################################
     ########### Run model ############
@@ -212,8 +212,7 @@ def main(
         }
     )
     pv.to_csv(outfilename)
-    
 
-if __name__ == '__main__':
-    main()  
 
+if __name__ == "__main__":
+    main()

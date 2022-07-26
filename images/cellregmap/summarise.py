@@ -5,11 +5,13 @@ import numpy as np
 import scipy as sp
 from scipy import interpolate
 
-def smartAppend(table,name,value):
-    """ helper function for appending in a dictionary """
+
+def smartAppend(table, name, value):
+    """helper function for appending in a dictionary"""
     if name not in table.keys():
         table[name] = []
     table[name].append(value)
+
 
 def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
     """
@@ -52,7 +54,7 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     """
 
-    assert(pv.min() >= 0 and pv.max() <= 1), "p-values should be between 0 and 1"
+    assert pv.min() >= 0 and pv.max() <= 1, "p-values should be between 0 and 1"
 
     original_shape = pv.shape
     pv = pv.ravel()  # flattens the array in place, more efficient than flatten()
@@ -74,7 +76,7 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
         lam = sp.arange(0, 0.90, 0.01)
         counts = sp.array([(pv > i).sum() for i in sp.arange(0, 0.9, 0.01)])
         for l in range(len(lam)):
-            pi0.append(counts[l]/(m*(1-lam[l])))
+            pi0.append(counts[l] / (m * (1 - lam[l])))
 
         pi0 = sp.array(pi0)
 
@@ -86,21 +88,23 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
 
         if pi0 > 1:
             if verbose:
-                print("got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0)
+                print(
+                    "got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0
+                )
             pi0 = 1.0
 
-    assert(pi0 >= 0 and pi0 <= 1), "pi0 is not between 0 and 1: %f" % pi0
+    assert pi0 >= 0 and pi0 <= 1, "pi0 is not between 0 and 1: %f" % pi0
 
     if lowmem:
         # low memory version, only uses 1 pv and 1 qv matrices
         qv = sp.zeros((len(pv),))
         last_pv = pv.argmax()
-        qv[last_pv] = (pi0*pv[last_pv]*m)/float(m)
+        qv[last_pv] = (pi0 * pv[last_pv] * m) / float(m)
         pv[last_pv] = -sp.inf
         prev_qv = last_pv
-        for i in range(int(len(pv))-2, -1, -1):
+        for i in range(int(len(pv)) - 2, -1, -1):
             cur_max = pv.argmax()
-            qv_i = (pi0*m*pv[cur_max]/float(i+1))
+            qv_i = pi0 * m * pv[cur_max] / float(i + 1)
             pv[cur_max] = -sp.inf
             qv_i1 = prev_qv
             qv[cur_max] = min(qv_i, qv_i1)
@@ -109,11 +113,11 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
     else:
         p_ordered = sp.argsort(pv)
         pv = pv[p_ordered]
-        qv = pi0 * m/len(pv) * pv
+        qv = pi0 * m / len(pv) * pv
         qv[-1] = min(qv[-1], 1.0)
 
-        for i in range(len(pv)-2, -1, -1):
-            qv[i] = min(pi0*m*pv[i]/(i+1.0), qv[i+1])
+        for i in range(len(pv) - 2, -1, -1):
+            qv[i] = min(pi0 * m * pv[i] / (i + 1.0), qv[i + 1])
 
         # reorder qvalues
         qv_temp = qv.copy()
@@ -125,37 +129,39 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
 
     return qv
 
+
 @click.command()
-@click.option('--file-with-filenames', required=True)
-@click.option('--fdr-threshold', required=False, default=0.05)
+@click.option("--file-with-filenames", required=True)
+@click.option("--fdr-threshold", required=False, default=0.05)
 @click.option(
     "--output-folder", required=False, default=""
 )  # by default current directory, where you are running your script from
-
-def main(file_with_filenames, fdr_threshold, output_folder):
+def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
 
     table = {}
 
-    with open(file_with_filenames, encoding='utf-8') as f:
+    with open(file_with_filenames, encoding="utf-8") as f:
         list_of_files = [line.strip() for line in f.readlines() if line.strip()]
 
     for file in list_of_files:
         df = pd.read_csv(file, index_col=0)
         nsnps = int(len(df))
-        if nsnps==0:
+        if nsnps == 0:
             continue
-        gene = os.path.splitext(os.path.basename(file))[0] 
-        chrom = df['chrom'].values[0]
+        gene = os.path.splitext(os.path.basename(file))[0]
+        chrom = df["chrom"].values[0]
         for i in range(nsnps):
             temp = {}
-            temp['chrom'] = chrom
-            temp['gene'] = gene
-            temp['n_snps'] = nsnps
-            temp['snp_id'] = df['variant'].values[i]
-            temp['pv_raw'] = df['pv'].values[i]
-            temp['pv_Bonf'] = nsnps * temp['pv_raw']
-            if temp['pv_Bonf']>1: temp['pv_Bonf'] = 1
-            if temp['pv_Bonf']<0: temp['pv_Bonf'] = 0
+            temp["chrom"] = chrom
+            temp["gene"] = gene
+            temp["n_snps"] = nsnps
+            temp["snp_id"] = df["variant"].values[i]
+            temp["pv_raw"] = df["pv"].values[i]
+            temp["pv_Bonf"] = nsnps * temp["pv_raw"]
+            if temp["pv_Bonf"] > 1:
+                temp["pv_Bonf"] = 1
+            if temp["pv_Bonf"] < 0:
+                temp["pv_Bonf"] = 0
 
         for key in temp.keys():
             smartAppend(table, key, temp[key])
@@ -165,19 +171,18 @@ def main(file_with_filenames, fdr_threshold, output_folder):
         table[key] = np.array(table[key])
 
     df = pd.DataFrame.from_dict(table)
-    outfile = "summary.csv" 
+    outfile = "summary.csv"
     myp = os.path.join(output_folder, outfile)
     df.to_csv(myp)
 
     # apply multiple testing correction (q-value)
     df["qv"] = qv_estimate(df["pv_Bonf"])
     # select only significant results (at given FDR threshold)
-    df_sign = df[df["qv"]<=fdr_threshold]
-    outfile = "significant_results.csv" 
+    df_sign = df[df["qv"] <= fdr_threshold]
+    outfile = "significant_results.csv"
     myp = os.path.join(output_folder, outfile)
     df_sign.to_csv(myp)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
