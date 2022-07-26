@@ -27,8 +27,8 @@ EOF
     >>>
     
     output {
-        File all_results = "summary.csv"
-        File significant_results = "significant_results.csv"
+        File allResults = "summary.csv"
+        File significantResults = "significant_results.csv"
     }
 }
 
@@ -37,17 +37,17 @@ EOF
 
 task AggregateBetaResults { # results from EstimateBetas
     input {
-        Array[File] listOfFiles1
-        Array[File] listOfFiles2
+        Array[File] listOfFilesBetaG
+        Array[File] listOfFilesBetaGxC
     }
 
     command <<<
 
 cat << EOF >> path-results-betaG.txt
-~{sep("\n", listOfFiles1)}
+~{sep("\n", listOfFilesBetaG)}
 EOF
 cat << EOF >> path-results-betaGxC.txt
-~{sep("\n", listOfFiles2)}
+~{sep("\n", listOfFilesBetaGxC)}
 EOF
 
     eval "$(conda shell.bash hook)" 
@@ -59,7 +59,7 @@ EOF
     >>>
 
     output {
-        File all_betaG = "summary_betaG.csv"
-        File all_betaGxC = "summary_betaGxC.csv"
+        File allResultsBetaG = "summary_betaG.csv"
+        File allResultsBetaGxC = "summary_betaGxC.csv"
     }
 }

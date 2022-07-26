@@ -44,6 +44,6 @@ python script.py
     }
 
     output {
-        Array[Array[String]] output_pairs = read_tsv("outputPairs.tsv")
+        Array[Array[String]] outputPairs = read_tsv("outputPairs.tsv")
     }
 }

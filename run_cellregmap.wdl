@@ -27,7 +27,7 @@ workflow RunCellRegMap {
             columnsToSelect=["chrom", "gene"],
     }
 
-    scatter (outputPair in GetGeneChrPairs.output_pairs) {
+    scatter (outputPair in GetGeneChrPairs.outputPairs) {
 
         String RunInteractionChr = outputPair[0]
 
@@ -56,11 +56,11 @@ workflow RunCellRegMap {
 
     call u.CsvPairExtractor as GetGeneChrPairsBetas {
         input:
-            csvFile=AggregateInteractionResults.significant_results,
+            csvFile=AggregateInteractionResults.significantResults,
             columnsToSelect=["chrom", "gene"],
     }
 
-    scatter (outputPair in GetGeneChrPairsBetas.output_pairs) { 
+    scatter (outputPair in GetGeneChrPairsBetas.outputPairs) { 
 
         String EstimateBetaChr = outputPair[0]
 
@@ -75,7 +75,7 @@ workflow RunCellRegMap {
                 phenotypeFile=phenotypeFiles[EstimateBetaChr],
                 contextFile=contextFile,
                 kinshipFile=kinshipFile,
-                betaFeatureVariantFile=AggregateInteractionResults.significant_results,
+                betaFeatureVariantFile=AggregateInteractionResults.significantResults,
                 nContexts=nContexts,
                 mafFile=mafFiles[EstimateBetaChr],
         }
@@ -83,16 +83,16 @@ workflow RunCellRegMap {
 
     call pp.AggregateBetaResults as AggregateBetaResults {
         input:
-            listOfFiles1=EstimateBetas.geneOutputBetaG,
-            listOfFiles2=EstimateBetas.geneOutputBetaGxC
+            listOfFilesBetaG=EstimateBetas.geneOutputBetaG,
+            listOfFilesBetaGxC=EstimateBetas.geneOutputBetaGxC
 
     }
 
     output {
-        File out_interaction_all_results = AggregateInteractionResults.all_results
-        File out_interaction_significant_results = AggregateInteractionResults.significant_results
-        File out_betaG = AggregateBetaResults.all_betaG
-        File out_betaGxC = AggregateBetaResults.all_betaGxC
+        File outInteractionAllResults = AggregateInteractionResults.allResults
+        File outInteractionSignificantResults = AggregateInteractionResults.significantResults
+        File outBetaG = AggregateBetaResults.allResultsBetaG
+        File outBetaGxC = AggregateBetaResults.allResultsBetaGxC
     }
 
 }
