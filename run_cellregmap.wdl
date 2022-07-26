@@ -18,7 +18,7 @@ workflow RunCellRegMap {
         File sampleMappingFile
         File featureVariantFile
         Int nContexts=10
-        Float fdrThreshold=0.05
+        Float fdrThreshold=1
     }
 
     call u.CsvPairExtractor as GetGeneChrPairs { # returns [chrom, gene] pairs
