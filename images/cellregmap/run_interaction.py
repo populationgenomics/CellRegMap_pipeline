@@ -1,6 +1,6 @@
 import os
 import sys
-
+import logging
 import click
 import scanpy as sc
 import pandas as pd
@@ -11,6 +11,9 @@ from numpy.linalg import cholesky
 from limix.qc import quantile_gaussianize
 
 from cellregmap import run_interaction
+
+# use logging to print statements, display at info level
+logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
 
 @click.command()
@@ -57,7 +60,8 @@ def main(
     ## extract unique individuals
     donors0 = sample_mapping["genotype_individual_id"].unique()
     donors0.sort()
-    print("Number of unique donors: {}".format(len(donors0)))
+    # print("Number of unique donors: {}".format(len(donors0)))
+    logging.info("Number of unique donors: {}".format(len(donors0)))
 
     ######################################################
     ###### check if gene output file already exists ######
@@ -66,7 +70,8 @@ def main(
     outfilename = os.path.join(output_folder, f"{gene_name}.csv")
 
     if os.path.exists(outfilename):
-        print("File already exists, exiting")
+        # print("File already exists, exiting")
+        logging.info("File already exists, exiting")
         sys.exit()
 
     ######################################
@@ -85,7 +90,8 @@ def main(
     )
     K = K.sortby("sample_0").sortby("sample_1")
     donors = sorted(set(list(K.sample_0.values)).intersection(donors0))
-    print("Number of donors after kinship intersection: {}".format(len(donors)))
+    # print("Number of donors after kinship intersection: {}".format(len(donors)))
+    logging.info("Number of donors after kinship intersection: {}".format(len(donors)))
 
     ## subset to relevant donors
     K = K.sel(sample_0=donors, sample_1=donors)
@@ -98,7 +104,12 @@ def main(
     assert all(hK.sample.values == K.sample_0.values)
 
     del K  # delete K to free up memory
-    print(
+    # print(
+    #     "Sample mapping number of rows BEFORE intersection: {}".format(
+    #         sample_mapping.shape[0]
+    #     )
+    # )
+    logging.info(
         "Sample mapping number of rows BEFORE intersection: {}".format(
             sample_mapping.shape[0]
         )
@@ -107,7 +118,12 @@ def main(
     sample_mapping = sample_mapping[
         sample_mapping["genotype_individual_id"].isin(donors)
     ]
-    print(
+    # print(
+    #     "Sample mapping number of rows AFTER intersection: {}".format(
+    #         sample_mapping.shape[0]
+    #     )
+    # )
+    logging.info(
         "Sample mapping number of rows AFTER intersection: {}".format(
             sample_mapping.shape[0]
         )
@@ -136,7 +152,7 @@ def main(
     # assert all(hK_expanded.sample.values == G_expanded.sample.values)
 
     # delete large files to free up memory
-    del G  
+    del G
     del G_sel
 
     ######################################
@@ -172,7 +188,7 @@ def main(
         coords={"trait": mat_df.index.values, "cell": mat_df.columns.values},
     )
     phenotype = phenotype.sel(cell=sample_mapping["phenotype_sample_id"].values)
-    
+
     # delete large files to free up memory
     del mat
     del mat_df
@@ -190,7 +206,7 @@ def main(
     y = quantile_gaussianize(y)
     y = y.values.reshape(y.shape[0], 1)
 
-    del phenotype # delete to free up memory
+    del phenotype  # delete to free up memory
 
     GG = G_expanded.values
 
@@ -198,7 +214,8 @@ def main(
     ########### Run model ############
     ##################################
 
-    print("Running for gene {}".format(gene_name))
+    # print("Running for gene {}".format(gene_name))
+    logging.info("Running for gene {}".format(gene_name))
 
     pvals = run_interaction(
         y=y, W=W, E=C.values[:, 0:n_contexts], G=GG, hK=hK_expanded
