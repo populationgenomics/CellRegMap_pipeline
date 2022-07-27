@@ -1,9 +1,12 @@
-name: Deploy CellRegMap
+name: Deploy CellRegMap docker
 
 on:
   push:
-    tags:
-      - v*
+    # uncomment when docker push does work
+    # tags:
+    #   - v*
+    branches:
+      - create_wdl_workflow
 
 jobs:
   deploy:
@@ -29,6 +32,7 @@ jobs:
       # Build and deploy the docker
       - name: Build and publish to docker
         run: |
-          DOCKER_TAG=annasecuomo/cellregmap_pipeline:${GITHUB_REF##*/}
+          # TODO: uncomment GITHUB_REF version
+          DOCKER_TAG=annasecuomo/cellregmap_pipeline:dev # ${GITHUB_REF##*/}
           docker build -t $DOCKER_TAG .
           docker push $DOCKER_TAG
