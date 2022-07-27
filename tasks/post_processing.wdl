@@ -33,7 +33,7 @@ EOF
 
     runtime {
         docker: "annasecuomo/cellregmap_pipeline:dev"
-        memory: "2GB"
+        memory: "8GB"
     }
 }
 
@@ -70,6 +70,6 @@ EOF
 
     runtime {
         docker: "annasecuomo/cellregmap_pipeline:dev"
-        memory: "2GB"
+        memory: "8GB"
     }
 }
