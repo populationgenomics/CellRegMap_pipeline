@@ -40,7 +40,7 @@ python script.py
 
     runtime {
         memory: "2G"
-        container: "python:3.10"
+        docker: "python:3.10"
     }
 
     output {
