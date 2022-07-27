@@ -21,7 +21,7 @@ EOF
     # eval "$(conda shell.bash hook)" 
     # conda activate cellregmap_notebook
 
-    python summarise.py \
+    python /app/summarise.py \
         --fdr-threshold ~{fdrThreshold} \
         --file-with-filenames path-results.txt
     >>>
@@ -58,7 +58,7 @@ EOF
     # eval "$(conda shell.bash hook)" 
     # conda activate cellregmap_notebook
 
-    python summarise_betas.py \
+    python /app/summarise_betas.py \
         --file-with-filenames-1 path-results-betaG.txt \
         --file-with-filenames-2 path-results-betaGxC.txt
     >>>

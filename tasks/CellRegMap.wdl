@@ -29,7 +29,7 @@ task RunInteraction { # CellRegMap's run_interaction()
         # eval "$(conda shell.bash hook)" 
         # conda activate cellregmap_notebook 
 
-        python run_interaction.py \
+        python /app/run_interaction.py \
             --chrom ~{chrom} \
             --gene-name ~{geneName} \
             --sample-mapping-file ~{sampleMappingFile} \
@@ -77,7 +77,7 @@ task EstimateBetas { # CellRegMap's estimate_betas()
         # eval "$(conda shell.bash hook)" 
         # conda activate cellregmap_notebook
 
-        python estimate_betas.py \
+        python /app/estimate_betas.py \
             --chrom ~{chrom} \
             --gene-name ~{geneName} \
             --sample-mapping-file ~{sampleMappingFile} \
