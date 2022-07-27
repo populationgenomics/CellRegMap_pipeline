@@ -39,7 +39,7 @@ python script.py
 	>>>
 
     runtime {
-        memory: "2G"
+        memory: "2GB"
         docker: "python:3.10"
     }
 

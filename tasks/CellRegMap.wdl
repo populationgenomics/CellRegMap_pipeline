@@ -48,7 +48,7 @@ task RunInteraction { # CellRegMap's run_interaction()
     runtime {
         docker: "annasecuomo/cellregmap_pipeline:dev"
 
-        memory: "400Gb" # static
+        memory: "400GB" # static
     }
 }
 
@@ -99,6 +99,6 @@ task EstimateBetas { # CellRegMap's estimate_betas()
         docker: "annasecuomo/cellregmap_pipeline:dev"
 
         # static
-        memory: "400Gb"
+        memory: "400GB" # static
     }
 }
