@@ -60,7 +60,6 @@ def main(
     ## extract unique individuals
     donors0 = sample_mapping["genotype_individual_id"].unique()
     donors0.sort()
-    # print("Number of unique donors: {}".format(len(donors0)))
     logging.info("Number of unique donors: {}".format(len(donors0)))
 
     ######################################################
@@ -70,7 +69,6 @@ def main(
     outfilename = os.path.join(output_folder, f"{gene_name}.csv")
 
     if os.path.exists(outfilename):
-        # print("File already exists, exiting")
         logging.info("File already exists, exiting")
         sys.exit()
 
@@ -90,7 +88,6 @@ def main(
     )
     K = K.sortby("sample_0").sortby("sample_1")
     donors = sorted(set(list(K.sample_0.values)).intersection(donors0))
-    # print("Number of donors after kinship intersection: {}".format(len(donors)))
     logging.info("Number of donors after kinship intersection: {}".format(len(donors)))
 
     ## subset to relevant donors
@@ -104,11 +101,6 @@ def main(
     assert all(hK.sample.values == K.sample_0.values)
 
     del K  # delete K to free up memory
-    # print(
-    #     "Sample mapping number of rows BEFORE intersection: {}".format(
-    #         sample_mapping.shape[0]
-    #     )
-    # )
     logging.info(
         "Sample mapping number of rows BEFORE intersection: {}".format(
             sample_mapping.shape[0]
@@ -118,11 +110,6 @@ def main(
     sample_mapping = sample_mapping[
         sample_mapping["genotype_individual_id"].isin(donors)
     ]
-    # print(
-    #     "Sample mapping number of rows AFTER intersection: {}".format(
-    #         sample_mapping.shape[0]
-    #     )
-    # )
     logging.info(
         "Sample mapping number of rows AFTER intersection: {}".format(
             sample_mapping.shape[0]
@@ -214,7 +201,6 @@ def main(
     ########### Run model ############
     ##################################
 
-    # print("Running for gene {}".format(gene_name))
     logging.info("Running for gene {}".format(gene_name))
 
     pvals = run_interaction(
