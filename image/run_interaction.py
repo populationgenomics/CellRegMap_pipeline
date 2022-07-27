@@ -10,14 +10,15 @@ from pandas_plink import read_plink1_bin
 from numpy.linalg import cholesky
 from limix.qc import quantile_gaussianize
 
-from cellregmap import run_interaction
+from cellregmap import run_interaction, __version__
 
 # use logging to print statements, display at info level
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
 
 @click.command()
-@click.option("--chrom", required=True)
+# @click.version_option(version=__version__)
+@click.option("--chrom", required=True, help="More info here")
 @click.option("--gene-name", required=True)
 @click.option("--sample-mapping-file", required=True)
 @click.option("--genotype-file", required=True)

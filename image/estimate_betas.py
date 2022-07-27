@@ -41,7 +41,7 @@ def main(
     kinship_file: str,
     beta_feature_variant_file: str,
     output_folder: str,
-    maf_file: str,
+    maf_file: str=None,
     n_contexts: int = 10,
 ):
 
@@ -203,11 +203,14 @@ def main(
 
     # get minor allele frequencies (MAFs)
     # ideally these are precomputed, if not they can be calculated
-    df_maf = pd.read_csv(maf_file, sep="\t")
 
-    mafs = np.array([])
-    for snp in snps:
-        mafs = np.append(mafs, df_maf[df_maf["SNP"] == snp]["MAF"].values)
+    mafs = None
+    if maf_file:
+        df_maf = pd.read_csv(maf_file, sep="\t")
+
+        mafs = np.array([])
+        for snp in snps:
+            mafs = np.append(mafs, df_maf[df_maf["SNP"] == snp]["MAF"].values)
 
     ##################################
     ########### Run model ############
@@ -216,7 +219,7 @@ def main(
     logging.info("Running for gene {}".format(gene_name))
 
     betas = estimate_betas(
-        y=y, W=W, E=C.values[:, 0:10], G=GG, maf=mafs, hK=hK_expanded
+        y=y, W=W, E=C.values[:, 0:n_contexts], G=GG, maf=mafs, hK=hK_expanded
     )
     beta_G = betas[0]
     beta_GxC = betas[1][0]
