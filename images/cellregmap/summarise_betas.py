@@ -2,13 +2,8 @@ import os
 import click
 import pandas as pd
 import numpy as np
+from typing import Dict, List
 from collections import defaultdict
-
-# def smartAppend(table, name, value):
-#     """helper function for appending in a dictionary"""
-#     if name not in table.keys():
-#         table[name] = []
-#     table[name].append(value)
 
 
 @click.command()
@@ -22,7 +17,6 @@ def main(file_with_filenames_1: str, file_with_filenames_2: str, output_folder: 
     # betaG
     # summarise persistent effect sizes
     # each row here is a SNP-gene pair
-    # table = {}
     table: Dict[str, List[any]] = defaultdict(list)
 
     with open(file_with_filenames_1, encoding="utf-8") as f:
@@ -45,7 +39,6 @@ def main(file_with_filenames_1: str, file_with_filenames_2: str, output_folder: 
             temp["betaG"] = df["betaG"].values[i]
 
         for key in temp.keys():
-            # smartAppend(table, key, temp[key])
             table[key].append(temp[key])
 
     for key in table.keys():
