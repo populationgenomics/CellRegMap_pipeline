@@ -18,10 +18,10 @@ cat << EOF >> path-results.txt
 ~{sep("\n", listOfFiles)}
 EOF
 
-    eval "$(conda shell.bash hook)" 
-    conda activate cellregmap_notebook
+    # eval "$(conda shell.bash hook)" 
+    # conda activate cellregmap_notebook
 
-    python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/summarise.py \
+    python summarise.py \
         --fdr-threshold ~{fdrThreshold} \
         --file-with-filenames path-results.txt
     >>>
@@ -29,6 +29,11 @@ EOF
     output {
         File allResults = "summary.csv"
         File significantResults = "significant_results.csv"
+    }
+
+    runtime {
+        container: "annasecuomo/cellregmap_pipeline:dev"
+        memory: "2GB"
     }
 }
 
@@ -50,10 +55,10 @@ cat << EOF >> path-results-betaGxC.txt
 ~{sep("\n", listOfFilesBetaGxC)}
 EOF
 
-    eval "$(conda shell.bash hook)" 
-    conda activate cellregmap_notebook
+    # eval "$(conda shell.bash hook)" 
+    # conda activate cellregmap_notebook
 
-    python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/summarise_betas.py \
+    python summarise_betas.py \
         --file-with-filenames-1 path-results-betaG.txt \
         --file-with-filenames-2 path-results-betaGxC.txt
     >>>
@@ -61,5 +66,10 @@ EOF
     output {
         File allResultsBetaG = "summary_betaG.csv"
         File allResultsBetaGxC = "summary_betaGxC.csv"
+    }
+
+    runtime {
+        container: "annasecuomo/cellregmap_pipeline:dev"
+        memory: "2GB"
     }
 }

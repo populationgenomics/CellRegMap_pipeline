@@ -26,10 +26,10 @@ task RunInteraction { # CellRegMap's run_interaction()
 
         # for now, use conda, but when we're closer,
         # remove this in favor of 'container' in the runtime section
-        eval "$(conda shell.bash hook)" 
-        conda activate cellregmap_notebook 
+        # eval "$(conda shell.bash hook)" 
+        # conda activate cellregmap_notebook 
 
-        python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/run_interaction.py \
+        python run_interaction.py \
             --chrom ~{chrom} \
             --gene-name ~{geneName} \
             --sample-mapping-file ~{sampleMappingFile} \
@@ -46,7 +46,7 @@ task RunInteraction { # CellRegMap's run_interaction()
     }
 
     runtime {
-        # container: "annacuomo/limix:dev"
+        container: "annasecuomo/cellregmap_pipeline:dev"
 
         memory: "400Gb" # static
     }
@@ -74,10 +74,10 @@ task EstimateBetas { # CellRegMap's estimate_betas()
         cp -f '~{genotypeFilesFam}' "$(echo '~{genotypeFile}' | sed 's/\.[^.]*$//').fam"
         
         # leave this until containers are used
-        eval "$(conda shell.bash hook)" 
-        conda activate cellregmap_notebook
+        # eval "$(conda shell.bash hook)" 
+        # conda activate cellregmap_notebook
 
-        python /share/ScratchGeneral/anncuo/github_repos/CellRegMap_pipeline/images/cellregmap/estimate_betas.py \
+        python estimate_betas.py \
             --chrom ~{chrom} \
             --gene-name ~{geneName} \
             --sample-mapping-file ~{sampleMappingFile} \
@@ -87,7 +87,7 @@ task EstimateBetas { # CellRegMap's estimate_betas()
             --kinship-file ~{kinshipFile} \
             --beta-feature-variant-file ~{betaFeatureVariantFile} \
             --n-contexts ~{nContexts} \
-            --maf-file ~{mafFile}
+            ~{if defined(mafFile) then "--maf-file ~{mafFile}" else ""}
     >>>
 
     output {
@@ -96,6 +96,8 @@ task EstimateBetas { # CellRegMap's estimate_betas()
     }
 
     runtime {
+        container: "annasecuomo/cellregmap_pipeline:dev"
+
         # static
         memory: "400Gb"
     }
