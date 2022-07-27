@@ -1,9 +1,9 @@
 # tells WDL to use most recent version
 version development 
 
-import "tasks/CellRegMap.wdl" as C
+import "tasks/cellregmap.wdl" as C
 import "tasks/utils.wdl" as u
-import "tasks/post_processing.wdl" as pp
+import "tasks/postProcessing.wdl" as pp
 
 
 workflow RunCellRegMap {
