@@ -5,7 +5,12 @@ A container to run the workflow is available [on Dockerhub](https://hub.docker.c
 
 ## To run on a High Performance Computing (HPC) system
 ```
-java -Dconfig.file=qsub.conf -jar /cromwell/path/cromwell-56.jar run runCellRegMap.wdl --imports tasks.zip --inputs inputs.json
+java \
+    -Dconfig.file=qsub.conf \
+    -jar /cromwell/path/cromwell-56.jar run \
+    runCellRegMap.wdl \
+    --imports tasks.zip \
+    --inputs inputs.json
 ```
 
 ## To run on a the Google Cloud Platform (GCP) using analysis-runner
