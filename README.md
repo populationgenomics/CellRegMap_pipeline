@@ -14,7 +14,7 @@ java \
     --imports tasks.zip \
     --inputs inputs.json
 ```
-### TO DO: SLURM (sbatch) / LFS (platform Load Sharing Facility, bsub)
+<!-- ### TO DO: SLURM (sbatch) / LFS (platform Load Sharing Facility, bsub) -->
 
 ## To run on a the Google Cloud Platform (GCP) using analysis-runner
 ```
