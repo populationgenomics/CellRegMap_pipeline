@@ -19,7 +19,7 @@ analysis-runner cromwell submit  \
     --dataset "tob-wgs" \
     --description "Run CellRegMap WDL pipeline" \
     --access-level "full" \
-    --output-dir "scrna-seq/CellRegMap_input_files/"
+    --output-dir "scrna-seq/CellRegMap_input_files/2022-08-10_output/"
     -i input_gcs.json \
     -p tasks/ \
     runCellRegMap.wdl
