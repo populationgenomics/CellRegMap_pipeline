@@ -13,12 +13,12 @@ For real data, the pipeline also needs to use Hail Query to query genetic varian
 
 ### Structure of repo:
 * WDL workflow 
-  * this does not contain data generation (does not require Hail Query) and takes pre-generated input files
-  * should work for both simulated and real data
-  * contains both python and R scripts as tasks
+  * this does not contain input files generation (does not require Hail Query) and takes pre-generated input files
+  * should work for both simulated and real data (see below)
+  * contains both python and R scripts as tasks (and respective Docker images)
   * returns p-values and other summary statistics for all results (original CellRegMap, new CellRegMap, R-implemented tests) 
 * Hail Batch workflow
-  * single-file end-to-end (Python) workflow from data collection / input file generation (using Hail Query) to testing to returning summary stats (for new CellRegMap specifically, to run internally)
+  * single-script end-to-end (Python) workflow from data collection / input file generation (using Hail Query) to association testing to returning summary stats (for new CellRegMap specifically, to run internally)
 * (Python) scripts to generate both real and simulated input files to feed to the WDL workflow
 
 ## CellRegMap pipeline v1
