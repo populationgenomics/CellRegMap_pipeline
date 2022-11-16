@@ -11,7 +11,7 @@ For simulations, the pipeline also needs to run alternative methods for comparis
 
 For real data, the pipeline also needs to use Hail Query to query genetic variants and annotations stored as Hail Matrix Tables and Hail Tables.
 
-Structure of repo:
+### Structure of repo:
 * WDL workflow 
   * this does not contain data generation (does not require Hail Query) and takes pre-generated input files
   * should work for both simulated and real data
