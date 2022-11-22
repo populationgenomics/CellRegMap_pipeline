@@ -16,6 +16,7 @@ import click
 import numpy as np
 import pandas as pd
 from numpy import eye, ones
+from scipy.stats import shapiro
 
 import hail as hl
 import hailtop.batch as hb
@@ -190,6 +191,7 @@ def get_crm_pvs(pheno, covs, genotypes, E=None):
     Output:
     list of p-values from the three tests
     """
+    pv_norm = shapiro(pheno).pvalue
     pv0 = run_gene_set_association(y=pheno, G=genotypes, W=covs, E=E)[0]
     pv1 = run_burden_association(y=pheno, G=genotypes, W=covs, E=E, mask="mask.max")[0]
     pv2 = run_burden_association(y=pheno, G=genotypes, W=covs, E=E, mask="mask.sum")[0]
@@ -199,7 +201,7 @@ def get_crm_pvs(pheno, covs, genotypes, E=None):
     pv4 = omnibus_set_association(np.array([pv0, pv1]))
     pv5 = omnibus_set_association(np.array([pv0, pv2]))
     pv6 = omnibus_set_association(np.array([pv0, pv3]))
-    return [pv0, pv1, pv2, pv3, pv4, pv5, pv6]
+    return [pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6]
 
 
 # endregion GET_CRM_PVALUES
@@ -208,7 +210,8 @@ def get_crm_pvs(pheno, covs, genotypes, E=None):
 
 
 def run_gene_association(
-    genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
+    gene_name: str,           # 'VPREB3' 
+    genotype_mat_path: str,   # 'VPREB3_50K_window/SNVs.csv'
     phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
 ):
     """Run gene-set association test
@@ -238,11 +241,33 @@ def run_gene_association(
     # contexts
     contexts = eye(genotypes.shape[0])
 
-    # kinship
+    # TODO: kinship
+    
+    cols = [
+    'P_shapiro',
+    'P_CRM_VC',
+    'P_CRM_burden_max',
+    'P_CRM_burden_sum',
+    'P_CRM_burden_comphet',
+    'P_CRM_omnibus_max',
+    'P_CRM_omnibus_sum',
+    'P_CRM_omnibus_comphet',
+]
 
-    # create p-values matrix
-    pv_df = pd.DataFrame(data=get_crm_pvs(pheno, covs, genotypes, E))
+    # create p-values data frame
+    pv_df = pd.DataFrame(
+        data=get_crm_pvs(pheno, covs, genotypes, contexts),
+        columns=cols,
+        index=gene_name
+        )
+    
+    pv_filename = AnyPath(
+        output_path('simulations/CRM/1000samples_10causal_singletons/10tested_samebeta.csv')
+    )
+    with pv_filename.open('w') as pf:
+        pv_df.to_csv(pf, index=False)
 
+    return pv_filename
 
 # endregion RUN_ASSOCIATION
 
