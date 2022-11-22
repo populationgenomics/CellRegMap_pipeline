@@ -1,26 +1,33 @@
 import logging
 import hail as hl
 import hailtop.batch as hb
+import pandas as pd
+from hail.methods import export_plink
 from cpg_utils.hail_batch import get_config, remote_tmpdir
 from cloudpathlib import AnyPath
+from cpg_utils.hail_batch import dataset_path, init_batch, output_path
 
 config = get_config()
 
 def main(
-    genotypeFiles: dict[str, str], # one file per chromosome
-    genotypeFilesBims: dict[str, str],
-    genotypeFilesFams: dict[str, str],
-    phenotypeFiles: dict[str, str],
-    mafFiles: dict[str, str],
-    contextFile: str,
-    kinshipFile: str,
-    sampleMappingFile: str,
-    featureVariantFile: str,
-    nContexts: int=10,
-    fdrThreshold: int=1,
-
+    # genotypeFiles: dict[str, str], # one file per chromosome
+    # genotypeFilesBims: dict[str, str],
+    # genotypeFilesFams: dict[str, str],
+    # phenotypeFiles: dict[str, str],
+    # mafFiles: dict[str, str],
+    # contextFile: str,
+    # kinshipFile: str,
+    # sampleMappingFile: str,
+    # featureVariantFile: str,
+    # nContexts: int=10,
+    # fdrThreshold: int=1,
+    mt_path: str,               # 'mt/v7.mt'
+    vep_ht_path: str,           # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     gene_loc_files: list[str],
 ):
+
+    MT = dataset_path(mt_path)
+    VEP_HT = dataset_path(vep_ht_path)
 
     sb = hb.ServiceBackend(
     billing_project=config['hail']['billing_project'],
@@ -59,6 +66,8 @@ def main(
 
 
 def get_promoter_variants(
+    MT: str,
+    VEP_HT: str,
     gene_file: str,
     gene_name: str,
     window_size: int,

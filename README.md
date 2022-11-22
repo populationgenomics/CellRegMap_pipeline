@@ -21,6 +21,14 @@ For real data, the pipeline also needs to use Hail Query to query genetic varian
   * single-script end-to-end (Python) workflow from data collection / input file generation (using Hail Query) to association testing to returning summary stats (for new CellRegMap specifically, to run internally)
 * (Python) scripts to generate both real and simulated input files to feed to the WDL workflow
 
+## Hail Batch workflow
+Single python script, key steps (maybe make into functions?):
+* given one gene and the full WGS hail matrix table, selects relevant variants and export as plink files
+* plink files are read in and turned into genotype input files, other input files (phenotype, kinship) are processed
+* genes are parallelised into chunks
+* CellRegMap-RV various tests are run (each chunk independently)
+* resulting p-values are aggregated across jobs and saved
+
 ## CellRegMap pipeline v1
 
 A WDL workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
