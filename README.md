@@ -4,10 +4,10 @@
 
 In its original version, this is a WDL workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
 
-[CellRegMap v2](https://github.com/annacuomo/CellRegMap) (new name to come) now comes with new functionalities, particularly around the implementation of tests to map effects of rare genetic variants.
+[CellRegMap v2](https://github.com/annacuomo/CellRegMap) (new name to come) now comes with new functionalities, particularly around the implementation of tests to map effects of rare genetic variants (called from whole-genome sequencing, WGS).
 To assess these new methods, this pipeline needs to be run on both real and simulated data.
 
-For simulations, the pipeline also needs to run alternative methods for comparison purposes, which are implemented in R.
+For simulations, the pipeline also needs to run alternative methods (including [SKAT / SKAT-O](https://github.com/leelabsg/SKAT) and [ACAT-V / ACAT-O](https://github.com/yaowuliu/ACAT)) for comparison purposes, which are implemented in R.
 
 For real data, the pipeline also needs to use Hail Query to query genetic variants and annotations stored as Hail Matrix Tables and Hail Tables.
 
@@ -22,7 +22,7 @@ For real data, the pipeline also needs to use Hail Query to query genetic varian
 * (Python) scripts to generate both real and simulated input files to feed to the WDL workflow
 
 ## Hail Batch workflow
-Single python script, key steps (maybe make into functions?):
+Single [python script](batch.py), key steps (maybe make into separately called functions?):
 * given one gene and the full WGS hail matrix table, selects relevant variants and export as plink files
 * plink files are read in and turned into genotype input files, other input files (phenotype, kinship) are processed
 * genes are parallelised into chunks
