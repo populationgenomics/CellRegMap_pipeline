@@ -1,5 +1,8 @@
+import logging
+import hail as hl
 import hailtop.batch as hb
 from cpg_utils.hail_batch import get_config, remote_tmpdir
+from cloudpathlib import AnyPath
 
 config = get_config()
 
