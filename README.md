@@ -7,7 +7,7 @@ In its original version, this is a WDL workflow to facilitate running [CellRegMa
 [CellRegMap v2](https://github.com/annacuomo/CellRegMap) (new name to come) now comes with new functionalities, particularly around the implementation of tests to map effects of rare genetic variants (called from whole-genome sequencing, WGS).
 To assess these new methods, this pipeline needs to be run on both real and simulated data.
 
-For simulations, the pipeline also needs to run alternative methods (including [SKAT / SKAT-O](https://github.com/leelabsg/SKAT) and [ACAT-V / ACAT-O](https://github.com/yaowuliu/ACAT)) for comparison purposes, which are implemented in R.
+For simulations, the pipeline also needs to run alternative methods (including the [SKAT](https://github.com/leelabsg/SKAT)- and [ACAT](https://github.com/yaowuliu/ACAT)-derived methods) for comparison purposes, which are implemented in R.
 
 For real data, the pipeline also needs to use Hail Query to query genetic variants and annotations stored as Hail Matrix Tables and Hail Tables.
 
