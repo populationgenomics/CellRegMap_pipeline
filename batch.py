@@ -29,8 +29,8 @@ import xarray as xr  # what am I doing here?? install this in a new image? build
 from limix.qc import quantile_gaussianize
 from numpy import eye, ones
 from pandas_plink import read_plink1_bin
-from scipy.stats import shapiro 
- 
+from scipy.stats import shapiro
+
 import hail as hl
 import hailtop.batch as hb
 from hail.methods import export_plink
@@ -42,12 +42,15 @@ from cellregmap import (  # figure out how to import this (in image?)
 )
 
 # use logging to print statements, display at info level
-logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)  # consider removing some print statements?
+logging.basicConfig(
+    format="%(levelname)s:%(message)s", level=logging.INFO
+)  # consider removing some print statements?
 
 DEFAULT_JOINT_CALL_MT = dataset_path("mt/v7.mt")
 DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # atm VEP
 
 # region GET_RELEVANT_VARIANTS
+
 
 def get_promoter_variants(
     mt_path: str,
@@ -162,7 +165,13 @@ def get_promoter_variants(
 # region PREPARE_INPUT_FILES
 
 
-def prepare_input_files():
+def prepare_input_files(  # consider splitting into multiple functions
+    genotype_file_bed: str,
+    genotype_file_bim: str,
+    genotype_file_fam: str,
+    phenotype_file: str,
+    sample_mapping_file: str,
+):
     """Prepare association test input files
 
     Input:
@@ -173,6 +182,13 @@ def prepare_input_files():
     genotype matrix
     phenotype vector
     """
+    phenotype = pd.read_csv(phenotype_file, sep="\t", index_col=0)
+
+    phenotype = xr.DataArray(
+        phenotype.values,
+        dims=["sample", "gene"],
+        coords={"sample": phenotype.index.values, "gene": phenotype.columns.values},
+    )
 
 
 # endregion PREPARE_INPUT_FILES
@@ -181,7 +197,7 @@ def prepare_input_files():
 # region GET_CRM_PVALUES
 
 
-def get_crm_pvs(pheno, covs, genotypes, E=None):
+def get_crm_pvs(pheno, covs, genotypes, contexts=None):
     """
     CellRegMap-RV tests
     * score test (variance)
@@ -195,11 +211,15 @@ def get_crm_pvs(pheno, covs, genotypes, E=None):
     list of p-values from the three tests
     """
     pv_norm = shapiro(pheno).pvalue
-    pv0 = run_gene_set_association(y=pheno, G=genotypes, W=covs, E=E)[0]
-    pv1 = run_burden_association(y=pheno, G=genotypes, W=covs, E=E, mask="mask.max")[0]
-    pv2 = run_burden_association(y=pheno, G=genotypes, W=covs, E=E, mask="mask.sum")[0]
+    pv0 = run_gene_set_association(y=pheno, G=genotypes, W=covs, E=contexts)[0]
+    pv1 = run_burden_association(
+        y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.max"
+    )[0]
+    pv2 = run_burden_association(
+        y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.sum"
+    )[0]
     pv3 = run_burden_association(
-        y=pheno, G=genotypes, W=covs, E=E, mask="mask.comphet"
+        y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.comphet"
     )[0]
     pv4 = omnibus_set_association(np.array([pv0, pv1]))
     pv5 = omnibus_set_association(np.array([pv0, pv2]))
@@ -213,8 +233,8 @@ def get_crm_pvs(pheno, covs, genotypes, E=None):
 
 
 def run_gene_association(
-    gene_name: str,           # 'VPREB3' 
-    genotype_mat_path: str,   # 'VPREB3_50K_window/SNVs.csv'
+    gene_name: str,  # 'VPREB3'
+    genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
     phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
 ):
     """Run gene-set association test
@@ -245,32 +265,35 @@ def run_gene_association(
     contexts = eye(genotypes.shape[0])
 
     # TODO: kinship
-    
+
     cols = [
-    'P_shapiro',
-    'P_CRM_VC',
-    'P_CRM_burden_max',
-    'P_CRM_burden_sum',
-    'P_CRM_burden_comphet',
-    'P_CRM_omnibus_max',
-    'P_CRM_omnibus_sum',
-    'P_CRM_omnibus_comphet',
-]
+        "P_shapiro",
+        "P_CRM_VC",
+        "P_CRM_burden_max",
+        "P_CRM_burden_sum",
+        "P_CRM_burden_comphet",
+        "P_CRM_omnibus_max",
+        "P_CRM_omnibus_sum",
+        "P_CRM_omnibus_comphet",
+    ]
 
     # create p-values data frame
     pv_df = pd.DataFrame(
         data=get_crm_pvs(pheno, covs, genotypes, contexts),
         columns=cols,
-        index=gene_name
-        )
-    
-    pv_filename = AnyPath(
-        output_path('simulations/CRM/1000samples_10causal_singletons/10tested_samebeta.csv')
+        index=gene_name,
     )
-    with pv_filename.open('w') as pf:
+
+    pv_filename = AnyPath(
+        output_path(
+            "simulations/CRM/1000samples_10causal_singletons/10tested_samebeta.csv"
+        )
+    )
+    with pv_filename.open("w") as pf:
         pv_df.to_csv(pf, index=False)
 
     return pv_filename
+
 
 # endregion RUN_ASSOCIATION
 
@@ -280,7 +303,7 @@ def run_gene_association(
 
 def summarise_association_results(
     pv_dfs: list[str],
-    fdrThreshold: int=1,
+    fdrThreshold: int = 1,
 ):
     """Summarise results
 
@@ -295,6 +318,7 @@ def summarise_association_results(
         pv_all_df = pd.concat(pv_df)
 
     # run qvalues for all tests
+
 
 # endregion AGGREGATE_RESULTS
 
@@ -311,7 +335,7 @@ config = get_config()
 def main(
     gene_list: list[str],
     celltype_list: list[str],
-    mt_path: str = DEFAULT_JOINT_CALL_MT,       # 'mt/v7.mt'
+    mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     fdr_threshold: float = 0.05,
 ):
