@@ -52,8 +52,7 @@ logging.basicConfig(
 DEFAULT_JOINT_CALL_MT = dataset_path("mt/v7.mt")
 DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # atm VEP
 
-# region GET_RELEVANT_VARIANTS
-
+# region SUBSET_VARIANTS
 
 def common_variant_selection(
     mt_path: str,
@@ -99,10 +98,10 @@ def common_variant_selection(
     mt = mt.checkpoint(output_mt_path, overwrite=True)  # syntax???
     logging.info(f"Number of rare variants (freq<5%): {mt.count()[0]}")
 
-    return output_mt_path
+    return output_mt_path  # both input and output??
 
 
-# endregion GET_RELEVANT_VARIANTS
+# endregion SUBSET_VARIANTS
 
 
 # region GET_GENE_SPECIFIC_VARIANTS
@@ -194,7 +193,7 @@ def get_promoter_variants(
     mt_path = output_path(f"plink_files/{gene_name}_rare_promoter")
     export_plink(mt, mt_path, ind_id=mt.s)
 
-    return [mt_path, ht_filename]
+    return mt_path, ht_filename
 
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
@@ -326,7 +325,7 @@ def prepare_input_files(  # consider splitting into multiple functions
     with kinship_filename.open("w") as kf:
         kinship_df.to_csv(kf, index=False)
 
-    return [y_df, geno_df, kinship_df]
+    return y_df, geno_df, kinship_df
 
 
 # endregion PREPARE_INPUT_FILES
@@ -362,7 +361,7 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
     pv4 = omnibus_set_association(np.array([pv0, pv1]))
     pv5 = omnibus_set_association(np.array([pv0, pv2]))
     pv6 = omnibus_set_association(np.array([pv0, pv3]))
-    return [pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6]  # do I need brackets?
+    return pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6
 
 
 # endregion GET_CRM_PVALUES
