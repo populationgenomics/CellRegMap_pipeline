@@ -10,17 +10,8 @@ Hail Batch workflow for the rare-variant association analysis, including:
 """
 
 # import python modules # is there a specific order, rationale for grouping imports??
-import logging
 import click
-
-import numpy as np
-import pandas as pd
-from numpy import eye, ones
-from scipy.stats import shapiro
-
-import hail as hl
-import hailtop.batch as hb
-from hail.methods import export_plink
+import logging
 
 from cloudpathlib import AnyPath
 from cpg_utils.hail_batch import (
@@ -31,6 +22,19 @@ from cpg_utils.hail_batch import (
     remote_tmpdir,
 )
 
+import numpy as np
+import pandas as pd
+import xarray as xr  # what am I doing here?? install this in a new image? build an image within this??
+
+from limix.qc import quantile_gaussianize
+from numpy import eye, ones
+from pandas_plink import read_plink1_bin
+from scipy.stats import shapiro 
+ 
+import hail as hl
+import hailtop.batch as hb
+from hail.methods import export_plink
+
 from cellregmap import (  # figure out how to import this (in image?)
     run_gene_set_association,
     run_burden_association,
@@ -38,7 +42,7 @@ from cellregmap import (  # figure out how to import this (in image?)
 )
 
 # use logging to print statements, display at info level
-logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
+logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)  # consider removing some print statements?
 
 DEFAULT_JOINT_CALL_MT = dataset_path("mt/v7.mt")
 DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # atm VEP
@@ -305,16 +309,6 @@ config = get_config()
 @click.option("--anno_ht_path")
 @click.option("--fdr-threshold")
 def main(
-    # genotypeFiles: dict[str, str], # one file per chromosome
-    # genotypeFilesBims: dict[str, str],
-    # genotypeFilesFams: dict[str, str],
-    # phenotypeFiles: dict[str, str],
-    # mafFiles: dict[str, str],
-    # contextFile: str,
-    # kinshipFile: str,
-    # sampleMappingFile: str,
-    # featureVariantFile: str,
-    # nContexts: int=10,
     gene_list: list[str],
     celltype_list: list[str],
     mt_path: str = DEFAULT_JOINT_CALL_MT,       # 'mt/v7.mt'
