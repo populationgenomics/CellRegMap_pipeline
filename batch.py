@@ -169,6 +169,8 @@ def get_promoter_variants(
 
 
 def prepare_input_files(  # consider splitting into multiple functions
+    gene_name: str,
+    cell_type: str,
     genotype_file_bed: str,
     genotype_file_bim: str,
     genotype_file_fam: str,
@@ -186,6 +188,9 @@ def prepare_input_files(  # consider splitting into multiple functions
     genotype matrix
     phenotype vector
     """
+    expression_filename = AnyPath(output_path(f'{gene_name}_{cell_type}.csv'))
+    genotype_filename = AnyPath(output_path(f'{gene_name}_rare_regulatory.csv'))
+    kinship_filename = AnyPath(output_path('kinship_common_samples.csv'))
 
     # read in phenotype file (tsv)
     phenotype = pd.read_csv(phenotype_file, sep="\t", index_col=0)
@@ -238,9 +243,56 @@ def prepare_input_files(  # consider splitting into multiple functions
     donors_e = sample_mapping_both["OneK1K_ID"].unique()
     donors_g = sample_mapping_both["InternalID"].unique()
     assert len(donors_e) == len(donors_g)
+    
+    # samples in kinship
+    donors_e_short = [re.sub('.*_', '', donor) for donor in donors_e]
+    donors_k = sorted(set(list(kinship.sample_0.values)).intersection(donors_e_short))
 
     logging.info(f"Number of unique common donors: {len(donors_g)}")
 
+    # subset files
+
+    # phenotype
+    phenotype = phenotype.sel(sample=donors_e)
+    # select gene
+    y = phenotype.sel(gene=gene_name)
+    y = quantile_gaussianize(y)
+    del phenotype  # delete to free up memory
+    # make data frame to save as csv
+    y_df = pd.DataFrame(
+        data=y.values.reshape(y.shape[0], 1), index=y.sample.values, columns=[gene_name]
+    )
+
+    # genotype
+    geno = geno.sel(sample=donors_g)
+    # make data frame to save as csv
+    data = geno.values
+    geno_df = pd.DataFrame(data, columns=geno.snp.values, index=geno.sample.values)
+    geno_df = geno_df.dropna(axis=1)
+    # delete large files to free up memory
+    del geno
+
+    # kinship
+    kinship = kinship.sel(sample_0=donors_k, sample_1=donors_k)
+    assert all(kinship.sample_0 == donors_k)
+    assert all(kinship.sample_1 == donors_k)
+    # make data frame to save as csv
+    kinship_df = pd.DataFrame(
+        kinship.values, columns=kinship.sample_0, index=kinship.sample_1
+    )
+    del kinship  # delete kinship to free up memory
+
+    # save files
+    with expression_filename.open('w') as ef:  
+        y_df.to_csv(ef, index=False)
+
+    with genotype_filename.open('w') as gf:  
+        geno_df.to_csv(gf, index=False)
+
+    with kinship_filename.open('w') as kf: 
+        kinship_df.to_csv(kf, index=False)
+    
+    return [y_df, geno_df, kinship_df]
 
 # endregion PREPARE_INPUT_FILES
 
