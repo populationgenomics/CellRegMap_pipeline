@@ -14,6 +14,7 @@ import click
 import logging
 
 from cloudpathlib import AnyPath
+from cpg_utils import to_path
 from cpg_utils.hail_batch import (
     dataset_path,
     get_config,
@@ -58,6 +59,7 @@ def get_promoter_variants(
     gene_file: str,
     gene_name: str,
     window_size: int,
+    samples: list[str],
     # plink_output_prefix: str, # figure out how to deal with this
 ):
     """Subset hail matrix table
@@ -74,6 +76,7 @@ def get_promoter_variants(
     - Path to plink prefix for genotype files (plink format: .bed, .bim, .fam)
     - Path to hail table with variant (rows) stats for downstream analyses
     """
+    # TODO: subset to relevant samples (at least before frequency filter)
     # read hail matrix table object (WGS data)
     init_batch()
     mt = hl.read_matrix_table(mt_path)
@@ -170,6 +173,7 @@ def prepare_input_files(  # consider splitting into multiple functions
     genotype_file_bim: str,
     genotype_file_fam: str,
     phenotype_file: str,
+    kinship_file: str,
     sample_mapping_file: str,
 ):
     """Prepare association test input files
@@ -182,6 +186,8 @@ def prepare_input_files(  # consider splitting into multiple functions
     genotype matrix
     phenotype vector
     """
+
+    # read in phenotype file (tsv)
     phenotype = pd.read_csv(phenotype_file, sep="\t", index_col=0)
 
     phenotype = xr.DataArray(
@@ -189,6 +195,51 @@ def prepare_input_files(  # consider splitting into multiple functions
         dims=["sample", "gene"],
         coords={"sample": phenotype.index.values, "gene": phenotype.columns.values},
     )
+
+    # read in genotype file (plink format)
+    to_path(genotype_file_bed).copy("temp.bed")  # bed
+    to_path(genotype_file_bim).copy("temp.bim")  # bim
+    to_path(genotype_file_fam).copy("temp.fam")  # fam
+    geno = read_plink1_bin("temp.bed")
+
+    # read in GRM (genotype relationship matrix; kinship matrix)
+    kinship = pd.read_csv(kinship_file, index_col=0)
+    kinship.index = kinship.index.astype("str")
+    assert all(kinship.columns == kinship.index)  # symmetric matrix, donors x donors
+    kinship = xr.DataArray(
+        kinship.values,
+        dims=["sample_0", "sample_1"],
+        coords={"sample_0": kinship.columns, "sample_1": kinship.index},
+    )
+    kinship = kinship.sortby("sample_0").sortby("sample_1")
+
+    # this file will map different IDs (and OneK1K ID to CPG ID)
+    sample_mapping = pd.read_csv(sample_mapping_file, sep="\t")
+
+    # ensure samples are the same and in the same order across input files
+    # samples with expression data
+    donors_exprs = set(phenotype.sample.values).intersection(
+        set(sample_mapping["OneK1K_ID"].unique())
+    )
+
+    logging.info(f"Number of unique donors with expression data: {len(donors_exprs)}")
+
+    # samples with genotype data
+    donors_geno = set(geno.sample.values).intersection(
+        set(sample_mapping["InternalID"].unique())
+    )
+    logging.info(f"Number of unique donors with genotype data: {len(donors_geno)}")
+
+    # samples with both (can this be done in one step?)
+    sample_mapping1 = sample_mapping.loc[sample_mapping["OneK1K_ID"].isin(donors_exprs)]
+    sample_mapping_both = sample_mapping1.loc[
+        sample_mapping1["InternalID"].isin(donors_geno)
+    ]
+    donors_e = sample_mapping_both["OneK1K_ID"].unique()
+    donors_g = sample_mapping_both["InternalID"].unique()
+    assert len(donors_e) == len(donors_g)
+
+    logging.info(f"Number of unique common donors: {len(donors_g)}")
 
 
 # endregion PREPARE_INPUT_FILES
