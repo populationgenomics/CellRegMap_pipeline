@@ -54,6 +54,7 @@ DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # at
 
 # region SUBSET_VARIANTS
 
+
 def common_variant_selection(
     mt_path: str,
     samples: list[str],
@@ -96,7 +97,9 @@ def common_variant_selection(
         | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
     )
     mt = mt.checkpoint(output_mt_path, overwrite=True)  # syntax???
-    logging.info(f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}")
+    logging.info(
+        f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}"
+    )
 
     return output_mt_path  # both input and output??
 
