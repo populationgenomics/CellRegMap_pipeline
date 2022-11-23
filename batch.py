@@ -45,7 +45,6 @@ DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # at
 
 # region GET_RELEVANT_VARIANTS
 
-
 def get_promoter_variants(
     mt_path: str,
     ht_path: str,
@@ -201,7 +200,7 @@ def get_crm_pvs(pheno, covs, genotypes, E=None):
     pv4 = omnibus_set_association(np.array([pv0, pv1]))
     pv5 = omnibus_set_association(np.array([pv0, pv2]))
     pv6 = omnibus_set_association(np.array([pv0, pv3]))
-    return [pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6]
+    return [pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6]  # do I need brackets?
 
 
 # endregion GET_CRM_PVALUES
@@ -275,7 +274,10 @@ def run_gene_association(
 # region AGGREGATE_RESULTS
 
 
-def summarise_association_results():
+def summarise_association_results(
+    pv_dfs: list[str],
+    fdrThreshold: int=1,
+):
     """Summarise results
 
     Input:
@@ -285,7 +287,10 @@ def summarise_association_results():
     one matrix (what format??) per cell type,
     combining results across all genes in a single file
     """
+    for pv_df in pv_dfs:
+        pv_all_df = pd.concat(pv_df)
 
+    # run qvalues for all tests
 
 # endregion AGGREGATE_RESULTS
 
@@ -296,6 +301,9 @@ config = get_config()
 @click.command()
 @click.option("--gene-list")
 @click.option("--celltype-list")
+@click.option("--mt-path")
+@click.option("--anno_ht_path")
+@click.option("--fdr-threshold")
 def main(
     # genotypeFiles: dict[str, str], # one file per chromosome
     # genotypeFilesBims: dict[str, str],
@@ -307,10 +315,11 @@ def main(
     # sampleMappingFile: str,
     # featureVariantFile: str,
     # nContexts: int=10,
-    # fdrThreshold: int=1,
-    mt_path: str,  # 'mt/v7.mt'
-    vep_ht_path: str,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
-    gene_loc_files: list[str],
+    gene_list: list[str],
+    celltype_list: list[str],
+    mt_path: str = DEFAULT_JOINT_CALL_MT,       # 'mt/v7.mt'
+    anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
+    fdr_threshold: float = 0.05,
 ):
 
     sb = hb.ServiceBackend(
