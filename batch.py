@@ -58,7 +58,7 @@ DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # at
 def common_variant_selection(
     mt_path: str,
     samples: list[str],
-    output_mt_path: str, 
+    output_mt_path: str,
 ):
     """Subset hail matrix table
 
@@ -78,7 +78,9 @@ def common_variant_selection(
     mt = mt.filter_cols(samples)  # figure out syntax
 
     # densify (can this be done at the end?)
-    mt = hl.experimental.densify(mt)  # is this definitely efficient to do on the whole thing once, vs on much smaller subset many times?
+    mt = hl.experimental.densify(
+        mt
+    )  # is this definitely efficient to do on the whole thing once, vs on much smaller subset many times?
 
     # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
     mt = mt.filter_rows(  # check these filters!
@@ -94,11 +96,10 @@ def common_variant_selection(
         (mt.variant_qc.AF[1] < 0.05) & (mt.variant_qc.AF[1] > 0)
         | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
     )
-    mt_path = output_path("nonref_qced_rare_variants.mt", "tmp")
-    mt = mt.checkpoint(mt_path, overwrite=True)  # checkpoint
+    mt = mt.checkpoint(output_mt_path, overwrite=True)  # syntax???
     logging.info(f"Number of rare variants (freq<5%): {mt.count()[0]}")
 
-    return mt_path
+    return output_mt_path
 
 
 # endregion GET_RELEVANT_VARIANTS
@@ -126,7 +127,7 @@ def get_promoter_variants(
     For retained variants, that are: 1) in promoter regions and
     2) within 50kb up or down-stream of the gene body (or in the gene body itself)
     (on top of all filters done above)
-    
+
     returns:
     - Path to plink prefix for genotype files (plink format: .bed, .bim, .fam)
     - Path to hail table with variant (rows) stats for downstream analyses
