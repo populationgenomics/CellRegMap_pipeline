@@ -55,7 +55,7 @@ DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # at
 # region SUBSET_VARIANTS
 
 
-def common_variant_selection(
+def filter_variants(
     mt_path: str,
     samples: list[str],
     output_mt_path: str,
@@ -85,8 +85,8 @@ def common_variant_selection(
     # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
     mt = mt.filter_rows(  # check these filters!
         (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
-        & (hl.len(mt.alleles) == 2)  # remove hom-ref
-        & (mt.n_unsplit_alleles == 2)  # biallelic
+        & (hl.len(mt.alleles) == 2)                  # remove hom-ref
+        & (mt.n_unsplit_alleles == 2)                # biallelic
         & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNVs
     )
 
@@ -367,7 +367,7 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
     pv4 = omnibus_set_association(np.array([pv0, pv1]))
     pv5 = omnibus_set_association(np.array([pv0, pv2]))
     pv6 = omnibus_set_association(np.array([pv0, pv3]))
-    return pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6
+    return np.array([pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6])
 
 
 # endregion GET_CRM_PVALUES
@@ -490,6 +490,17 @@ def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[s
     genes = set(geneloc_df.gene_name).intersection(gene_ids)
     return list(sorted(genes))
 
+# copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
+# check whether it needs modifying
+def remove_sc_outliers(df):
+    """
+    Remove outlier samples, as identified by sc analysis
+    """
+    outliers = ['966_967', '88_88']
+    df = df[-df.sampleid.isin(outliers)]
+
+    return df
+
 
 # endregion MISCELLANEOUS
 
@@ -504,6 +515,7 @@ config = get_config()
 @click.option("--anno_ht_path")
 @click.option("--fdr-threshold")
 def main(
+    sc_samples: list['str'],
     chromosomes: list[str],
     genes: list[str],
     celltypes: list[str],
@@ -512,6 +524,14 @@ def main(
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     fdr_threshold: float = 0.05,
 ):
+    
+    sb = hb.ServiceBackend(
+        billing_project=config["hail"]["billing_project"],
+        remote_tmpdir=remote_tmpdir(),
+    )
+    batch = hb.Batch("CellRegMap pipeline", backend=sb)
+    
+    mt = filter_variants(mt_path=mt_path, samples=sc_samples)
 
     for cell_type in celltypes:
         expression_tsv_path = os.path.join(
@@ -530,11 +550,20 @@ def main(
                 geneloc_tsv_path=geneloc_tsv_path,
             )
 
-    sb = hb.ServiceBackend(
-        billing_project=config["hail"]["billing_project"],
-        remote_tmpdir=remote_tmpdir(),
-    )
-    batch = hb.Batch("CellRegMap pipeline", backend=sb)
+            for gene in _genes:
+                job = batch.new_python_job(f"Preprocess: {gene}")
+                mt_path, _ = job.call(
+                    get_promoter_variants,
+                    gene_file=geneloc_tsv_path,
+                    gene_name=gene,
+                    window_size=50000,
+                    plink_output_prefix=plink_output_prefix,
+                )
+                pheno, geno, _ = job.call(
+                    prepare_input_files,
+                ) 
+
+    
 
     # determine for each chromosome
 
