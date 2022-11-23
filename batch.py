@@ -179,7 +179,7 @@ def get_promoter_variants(
 
     # filter variants found to be in promoter regions
     mt = mt.filter_rows(
-        mt.vep.regulatory_feature_consequences["biotype"][0] == "promoter"
+        mt.vep.regulatory_feature_consequences["biotype"].contains("promoter")
     )
     mt_path = output_path("promoter_variants.mt", "tmp")
     mt = mt.checkpoint(mt_path, overwrite=True)  # checkpoint
