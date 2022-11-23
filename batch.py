@@ -10,6 +10,8 @@ Hail Batch workflow for the rare-variant association analysis, including:
 """
 
 # import python modules # is there a specific order, rationale for grouping imports??
+import os
+
 import click
 import logging
 
@@ -115,7 +117,7 @@ def get_promoter_variants(
     logging.info(f"Number of variants in window: {mt.count()[0]}")
 
     # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
-    mt = mt.filter_rows(
+    mt = mt.filter_rows(  # check these filters!
         (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
         & (hl.len(mt.alleles) == 2)  # remove hom-ref
         & (mt.n_unsplit_alleles == 2)  # biallelic
@@ -188,9 +190,9 @@ def prepare_input_files(  # consider splitting into multiple functions
     genotype matrix
     phenotype vector
     """
-    expression_filename = AnyPath(output_path(f'{gene_name}_{cell_type}.csv'))
-    genotype_filename = AnyPath(output_path(f'{gene_name}_rare_regulatory.csv'))
-    kinship_filename = AnyPath(output_path('kinship_common_samples.csv'))
+    expression_filename = AnyPath(output_path(f"{gene_name}_{cell_type}.csv"))
+    genotype_filename = AnyPath(output_path(f"{gene_name}_rare_regulatory.csv"))
+    kinship_filename = AnyPath(output_path("kinship_common_samples.csv"))
 
     # read in phenotype file (tsv)
     phenotype = pd.read_csv(phenotype_file, sep="\t", index_col=0)
@@ -243,9 +245,9 @@ def prepare_input_files(  # consider splitting into multiple functions
     donors_e = sample_mapping_both["OneK1K_ID"].unique()
     donors_g = sample_mapping_both["InternalID"].unique()
     assert len(donors_e) == len(donors_g)
-    
+
     # samples in kinship
-    donors_e_short = [re.sub('.*_', '', donor) for donor in donors_e]
+    donors_e_short = [re.sub(".*_", "", donor) for donor in donors_e]
     donors_k = sorted(set(list(kinship.sample_0.values)).intersection(donors_e_short))
 
     logging.info(f"Number of unique common donors: {len(donors_g)}")
@@ -283,16 +285,17 @@ def prepare_input_files(  # consider splitting into multiple functions
     del kinship  # delete kinship to free up memory
 
     # save files
-    with expression_filename.open('w') as ef:  
+    with expression_filename.open("w") as ef:
         y_df.to_csv(ef, index=False)
 
-    with genotype_filename.open('w') as gf:  
+    with genotype_filename.open("w") as gf:
         geno_df.to_csv(gf, index=False)
 
-    with kinship_filename.open('w') as kf: 
+    with kinship_filename.open("w") as kf:
         kinship_df.to_csv(kf, index=False)
-    
+
     return [y_df, geno_df, kinship_df]
+
 
 # endregion PREPARE_INPUT_FILES
 
@@ -425,23 +428,70 @@ def summarise_association_results(
 
 # endregion AGGREGATE_RESULTS
 
+# region MISCELLANEOUS
+
+# copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
+# check whether it needs modifying
+def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[str]:
+    """get index of total number of genes
+    Input:
+    expression_df: a data frame with samples as rows and genes as columns,
+    containing normalised expression values (i.e., the average number of molecules
+    for each gene detected in each person).
+    geneloc_df: a data frame with the gene location (chromosome, start, and
+    end locations as columns) specified for each gene (rows).
+    Returns:
+    The number of genes (as an int) after filtering for lowly expressed genes.
+    This integer number gets fed into the number of scatters to run.
+    """
+    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep="\t")
+    geneloc_df = pd.read_csv(AnyPath(geneloc_tsv_path), sep="\t")
+
+    # expression_df = filter_lowly_expressed_genes(expression_df)
+    gene_ids = set(list(expression_df.columns.values)[1:])
+
+    genes = set(geneloc_df.gene_name).intersection(gene_ids)
+    return list(sorted(genes))
+
+
+# endregion MISCELLANEOUS
 
 config = get_config()
 
 
 @click.command()
-@click.option("--gene-list")
-@click.option("--celltype-list")
+@click.option("--chromosomes")
+@click.option("--genes")
+@click.option("--celltypes")
 @click.option("--mt-path")
 @click.option("--anno_ht_path")
 @click.option("--fdr-threshold")
 def main(
-    gene_list: list[str],
-    celltype_list: list[str],
+    chromosomes: list[str],
+    genes: list[str],
+    celltypes: list[str],
+    expression_files_prefix: str,
     mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     fdr_threshold: float = 0.05,
 ):
+
+    for cell_type in celltypes:
+        expression_tsv_path = os.path.join(
+            expression_files_prefix, "expression_files", f"{cell_type}_expression.tsv"
+        )
+
+        for chromosome in chromosomes:
+            geneloc_tsv_path = os.path.join(
+                expression_files_prefix,
+                "gene_location_files",
+                f"GRCh38_geneloc_chr{chromosome}.tsv",
+            )
+
+            _genes = genes or get_genes_for_chromosome(
+                expression_tsv_path=expression_tsv_path,
+                geneloc_tsv_path=geneloc_tsv_path,
+            )
 
     sb = hb.ServiceBackend(
         billing_project=config["hail"]["billing_project"],
@@ -481,3 +531,7 @@ def main(
     downstream_job.depends_on(dependent_job)
 
     # run that function
+
+
+if __name__ == "__main__":
+    main()  # rename
