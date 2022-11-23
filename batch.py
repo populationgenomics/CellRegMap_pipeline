@@ -85,8 +85,8 @@ def filter_variants(
     # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
     mt = mt.filter_rows(  # check these filters!
         (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
-        & (hl.len(mt.alleles) == 2)                  # remove hom-ref
-        & (mt.n_unsplit_alleles == 2)                # biallelic
+        & (hl.len(mt.alleles) == 2)  # remove hom-ref
+        & (mt.n_unsplit_alleles == 2)  # biallelic
         & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNVs
     )
 
@@ -490,13 +490,14 @@ def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[s
     genes = set(geneloc_df.gene_name).intersection(gene_ids)
     return list(sorted(genes))
 
+
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
 # check whether it needs modifying
 def remove_sc_outliers(df):
     """
     Remove outlier samples, as identified by sc analysis
     """
-    outliers = ['966_967', '88_88']
+    outliers = ["966_967", "88_88"]
     df = df[-df.sampleid.isin(outliers)]
 
     return df
@@ -515,7 +516,7 @@ config = get_config()
 @click.option("--anno_ht_path")
 @click.option("--fdr-threshold")
 def main(
-    sc_samples: list['str'],
+    sc_samples: list["str"],
     chromosomes: list[str],
     genes: list[str],
     celltypes: list[str],
@@ -524,18 +525,18 @@ def main(
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     fdr_threshold: float = 0.05,
 ):
-    
+
     sb = hb.ServiceBackend(
         billing_project=config["hail"]["billing_project"],
         remote_tmpdir=remote_tmpdir(),
     )
     batch = hb.Batch("CellRegMap pipeline", backend=sb)
-    
+
     mt = filter_variants(mt_path=mt_path, samples=sc_samples)
 
-    for cell_type in celltypes:
+    for celltype in celltypes:
         expression_tsv_path = os.path.join(
-            expression_files_prefix, "expression_files", f"{cell_type}_expression.tsv"
+            expression_files_prefix, "expression_files", f"{celltype}_expression.tsv"
         )
 
         for chromosome in chromosomes:
@@ -559,11 +560,24 @@ def main(
                     window_size=50000,
                     plink_output_prefix=plink_output_prefix,
                 )
-                pheno, geno, _ = job.call(
+                pheno_path, geno_path, _ = job.call(
                     prepare_input_files,
-                ) 
-
-    
+                    gene_name=gene,
+                    cell_type=celltype,
+                    genotype_file_bed=plink_output_prefix+".bed",
+                    genotype_file_bim=plink_output_prefix+".bim",
+                    genotype_file_fam=plink_output_prefix+".fam",
+                    phenotype_file=expression_tsv_path,
+                    kinship_file=None,
+                    sample_mapping_file=sample_mapping_file,
+                )
+                pv_file = job.call(
+                    run_gene_association,
+                    gene_name=gene,
+                    genotype_mat_path=geno_path,
+                    phenotype_vec_path=pheno_path
+                )
+        # combine all p-values across all chromosomes, genes (per cell type)
 
     # determine for each chromosome
 
