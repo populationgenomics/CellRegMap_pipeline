@@ -73,7 +73,7 @@ def common_variant_selection(
     init_batch()
     mt = hl.read_matrix_table(mt_path)
 
-    # TODO: subset to relevant samples (at least before frequency filter)
+    # subset to relevant samples (samples we have scRNA-seq data for)
     mt = mt.filter_cols(samples)  # figure out syntax
 
     # densify (can this be done at the end?)
@@ -96,7 +96,7 @@ def common_variant_selection(
         | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
     )
     mt = mt.checkpoint(output_mt_path, overwrite=True)  # syntax???
-    logging.info(f"Number of rare variants (freq<5%): {mt.count()[0]}")
+    logging.info(f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}")
 
     return output_mt_path  # both input and output??
 
@@ -162,13 +162,16 @@ def get_promoter_variants(
     mt = hl.filter_intervals(
         mt, [hl.parse_locus_interval(gene_interval, reference_genome="GRCh38")]
     )
+    mt_path = output_path("in_window.mt", "tmp")
+    mt = mt.checkpoint(
+        mt_path, overwrite=True
+    )  # add checkpoint to avoid repeat evaluation
     logging.info(f"Number of variants within interval: {mt.count()[0]}")
-    logging.info(f"Number of variants in window: {mt.count()[0]}")
 
     # annotate using VEP
     vep_ht = hl.read_table(ht_path)
     mt = mt.annotate_rows(vep=vep_ht[mt.row_key].vep)
-    mt_path = output_path("densified_qced_snps_only_vep_annotated.mt", "tmp")
+    mt_path = output_path("vep_annotated.mt", "tmp")
     mt = mt.checkpoint(
         mt_path, overwrite=True
     )  # add checkpoint to avoid repeat evaluation
