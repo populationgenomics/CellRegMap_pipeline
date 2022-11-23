@@ -55,31 +55,83 @@ DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # at
 # region GET_RELEVANT_VARIANTS
 
 
-def get_promoter_variants(
+def common_variant_selection(
     mt_path: str,
+    samples: list[str],
+    output_mt_path: str, 
+):
+    """Subset hail matrix table
+
+    Input:
+    joint call hail matrix table
+    set of samples for which we have scRNA-seq data
+
+    Output:
+    subsetted hail matrix table, containing only variants that:
+    1) are not ref-only, 2) biallelic, 3) meet QC filters, 4) are rare (MAF<5%)
+    """
+    # read hail matrix table object (WGS data)
+    init_batch()
+    mt = hl.read_matrix_table(mt_path)
+
+    # TODO: subset to relevant samples (at least before frequency filter)
+    mt = mt.filter_cols(samples)  # figure out syntax
+
+    # densify (can this be done at the end?)
+    mt = hl.experimental.densify(mt)  # is this definitely efficient to do on the whole thing once, vs on much smaller subset many times?
+
+    # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
+    mt = mt.filter_rows(  # check these filters!
+        (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
+        & (hl.len(mt.alleles) == 2)  # remove hom-ref
+        & (mt.n_unsplit_alleles == 2)  # biallelic
+        & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNVs
+    )
+
+    # filter rare variants only (MAF < 5%)
+    mt = hl.variant_qc(mt)
+    mt = mt.filter_rows(
+        (mt.variant_qc.AF[1] < 0.05) & (mt.variant_qc.AF[1] > 0)
+        | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
+    )
+    mt_path = output_path("nonref_qced_rare_variants.mt", "tmp")
+    mt = mt.checkpoint(mt_path, overwrite=True)  # checkpoint
+    logging.info(f"Number of rare variants (freq<5%): {mt.count()[0]}")
+
+    return mt_path
+
+
+# endregion GET_RELEVANT_VARIANTS
+
+
+# region GET_GENE_SPECIFIC_VARIANTS
+
+
+def get_promoter_variants(
+    mt_path: str,  # checkpoint from function above
     ht_path: str,
     gene_file: str,
     gene_name: str,
     window_size: int,
-    samples: list[str],
     # plink_output_prefix: str, # figure out how to deal with this
 ):
     """Subset hail matrix table
 
     Input:
+    mt_path: path to already subsetted hail matrix table
     gene_file: path to a tsv file with information on
     the chrom, start and end location of genes (rows)
 
     Output:
-    For retained variants, that are: 1) not ref-only, 2) biallelic,
-    3) meet QC filters, 4) rare (MAF<5%), 5) in promoter regions and
-    6) within 50kb up or down-stream of the gene body (or in the gene body itself)
+    For retained variants, that are: 1) in promoter regions and
+    2) within 50kb up or down-stream of the gene body (or in the gene body itself)
+    (on top of all filters done above)
+    
     returns:
     - Path to plink prefix for genotype files (plink format: .bed, .bim, .fam)
     - Path to hail table with variant (rows) stats for downstream analyses
     """
-    # TODO: subset to relevant samples (at least before frequency filter)
-    # read hail matrix table object (WGS data)
+    # read hail matrix table object (pre-filtered)
     init_batch()
     mt = hl.read_matrix_table(mt_path)
 
@@ -88,9 +140,6 @@ def get_promoter_variants(
     chrom = gene_df[gene_df["gene_name"] == gene_name]["chr"]
     # subset to chromosome
     mt = mt.filter_rows(mt.locus.contig == ("chr" + chrom))
-
-    # densify
-    mt = hl.experimental.densify(mt)  # never know when i should do this step
 
     # subset to window
     # get gene body position (start and end) and build interval
@@ -116,14 +165,6 @@ def get_promoter_variants(
     logging.info(f"Number of variants within interval: {mt.count()[0]}")
     logging.info(f"Number of variants in window: {mt.count()[0]}")
 
-    # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
-    mt = mt.filter_rows(  # check these filters!
-        (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
-        & (hl.len(mt.alleles) == 2)  # remove hom-ref
-        & (mt.n_unsplit_alleles == 2)  # biallelic
-        & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNVs
-    )
-
     # annotate using VEP
     vep_ht = hl.read_table(ht_path)
     mt = mt.annotate_rows(vep=vep_ht[mt.row_key].vep)
@@ -143,16 +184,6 @@ def get_promoter_variants(
         f"Number of rare variants (freq<5%) in promoter regions: {mt.count()[0]}"
     )
 
-    # filter rare variants only (MAF < 5%)
-    mt = hl.variant_qc(mt)
-    mt = mt.filter_rows(
-        (mt.variant_qc.AF[1] < 0.05) & (mt.variant_qc.AF[1] > 0)
-        | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
-    )
-    mt_path = output_path("rare_variants.mt", "tmp")
-    mt = mt.checkpoint(mt_path, overwrite=True)  # checkpoint
-    logging.info(f"Number of rare variants (freq<5%): {mt.count()[0]}")
-
     # export this as a Hail table for downstream analysis
     ht_filename = output_path(f"{gene_name}_rare_promoter_summary.ht")
     ht = mt.rows()
@@ -165,7 +196,7 @@ def get_promoter_variants(
     return [mt_path, ht_filename]
 
 
-# endregion GET_RELEVANT_VARIANTS
+# endregion GET_GENE_SPECIFIC_VARIANTS
 
 # region PREPARE_INPUT_FILES
 
@@ -447,7 +478,7 @@ def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[s
     expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep="\t")
     geneloc_df = pd.read_csv(AnyPath(geneloc_tsv_path), sep="\t")
 
-    # expression_df = filter_lowly_expressed_genes(expression_df)
+    # expression_df = filter_lowly_expressed_genes(expression_df) # I might add this in but not for now
     gene_ids = set(list(expression_df.columns.values)[1:])
 
     genes = set(geneloc_df.gene_name).intersection(gene_ids)
