@@ -120,7 +120,6 @@ def filter_variants(
 def get_promoter_variants(
     mt_path: str,  # checkpoint from function above
     ht_path: str,
-    # gene_file: str,  # 'scrna-seq/grch38_association_files/gene_location_files/GRCh38_geneloc_chr1.tsv'
     gene_dict: dict[str, str],  # ouput of make_gene_loc_dict
     window_size: int,
     plink_output_prefix: str,  # 'tob_wgs_rv/pseudobulk_rv_association/{celltype}/'
@@ -174,11 +173,6 @@ def get_promoter_variants(
     # annotate using VEP
     vep_ht = hl.read_table(ht_path)
     mt = mt.annotate_rows(vep=vep_ht[mt.row_key].vep)
-    mt_path = output_path(f"{gene_name}_vep_annotated.mt", "tmp")
-    mt = mt.checkpoint(
-        mt_path, overwrite=True
-    )  # add checkpoint to avoid repeat evaluation
-    logging.info(f"Number of QC-passing, biallelic SNPs: {mt.count()[0]}")
 
     # filter variants found to be in promoter regions
     mt = mt.filter_rows(
@@ -187,7 +181,7 @@ def get_promoter_variants(
     promoter_path = output_path(f"{gene_name}promoter_variants.mt", "tmp")
     mt = mt.checkpoint(promoter_path, overwrite=True)  # checkpoint
     logging.info(
-        f"Number of rare variants (freq<5%) in promoter regions: {mt.count()[0]}"
+        f"Number of rare (freq<5%) QC-passing, biallelic SNPs in promoter regions: {mt.count()[0]}"
     )
 
     # export this as a Hail table for downstream analysis
@@ -199,7 +193,7 @@ def get_promoter_variants(
     plink_path = output_path(f"{plink_output_prefix}/{gene_name}")
     export_plink(mt, plink_path, ind_id=mt.s)
 
-    return plink_path, ht_path
+    return plink_path
 
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
@@ -367,6 +361,7 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
     pv4 = omnibus_set_association(np.array([pv0, pv1]))
     pv5 = omnibus_set_association(np.array([pv0, pv2]))
     pv6 = omnibus_set_association(np.array([pv0, pv3]))
+    
     return np.array([pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6])
 
 
@@ -377,7 +372,7 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
 
 def run_gene_association(
     gene_name: str,  # 'VPREB3'
-    genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
+    genotype_mat_path: str,   # 'VPREB3_50K_window/SNVs.csv'
     phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
 ):
     """Run gene-set association test
@@ -475,7 +470,7 @@ def summarise_association_results(
 # region MISCELLANEOUS
 
 
-def make_gene_loc_dict(file):
+def make_gene_loc_dict(file) -> dict[str, dict]:
     from csv import DictReader
 
     gene_dict = {}
@@ -484,10 +479,11 @@ def make_gene_loc_dict(file):
         reader = DictReader(handle, delimiter="\t")
 
         for row in reader:
-            gene_dict[row["gene_name"]] = row["gene_name"]
-            gene_dict[row["chrom"]] = row["chr"]
-            gene_dict[row["gene_start"]] = row["start"]
-            gene_dict[row["gene_end"]] = row["end"]
+            gene_dict[row['gene_name']] = row
+            # gene_dict[row["gene_name"]] = row["gene_name"]
+            # gene_dict[row["chrom"]] = row["chr"]
+            # gene_dict[row["gene_start"]] = row["start"]
+            # gene_dict[row["gene_end"]] = row["end"]
 
     return gene_dict
 
@@ -662,7 +658,7 @@ config = get_config()
 @click.option("--celltypes")
 @click.option("--mt-path")
 @click.option("--anno-ht-path")
-@click.option("--fdr-threshold")
+# @click.option("--fdr-threshold")
 def main(
     sc_samples: list["str"],
     chromosomes: list[str],
@@ -671,7 +667,7 @@ def main(
     expression_files_prefix: str,  # 'scrna-seq/grch38_association_files'
     mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
-    fdr_threshold: float = 0.05,
+    # fdr_threshold: float = 0.05,
 ):
 
     sb = hb.ServiceBackend(
@@ -702,16 +698,19 @@ def main(
         )
 
         # submit a job for each gene (export genotypes to plink)
+        plink_paths = {}
         for gene in _genes:
             plink_job = batch.new_python_job(f"Create plink files for: {gene}")
             genotype_jobs.append(plink_job)
-            mt_path, _ = plink_job.call(
+            plink_path = plink_job.call(
                 get_promoter_variants,
-                gene_file=geneloc_tsv_path,
-                gene_name=gene,
+                mt_input_path=mt,  # ouput of filter_variants
+                anno_ht_path=anno_ht_path,   # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
+                gene_dict=geneloc_dict[gene],
                 window_size=50000,
-                plink_output_prefix=plink_output_prefix[gene],
+                # plink_output_prefix=plink_output_prefix[gene],
             )
+            plink_paths[gene] = plink_path  # syntax??
 
     for celltype in celltypes:
         expression_tsv_path = os.path.join(
@@ -726,7 +725,7 @@ def main(
         gene_prepare_jobs = []
         gene_run_jobs = []
         for gene in genes:
-            plink_output_prefix = plink_output_prefix[gene]
+            plink_output_prefix = plink_paths[gene]
             # prepare input files
             prepare_input_job = batch.new_python_job(f"Prepare inputs for: {gene}")
             gene_prepare_jobs.append(prepare_input_job)
