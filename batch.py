@@ -201,7 +201,7 @@ def get_promoter_variants(
 # region PREPARE_INPUT_FILES
 
 
-def prepare_input_files(  # consider splitting into multiple functions
+def prepare_input_files(
     gene_name: str,
     cell_type: str,
     genotype_file_bed: str,
@@ -483,7 +483,7 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
         reader = DictReader(handle, delimiter="\t")
 
         for row in reader:
-            gene_dict[row["gene_name"]] = row
+            gene_dict[row["gene_name"]] = row  # just this???
             # gene_dict[row["gene_name"]] = row["gene_name"]
             # gene_dict[row["chrom"]] = row["chr"]
             # gene_dict[row["gene_start"]] = row["start"]
@@ -530,8 +530,8 @@ def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[s
 
 
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
-# check whether it needs modifying
-def filter_lowly_expressed_genes(expression_df):
+# generalised to specify min pct samples as input
+def filter_lowly_expressed_genes(expression_df, min_pct=10):
     """Remove genes with low expression in all samples
     Input:
     expression_df: a data frame with samples as rows and genes as columns,
@@ -549,9 +549,9 @@ def filter_lowly_expressed_genes(expression_df):
     percent_expr_over_zero.index = expression_df.columns[1:]
 
     # Filter genes with less than 10 percent individuals with non-zero expression
-    atleast10percent = percent_expr_over_zero[(percent_expr_over_zero > 10)[0]]
+    atleastNpercent = percent_expr_over_zero[(percent_expr_over_zero > min_pct)[0]]
     sample_ids = expression_df["sampleid"]
-    expression_df = expression_df[atleast10percent.index]
+    expression_df = expression_df[atleastNpercent.index]
     expression_df.insert(loc=0, column="sampleid", value=sample_ids)
 
     return expression_df
@@ -755,7 +755,7 @@ def main(
     genotype_jobs = []
     for gene in genes_of_interest:
 
-        # final path for this gene - generate first
+        # final path for this gene - generate first (check syntax)
         plink_file = output_path(f"{plink_output_prefix}/{gene}")
         gene_dict[gene]["plink"] = plink_file
 
@@ -791,6 +791,7 @@ def main(
             plink_output_prefix = gene_dict[gene]["plink"]
             # prepare input files
             prepare_input_job = batch.new_python_job(f"Prepare inputs for: {gene}")
+            prepare_input_job.depends_on(*genotype_jobs)
             gene_prepare_jobs.append(prepare_input_job)
             pheno_path, geno_path, _ = prepare_input_job.call(
                 prepare_input_files,
@@ -805,6 +806,7 @@ def main(
             )
             # run association
             run_job = batch.new_python_job(f"Run association for: {gene}")
+            run_job.depends_on(prepare_input_job)
             run_job.image(CELLREGMAP_IMAGE)
             gene_run_jobs.append(run_job)
             pv_file = run_job.call(
@@ -813,25 +815,20 @@ def main(
                 genotype_mat_path=geno_path,
                 phenotype_vec_path=pheno_path,
             )
+            # save pv filename as gene attribute
             gene_dict[gene]["pv_file"] = pv_file
+
         # combine all p-values across all chromosomes, genes (per cell type)
         summarise_job = batch.new_python_job(f"Summarise all results for {celltype}")
+        summarise_job.depends_on(*gene_run_jobs)
         pv_all = summarise_job.call(
-            summarise_association_results, pv_dfs=pv_file_paths
+            summarise_association_results, pv_dfs=[gene_dict[gene]["pv_file"] for gene in genes]
         )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
         pv_filename = AnyPath(output_path(f"{celltype}_all_pvalues.csv"))
         with pv_filename.open("w") as pf:
             pv_all.to_csv(pf, index=False)
 
-    # dependencies between jobs
-    prepare_input_job.depends_on(*genotype_jobs)
-
-    # this only depends the corresponding job (for that same gene)??
-    # do this inside loop??
-    run_job.depends_on(prepare_input_job)
-
-    summarise_job.depends_on(*gene_run_jobs)
 
     # determine for each chromosome
 
