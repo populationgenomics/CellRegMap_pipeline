@@ -117,7 +117,7 @@ def filter_variants(
 def get_promoter_variants(
     mt_path: str,  # checkpoint from function above
     ht_path: str,
-    gene_file: str,
+    gene_file: str,  # 'scrna-seq/grch38_association_files/gene_location_files/GRCh38_geneloc_chr1.tsv'
     gene_name: str,
     window_size: int,
     # plink_output_prefix: str, # figure out how to deal with this
@@ -652,7 +652,7 @@ def main(
     chromosomes: list[str],
     genes: list[str],
     celltypes: list[str],
-    expression_files_prefix: str,
+    expression_files_prefix: str,  # 'scrna-seq/grch38_association_files'
     mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     fdr_threshold: float = 0.05,
