@@ -22,8 +22,9 @@ For real data, the pipeline also needs to use Hail Query to query genetic varian
 * (Python) scripts to generate both real and simulated input files to feed to the WDL workflow
 
 ## Hail Batch workflow
-Single [python script](batch.py), key steps (maybe make into separately called functions?):
-* given one gene and the full WGS hail matrix table, selects relevant variants and export as plink files
+Single [python script](batch.py), key steps (implemented as distinct functions):
+* preselection of full WGS hail matrix table to includ only biallelic (n alleles=2) rare (freq<5%) SNVs
+* given one gene and the prefiltered WGS hail matrix table, selects relevant variants and export as plink files
 * plink files are read in and turned into genotype input files, other input files (phenotype, kinship) are processed
 * genes are parallelised into chunks
 * CellRegMap-RV various tests are run (each chunk independently)
