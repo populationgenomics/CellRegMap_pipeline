@@ -11,6 +11,7 @@ Hail Batch workflow for the rare-variant association analysis, including:
 
 # import python modules # is there a specific order, rationale for grouping imports??
 import os
+import re
 
 import click
 import logging
@@ -27,7 +28,7 @@ from cpg_utils.hail_batch import (
 
 import numpy as np
 import pandas as pd
-import xarray as xr  
+import xarray as xr
 
 from limix.qc import quantile_gaussianize
 from numpy import eye, ones
@@ -54,9 +55,13 @@ logging.basicConfig(
 )  # consider removing some print statements?
 
 DEFAULT_JOINT_CALL_MT = dataset_path("mt/v7.mt")
-DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # atm VEP only
+DEFAULT_ANNOTATION_HT = dataset_path(
+    "tob_wgs_vep/104/vep104.3_GRCh38.ht"
+)  # atm VEP only
 
-CELLREGMAP_IMAGE = 'australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3'  # check
+CELLREGMAP_IMAGE = (
+    "australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3"  # check
+)
 
 # region SUBSET_VARIANTS
 
@@ -84,7 +89,7 @@ def filter_variants(
     mt = mt.filter_cols(hl.set(samples).contains(mt.s))
 
     # densify (can this be done at the end?)
-    mt = hl.experimental.densify(mt)  
+    mt = hl.experimental.densify(mt)
 
     # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
     mt = mt.filter_rows(  # check these filters!
@@ -117,10 +122,10 @@ def filter_variants(
 def get_promoter_variants(
     mt_path: str,  # checkpoint from function above
     ht_path: str,
-    gene_file: str,  # 'scrna-seq/grch38_association_files/gene_location_files/GRCh38_geneloc_chr1.tsv'
-    gene_name: str,
+    # gene_file: str,  # 'scrna-seq/grch38_association_files/gene_location_files/GRCh38_geneloc_chr1.tsv'
+    gene_dict: dict[str],  # ouput of make_gene_loc_dict
     window_size: int,
-    plink_output_prefix: str, # figure out how to deal with this
+    plink_output_prefix: str,  # 'tob_wgs_rv/pseudobulk_rv_association/{celltype}/'
 ):
     """Subset hail matrix table
 
@@ -142,18 +147,22 @@ def get_promoter_variants(
     init_batch()
     mt = hl.read_matrix_table(mt_path)
 
+    gene_name = gene_dict["gene_name"]
     # get relevant chromosome
-    gene_df = pd.read_csv(AnyPath(dataset_path(gene_file)), sep="\t", index_col=0)
-    chrom = gene_df[gene_df["gene_name"] == gene_name]["chr"]
+    # gene_df = pd.read_csv(AnyPath(dataset_path(gene_file)), sep="\t", index_col=0)
+    # chrom = gene_df[gene_df["gene_name"] == gene_name]["chr"]
+    chrom = gene_dict["chrom"]
 
     # subset to window
     # get gene body position (start and end) and build interval
-    interval_start = int(gene_df[gene_df["gene_name"] == gene_name]["start"]) - int(
-        window_size
-    )
-    interval_end = int(gene_df[gene_df["gene_name"] == gene_name]["end"]) + int(
-        window_size
-    )
+    interval_start = int(gene_dict["gene-start"]) - int(window_size)
+    interval_end = int(gene_dict["gene-end"]) + int(window_size)
+    # interval_start = int(gene_df[gene_df["gene_name"] == gene_name]["start"]) - int(
+    #     window_size
+    # )
+    # interval_end = int(gene_df[gene_df["gene_name"] == gene_name]["end"]) + int(
+    #     window_size
+    # )
     # clip to chromosome boundaries
     left_boundary = max(1, interval_start)
     right_boundary = min(
@@ -193,15 +202,15 @@ def get_promoter_variants(
     )
 
     # export this as a Hail table for downstream analysis
-    ht_filename = output_path(f"{gene_name}_rare_promoter_summary.ht")
+    ht_path = output_path(f"{gene_name}_rare_promoter_summary.ht")
     ht = mt.rows()
-    ht.write(ht_filename)
+    ht.write(ht_path)
 
     # export MT object to PLINK (promoter variants)
-    plink_path = output_path(f"plink_files/{gene_name}_rare_promoter")
+    plink_path = output_path(f"{plink_output_prefix}/{gene_name}")
     export_plink(mt, plink_path, ind_id=mt.s)
 
-    return plink_path, ht_filename
+    return plink_path, ht_path
 
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
@@ -476,21 +485,22 @@ def summarise_association_results(
 
 # region MISCELLANEOUS
 
+
 def make_gene_loc_dict(file):
     from csv import DictReader
 
     gene_dict = {}
 
     with open(file) as handle:
-        reader = DictReader(handle, delimiter='\t')
+        reader = DictReader(handle, delimiter="\t")
 
         for row in reader:
-            gene_dict[row['gene_name']] = row['gene_name']
-            gene_dict[row['chrom']] = row['chr']
-            gene_dict[row['gene_start']] = row['start']
-            gene_dict[row['gene_end']] = row['end']
+            gene_dict[row["gene_name"]] = row["gene_name"]
+            gene_dict[row["chrom"]] = row["chr"]
+            gene_dict[row["gene_start"]] = row["start"]
+            gene_dict[row["gene_end"]] = row["end"]
 
-    return  gene_dict
+    return gene_dict
 
 
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
@@ -527,6 +537,7 @@ def remove_sc_outliers(df):
     df = df[-df.sampleid.isin(outliers)]
 
     return df
+
 
 def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
     """
@@ -650,6 +661,7 @@ def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
 
     return qv
 
+
 # endregion MISCELLANEOUS
 
 config = get_config()
@@ -718,54 +730,59 @@ def main(
         )
 
         genes = extract_genes(expression_files_prefix)
-
+        pv_file_paths = []
         # maybe this makes no sense (to loop over genes twice)
         # but I also didn't want to re-select variants for the same gene repeatedly
         # for every new cell type?
         gene_prepare_jobs = []
         gene_run_jobs = []
         for gene in genes:
-            plink_output_prefix=plink_output_prefix[gene]
-            # do I need a new job for each task??
+            plink_output_prefix = plink_output_prefix[gene]
+            # prepare input files
             prepare_input_job = batch.new_python_job(f"Prepare inputs for: {gene}")
             gene_prepare_jobs.append(prepare_input_job)
             pheno_path, geno_path, _ = prepare_input_job.call(
                 prepare_input_files,
                 gene_name=gene,
                 cell_type=celltype,
-                genotype_file_bed=plink_output_prefix+".bed",
-                genotype_file_bim=plink_output_prefix+".bim",
-                genotype_file_fam=plink_output_prefix+".fam",
+                genotype_file_bed=plink_output_prefix + ".bed",
+                genotype_file_bim=plink_output_prefix + ".bim",
+                genotype_file_fam=plink_output_prefix + ".fam",
                 phenotype_file=expression_tsv_path,
                 kinship_file=None,
                 sample_mapping_file=sample_mapping_file,
             )
+            # run association
             run_job = batch.new_python_job(f"Run association for: {gene}")
             run_job.image(CELLREGMAP_IMAGE)
             gene_run_jobs.append(run_job)
-            pv_file[gene] = run_job.call(
+            pv_file = run_job.call(
                 run_gene_association,
                 gene_name=gene,
                 genotype_mat_path=geno_path,
-                phenotype_vec_path=pheno_path
+                phenotype_vec_path=pheno_path,
             )
             pv_file_paths.append(pv_file)
         # combine all p-values across all chromosomes, genes (per cell type)
         summarise_job = batch.new_python_job(f"Summarise all results for {celltype}")
         pv_all = summarise_job.call(
-            summarise_association_results, 
-            pv_dfs = pv_file_paths)  # no idea how do to this (get previous job's dataframes and add them in a list)
+            summarise_association_results, pv_dfs=pv_file_paths
+        )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
-
+        pv_filename = AnyPath(output_path(f"{celltype}_all_pvalues.csv"))
+        with pv_filename.open("w") as pf:
+            pv_all.to_csv(pf, index=False)
 
     # dependencies between jobs
     prepare_input_job.depends_on(*genotype_jobs)
-    run_job.depends_on(prepare_input_job)  # this only depends the corresponding job (for that same gene)??
+    run_job.depends_on(
+        prepare_input_job
+    )  # this only depends the corresponding job (for that same gene)??
     summarise_job.depends_on(*gene_run_jobs)
 
     # determine for each chromosome
 
-    # below is pseudocode from @illusional I don't understand but don't want to delete 
+    # below is pseudocode from @illusional I don't understand but don't want to delete
 
     # plink_job_reference_and_outputs_for_gene: dict[str, tuple[hb.Job, str]] = {}
     # if you know the output, you need to wait for the actual job that processes it
