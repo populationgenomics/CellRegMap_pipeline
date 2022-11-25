@@ -82,9 +82,7 @@ def filter_variants(
     mt = mt.filter_cols(hl.set(samples).contains(mt.s))
 
     # densify (can this be done at the end?)
-    mt = hl.experimental.densify(
-        mt
-    )  # is this definitely efficient to do on the whole thing once, vs on much smaller subset many times?
+    mt = hl.experimental.densify(mt)  
 
     # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
     mt = mt.filter_rows(  # check these filters!
@@ -120,7 +118,7 @@ def get_promoter_variants(
     gene_file: str,  # 'scrna-seq/grch38_association_files/gene_location_files/GRCh38_geneloc_chr1.tsv'
     gene_name: str,
     window_size: int,
-    # plink_output_prefix: str, # figure out how to deal with this
+    plink_output_prefix: str, # figure out how to deal with this
 ):
     """Subset hail matrix table
 
@@ -145,8 +143,6 @@ def get_promoter_variants(
     # get relevant chromosome
     gene_df = pd.read_csv(AnyPath(dataset_path(gene_file)), sep="\t", index_col=0)
     chrom = gene_df[gene_df["gene_name"] == gene_name]["chr"]
-    # # subset to chromosome
-    # mt = mt.filter_rows(mt.locus.contig == ("chr" + chrom))
 
     # subset to window
     # get gene body position (start and end) and build interval
@@ -188,7 +184,7 @@ def get_promoter_variants(
     mt = mt.filter_rows(
         mt.vep.regulatory_feature_consequences["biotype"].contains("promoter")
     )
-    promoter_path = output_path("promoter_variants.mt", "tmp")
+    promoter_path = output_path(f"{gene_name}promoter_variants.mt", "tmp")
     mt = mt.checkpoint(promoter_path, overwrite=True)  # checkpoint
     logging.info(
         f"Number of rare variants (freq<5%) in promoter regions: {mt.count()[0]}"
@@ -203,7 +199,7 @@ def get_promoter_variants(
     plink_path = output_path(f"plink_files/{gene_name}_rare_promoter")
     export_plink(mt, plink_path, ind_id=mt.s)
 
-    return mt_path, ht_filename
+    return plink_path, ht_filename
 
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
@@ -481,15 +477,18 @@ def summarise_association_results(
 def make_gene_loc_dict(file):
     from csv import DictReader
 
+    gene_dict = {}
+
     with open(file) as handle:
         reader = DictReader(handle, delimiter='\t')
 
         for row in reader:
-            gene = row['gene_name']
-            chrom = row['chr']
-            gene_start = row['start']
-            gene_end = row['end']
-    return 
+            gene_dict[row['gene_name']] = row['gene_name']
+            gene_dict[row['chrom']] = row['chr']
+            gene_dict[row['gene_start']] = row['start']
+            gene_dict[row['gene_end']] = row['end']
+
+    return  gene_dict
 
 
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
@@ -659,7 +658,7 @@ config = get_config()
 @click.option("--genes")
 @click.option("--celltypes")
 @click.option("--mt-path")
-@click.option("--anno_ht_path")
+@click.option("--anno-ht-path")
 @click.option("--fdr-threshold")
 def main(
     sc_samples: list["str"],
@@ -680,6 +679,9 @@ def main(
 
     mt = filter_variants(mt_path=mt_path, samples=sc_samples)
 
+    # step1: for each gene, extract relevant variants
+    genotype_jobs = []
+
     # loop over chromosomes
     for chromosome in chromosomes:
         geneloc_tsv_path = os.path.join(
@@ -687,6 +689,7 @@ def main(
             "gene_location_files",
             f"GRCh38_geneloc_chr{chromosome}.tsv",
         )
+        geneloc_dict = make_gene_loc_dict(geneloc_tsv_path)
 
         # find genes in that chromosome
         # loop over genes
@@ -697,8 +700,9 @@ def main(
 
         # submit a job for each gene (export genotypes to plink)
         for gene in _genes:
-            job = batch.new_python_job(f"Preprocess: {gene}")
-            mt_path, _ = job.call(
+            plink_job = batch.new_python_job(f"Create plink files for: {gene}")
+            genotype_jobs.append(plink_job)
+            mt_path, _ = plink_job.call(
                 get_promoter_variants,
                 gene_file=geneloc_tsv_path,
                 gene_name=gene,
@@ -716,10 +720,14 @@ def main(
         # maybe this makes no sense (to loop over genes twice)
         # but I also didn't want to re-select variants for the same gene repeatedly
         # for every new cell type?
+        gene_prepare_jobs = []
+        gene_run_jobs = []
         for gene in genes:
             plink_output_prefix=plink_output_prefix[gene]
             # do I need a new job for each task??
-            pheno_path, geno_path, _ = job.call(
+            prepare_input_job = batch.new_python_job(f"Prepare inputs for: {gene}")
+            gene_prepare_jobs.append(prepare_input_job)
+            pheno_path, geno_path, _ = prepare_input_job.call(
                 prepare_input_files,
                 gene_name=gene,
                 cell_type=celltype,
@@ -730,7 +738,9 @@ def main(
                 kinship_file=None,
                 sample_mapping_file=sample_mapping_file,
             )
-            pv_file = job.call(
+            run_job = batch.new_python_job(f"Run association for: {gene}")
+            gene_run_jobs.append(run_job)
+            pv_file[gene] = run_job.call(
                 run_gene_association,
                 gene_name=gene,
                 genotype_mat_path=geno_path,
@@ -738,9 +748,17 @@ def main(
             )
             pv_file_paths.append(pv_file)
         # combine all p-values across all chromosomes, genes (per cell type)
-        pv_all = job.call(
+        summarise_job = batch.new_python_job(f"Summarise all results for {celltype}")
+        pv_all = summarise_job.call(
             summarise_association_results, 
             pv_dfs = pv_file_paths)  # no idea how do to this (get previous job's dataframes and add them in a list)
+
+
+
+    # dependencies between jobs
+    prepare_input_job.depends_on(*genotype_jobs)
+    run_job.depends_on(prepare_input_job)  # this only depends the corresponding job (for that same gene)??
+    summarise_job.depends_on(*gene_run_jobs)
 
     # determine for each chromosome
 
