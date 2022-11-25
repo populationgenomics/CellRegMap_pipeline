@@ -471,6 +471,10 @@ def summarise_association_results(
 
 
 def make_gene_loc_dict(file) -> dict[str, dict]:
+    """
+    Turn gene information into a dictionary
+    to avoid opening this file for every gene
+    """
     from csv import DictReader
 
     gene_dict = {}
@@ -486,6 +490,19 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
             # gene_dict[row["gene_end"]] = row["end"]
 
     return gene_dict
+
+
+# can probably be merged with below
+def extract_genes(gene_list, expression_tsv_path) -> list[str]:
+    """
+    Takes a list of all genes and subsets to only those
+    present in the expression file of interest
+    """
+    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep="\t")
+    expression_df = filter_lowly_expressed_genes(expression_df)
+    gene_ids = set(list(expression_df.columns.values)[1:])
+    genes = set(gene_list).intersection(gene_ids)
+    return list(sorted(genes))
 
 
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
@@ -510,6 +527,34 @@ def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[s
 
     genes = set(geneloc_df.gene_name).intersection(gene_ids)
     return list(sorted(genes))
+
+
+# copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
+# check whether it needs modifying
+def filter_lowly_expressed_genes(expression_df):
+    """Remove genes with low expression in all samples
+    Input:
+    expression_df: a data frame with samples as rows and genes as columns,
+    containing normalised expression values (i.e., the average number of molecules
+    for each gene detected in each person).
+    Returns:
+    A filtered version of the input data frame, after removing columns (genes)
+    with 0 values in more than 10% of the rows (samples).
+    """
+    # Remove genes with 0 expression in all samples
+    expression_df = expression_df.loc[:, (expression_df != 0).any(axis=0)]
+    genes_not_equal_zero = expression_df.iloc[:, 1:].values != 0
+    n_expr_over_zero = pd.DataFrame(genes_not_equal_zero.sum(axis=0))
+    percent_expr_over_zero = (n_expr_over_zero / len(expression_df.index)) * 100
+    percent_expr_over_zero.index = expression_df.columns[1:]
+
+    # Filter genes with less than 10 percent individuals with non-zero expression
+    atleast10percent = percent_expr_over_zero[(percent_expr_over_zero > 10)[0]]
+    sample_ids = expression_df["sampleid"]
+    expression_df = expression_df[atleast10percent.index]
+    expression_df.insert(loc=0, column="sampleid", value=sample_ids)
+
+    return expression_df
 
 
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
@@ -680,56 +725,70 @@ def main(
     )
     batch = hb.Batch("CellRegMap pipeline", backend=sb)
 
-    mt = filter_variants(mt_path=mt_path, samples=sc_samples)
+    # filter to QC-passing, rare, biallelic variants
+    filter_job = batch.new_python_job(name="MT filter job")
+    output_mt_path = output_path("tob_wgs_rv/densified_rv_only.mt")
+    filter_job.call(
+        filter_variants,
+        mt_path=mt_path,
+        samples=sc_samples,
+        output_mt_path=output_mt_path,
+    )
 
-    # step1: for each gene, extract relevant variants
-    genotype_jobs = []
-
-    # loop over chromosomes
+    # grab all relevant genes across all chromosomes
+    # simpler if gene details are condensed to one file
+    gene_dict: dict[str, dict] = {}
     for chromosome in chromosomes:
         geneloc_tsv_path = os.path.join(
             expression_files_prefix,
             "gene_location_files",
             f"GRCh38_geneloc_chr{chromosome}.tsv",
         )
-        geneloc_dict = make_gene_loc_dict(geneloc_tsv_path)
 
-        # find genes in that chromosome
-        # loop over genes
-        _genes = genes or get_genes_for_chromosome(
-            expression_tsv_path=expression_tsv_path,
-            geneloc_tsv_path=geneloc_tsv_path,
+        gene_dict = make_gene_loc_dict(geneloc_tsv_path)
+
+    # isolate to the genes we're interested in
+    genes_of_interest = genes or list[gene_dict.keys()]
+
+    # for each gene, extract relevant variants
+    # submit a job for each gene (export genotypes to plink)
+    genotype_jobs = []
+    for gene in genes_of_interest:
+
+        # final path for this gene - generate first
+        plink_file = output_path(f"{plink_output_prefix}/{gene}")
+        gene_dict[gene]["plink"] = plink_file
+
+        # if the plink output exists, don't regenerate it
+        if to_path(plink_file).exists():
+            continue
+
+        plink_job = batch.new_python_job(f"Create plink files for: {gene}")
+        plink_job.depends_on(filter_job)
+        plink_job.call(
+            get_promoter_variants,
+            mt_path=output_mt_path,
+            gene_name=gene,
+            gene_details=gene_dict[gene],
+            window_size=50000,
+            plink_file=plink_file,
         )
+        genotype_jobs.append(plink_job)
 
-        # submit a job for each gene (export genotypes to plink)
-        plink_paths = {}
-        for gene in _genes:
-            plink_job = batch.new_python_job(f"Create plink files for: {gene}")
-            genotype_jobs.append(plink_job)
-            plink_path = plink_job.call(
-                get_promoter_variants,
-                mt_input_path=mt,  # ouput of filter_variants
-                anno_ht_path=anno_ht_path,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
-                gene_dict=geneloc_dict[gene],
-                window_size=50000,
-                # plink_output_prefix=plink_output_prefix[gene],
-            )
-            plink_paths[gene] = plink_path  # syntax??
-
+    # the next phase will be done across all cell types
     for celltype in celltypes:
         expression_tsv_path = os.path.join(
             expression_files_prefix, "expression_files", f"{celltype}_expression.tsv"
         )
 
-        genes = extract_genes(expression_files_prefix)
-        pv_file_paths = []
+        genes = extract_genes(expression_files_prefix, genes_of_interest)
         # maybe this makes no sense (to loop over genes twice)
         # but I also didn't want to re-select variants for the same gene repeatedly
         # for every new cell type?
         gene_prepare_jobs = []
         gene_run_jobs = []
         for gene in genes:
-            plink_output_prefix = plink_paths[gene]
+            plink_output_prefix = gene_dict[gene]["plink"]
             # prepare input files
             prepare_input_job = batch.new_python_job(f"Prepare inputs for: {gene}")
             gene_prepare_jobs.append(prepare_input_job)
@@ -754,7 +813,7 @@ def main(
                 genotype_mat_path=geno_path,
                 phenotype_vec_path=pheno_path,
             )
-            pv_file_paths.append(pv_file)
+            gene_dict[gene]["pv_file"] = pv_file
         # combine all p-values across all chromosomes, genes (per cell type)
         summarise_job = batch.new_python_job(f"Summarise all results for {celltype}")
         pv_all = summarise_job.call(
