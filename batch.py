@@ -79,7 +79,7 @@ def filter_variants(
     mt = hl.read_matrix_table(mt_path)
 
     # subset to relevant samples (samples we have scRNA-seq data for)
-    mt = mt.filter_cols(samples)  # figure out syntax
+    mt = mt.filter_cols(hl.set(samples).contains(mt.s))
 
     # densify (can this be done at the end?)
     mt = hl.experimental.densify(
