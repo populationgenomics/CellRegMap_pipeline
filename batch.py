@@ -680,56 +680,63 @@ def main(
 
     mt = filter_variants(mt_path=mt_path, samples=sc_samples)
 
+    # loop over chromosomes
+    for chromosome in chromosomes:
+        geneloc_tsv_path = os.path.join(
+            expression_files_prefix,
+            "gene_location_files",
+            f"GRCh38_geneloc_chr{chromosome}.tsv",
+        )
+
+        # find genes in that chromosome
+        # loop over genes
+        _genes = genes or get_genes_for_chromosome(
+            expression_tsv_path=expression_tsv_path,
+            geneloc_tsv_path=geneloc_tsv_path,
+        )
+
+        # submit a job for each gene (export genotypes to plink)
+        for gene in _genes:
+            job = batch.new_python_job(f"Preprocess: {gene}")
+            mt_path, _ = job.call(
+                get_promoter_variants,
+                gene_file=geneloc_tsv_path,
+                gene_name=gene,
+                window_size=50000,
+                plink_output_prefix=plink_output_prefix[gene],
+            )
+
     for celltype in celltypes:
         expression_tsv_path = os.path.join(
             expression_files_prefix, "expression_files", f"{celltype}_expression.tsv"
         )
-        pv_file_paths = list()
 
-        # loop over chromosomes
-        for chromosome in chromosomes:
-            geneloc_tsv_path = os.path.join(
-                expression_files_prefix,
-                "gene_location_files",
-                f"GRCh38_geneloc_chr{chromosome}.tsv",
+        genes = extract_genes(expression_files_prefix)
+
+        # maybe this makes no sense (to loop over genes twice)
+        # but I also didn't want to re-select variants for the same gene repeatedly
+        # for every new cell type?
+        for gene in genes:
+            plink_output_prefix=plink_output_prefix[gene]
+            # do I need a new job for each task??
+            pheno_path, geno_path, _ = job.call(
+                prepare_input_files,
+                gene_name=gene,
+                cell_type=celltype,
+                genotype_file_bed=plink_output_prefix+".bed",
+                genotype_file_bim=plink_output_prefix+".bim",
+                genotype_file_fam=plink_output_prefix+".fam",
+                phenotype_file=expression_tsv_path,
+                kinship_file=None,
+                sample_mapping_file=sample_mapping_file,
             )
-
-            # find genes in that chromosome
-            # loop over genes
-            _genes = genes or get_genes_for_chromosome(
-                expression_tsv_path=expression_tsv_path,
-                geneloc_tsv_path=geneloc_tsv_path,
+            pv_file = job.call(
+                run_gene_association,
+                gene_name=gene,
+                genotype_mat_path=geno_path,
+                phenotype_vec_path=pheno_path
             )
-
-            # submit a job for each gene
-            for gene in _genes:
-                job = batch.new_python_job(f"Preprocess: {gene}")
-                mt_path, _ = job.call(
-                    get_promoter_variants,
-                    gene_file=geneloc_tsv_path,
-                    gene_name=gene,
-                    window_size=50000,
-                    plink_output_prefix=plink_output_prefix,
-                )
-                # do I need a new job for each task??
-                pheno_path, geno_path, _ = job.call(
-                    prepare_input_files,
-                    gene_name=gene,
-                    cell_type=celltype,
-                    genotype_file_bed=plink_output_prefix+".bed",
-                    genotype_file_bim=plink_output_prefix+".bim",
-                    genotype_file_fam=plink_output_prefix+".fam",
-                    phenotype_file=expression_tsv_path,
-                    kinship_file=None,
-                    sample_mapping_file=sample_mapping_file,
-                )
-                pv_file = job.call(
-                    run_gene_association,
-                    gene_name=gene,
-                    genotype_mat_path=geno_path,
-                    phenotype_vec_path=pheno_path
-                )
-                pv_file_paths.append(pv_file)
+            pv_file_paths.append(pv_file)
         # combine all p-values across all chromosomes, genes (per cell type)
         pv_all = job.call(
             summarise_association_results, 
