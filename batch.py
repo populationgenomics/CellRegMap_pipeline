@@ -361,7 +361,7 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
     pv4 = omnibus_set_association(np.array([pv0, pv1]))
     pv5 = omnibus_set_association(np.array([pv0, pv2]))
     pv6 = omnibus_set_association(np.array([pv0, pv3]))
-    
+
     return np.array([pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6])
 
 
@@ -372,7 +372,7 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
 
 def run_gene_association(
     gene_name: str,  # 'VPREB3'
-    genotype_mat_path: str,   # 'VPREB3_50K_window/SNVs.csv'
+    genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
     phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
 ):
     """Run gene-set association test
@@ -479,7 +479,7 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
         reader = DictReader(handle, delimiter="\t")
 
         for row in reader:
-            gene_dict[row['gene_name']] = row
+            gene_dict[row["gene_name"]] = row
             # gene_dict[row["gene_name"]] = row["gene_name"]
             # gene_dict[row["chrom"]] = row["chr"]
             # gene_dict[row["gene_start"]] = row["start"]
@@ -653,9 +653,12 @@ config = get_config()
 
 
 @click.command()
+@click.option("--sc-samples")
 @click.option("--chromosomes")
 @click.option("--genes")
 @click.option("--celltypes")
+@click.option("--expression-file-prefix")
+@click.option("--sample-mapping-file")
 @click.option("--mt-path")
 @click.option("--anno-ht-path")
 # @click.option("--fdr-threshold")
@@ -665,6 +668,7 @@ def main(
     genes: list[str],
     celltypes: list[str],
     expression_files_prefix: str,  # 'scrna-seq/grch38_association_files'
+    sample_mapping_file: str,
     mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     # fdr_threshold: float = 0.05,
@@ -705,7 +709,7 @@ def main(
             plink_path = plink_job.call(
                 get_promoter_variants,
                 mt_input_path=mt,  # ouput of filter_variants
-                anno_ht_path=anno_ht_path,   # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
+                anno_ht_path=anno_ht_path,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
                 gene_dict=geneloc_dict[gene],
                 window_size=50000,
                 # plink_output_prefix=plink_output_prefix[gene],
