@@ -60,16 +60,16 @@ DEFAULT_ANNOTATION_HT = dataset_path(
 )  # atm VEP only
 
 CELLREGMAP_IMAGE = (
-    "australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3"  # check
+    "australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3"
 )
 
 # region SUBSET_VARIANTS
 
 
 def filter_variants(
-    mt_path: str,
+    mt_path: str,  # "mt/v7.mt"
     samples: list[str],
-    output_mt_path: str,
+    output_mt_path: str,  # "tob_wgs_rv/densified_rv_only.mt"
 ):
     """Subset hail matrix table
 
@@ -105,12 +105,10 @@ def filter_variants(
         (mt.variant_qc.AF[1] < 0.05) & (mt.variant_qc.AF[1] > 0)
         | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
     )
-    mt = mt.checkpoint(output_mt_path, overwrite=True)  # syntax???
+    mt = mt.checkpoint(output_mt_path, overwrite=True)
     logging.info(
         f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}"
     )
-
-    return output_mt_path  # both input and output??
 
 
 # endregion SUBSET_VARIANTS
@@ -123,7 +121,7 @@ def get_promoter_variants(
     mt_path: str,  # checkpoint from function above
     ht_path: str,
     # gene_file: str,  # 'scrna-seq/grch38_association_files/gene_location_files/GRCh38_geneloc_chr1.tsv'
-    gene_dict: dict[str],  # ouput of make_gene_loc_dict
+    gene_dict: dict[str, str],  # ouput of make_gene_loc_dict
     window_size: int,
     plink_output_prefix: str,  # 'tob_wgs_rv/pseudobulk_rv_association/{celltype}/'
 ):
@@ -148,28 +146,19 @@ def get_promoter_variants(
     mt = hl.read_matrix_table(mt_path)
 
     gene_name = gene_dict["gene_name"]
+
     # get relevant chromosome
-    # gene_df = pd.read_csv(AnyPath(dataset_path(gene_file)), sep="\t", index_col=0)
-    # chrom = gene_df[gene_df["gene_name"] == gene_name]["chr"]
     chrom = gene_dict["chrom"]
 
     # subset to window
     # get gene body position (start and end) and build interval
-    interval_start = int(gene_dict["gene-start"]) - int(window_size)
-    interval_end = int(gene_dict["gene-end"]) + int(window_size)
-    # interval_start = int(gene_df[gene_df["gene_name"] == gene_name]["start"]) - int(
-    #     window_size
-    # )
-    # interval_end = int(gene_df[gene_df["gene_name"] == gene_name]["end"]) + int(
-    #     window_size
-    # )
-    # clip to chromosome boundaries
-    left_boundary = max(1, interval_start)
+    left_boundary = max(1, int(gene_dict["gene-start"]) - window_size)
     right_boundary = min(
-        interval_end, hl.get_reference("GRCh38").lengths[f"chr{chrom}"]
+        int(gene_dict["gene-end"]) + window_size,
+        hl.get_reference("GRCh38").lengths[f"chr{chrom}"],
     )
     # get gene-specific genomic interval
-    gene_interval = f"chr{chrom}:{left_boundary}-{right_boundary}"
+    gene_interval = f"{chrom}:{left_boundary}-{right_boundary}"
     logging.info(f"Interval considered: {gene_interval}")  # 'chr22:23219960-23348287'
 
     # include variants up to {window size} up- and downstream
@@ -775,9 +764,11 @@ def main(
 
     # dependencies between jobs
     prepare_input_job.depends_on(*genotype_jobs)
-    run_job.depends_on(
-        prepare_input_job
-    )  # this only depends the corresponding job (for that same gene)??
+
+    # this only depends the corresponding job (for that same gene)??
+    # do this inside loop??
+    run_job.depends_on(prepare_input_job)
+
     summarise_job.depends_on(*gene_run_jobs)
 
     # determine for each chromosome
