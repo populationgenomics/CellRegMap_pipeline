@@ -478,6 +478,20 @@ def summarise_association_results(
 
 # region MISCELLANEOUS
 
+def make_gene_loc_dict(file):
+    from csv import DictReader
+
+    with open(file) as handle:
+        reader = DictReader(handle, delimiter='\t')
+
+        for row in reader:
+            gene = row['gene_name']
+            chrom = row['chr']
+            gene_start = row['start']
+            gene_end = row['end']
+    return 
+
+
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
 # check whether it needs modifying
 def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[str]:
