@@ -27,18 +27,22 @@ from cpg_utils.hail_batch import (
 
 import numpy as np
 import pandas as pd
-import xarray as xr  # what am I doing here?? install this in a new image? build an image within this??
+import xarray as xr  
 
 from limix.qc import quantile_gaussianize
 from numpy import eye, ones
 from pandas_plink import read_plink1_bin
 from scipy.stats import shapiro
 
+# qvalue imports
+import scipy as sp
+from scipy import interpolate
+
 import hail as hl
 import hailtop.batch as hb
 from hail.methods import export_plink
 
-from cellregmap import (  # figure out how to import this (in image?)
+from cellregmap import (  # figure out how to import this from github
     run_gene_set_association,
     run_burden_association,
     omnibus_set_association,
@@ -50,7 +54,7 @@ logging.basicConfig(
 )  # consider removing some print statements?
 
 DEFAULT_JOINT_CALL_MT = dataset_path("mt/v7.mt")
-DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # atm VEP
+DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # atm VEP only
 
 # region SUBSET_VARIANTS
 
@@ -446,7 +450,6 @@ def run_gene_association(
 
 def summarise_association_results(
     pv_dfs: list[str],
-    fdrThreshold: int = 1,
 ):
     """Summarise results
 
@@ -457,10 +460,18 @@ def summarise_association_results(
     one matrix (what format??) per cell type,
     combining results across all genes in a single file
     """
-    for pv_df in pv_dfs:
-        pv_all_df = pd.concat(pv_df)
+    pv_all_df = pd.concat([pv_dfs])  # test syntax
 
     # run qvalues for all tests
+    pv_all_df["Q_CRM_VC"] = qvalue(pv_all_df["P_CRM_VC"])
+    pv_all_df["Q_CRM_burden_max"] = qvalue(pv_all_df["P_CRM_burden_max"])
+    pv_all_df["Q_CRM_burden_sum"] = qvalue(pv_all_df["P_CRM_burden_sum"])
+    pv_all_df["Q_CRM_burden_comphet"] = qvalue(pv_all_df["P_CRM_burden_comphet"])
+    pv_all_df["Q_CRM_omnibus_max"] = qvalue(pv_all_df["P_CRM_omnibus_max"])
+    pv_all_df["Q_CRM_omnibus_sum"] = qvalue(pv_all_df["P_CRM_omnibus_sum"])
+    pv_all_df["Q_CRM_omnibus_comphet"] = qvalue(pv_all_df["P_CRM_omnibus_comphet"])
+
+    return pv_all_df
 
 
 # endregion AGGREGATE_RESULTS
@@ -502,6 +513,127 @@ def remove_sc_outliers(df):
 
     return df
 
+def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
+    """
+    Estimates q-values from p-values
+    Args
+    =====
+    m: number of tests. If not specified m = pv.size
+    verbose: print verbose messages? (default False)
+    lowmem: use memory-efficient in-place algorithm
+    pi0: if None, it's estimated as suggested in Storey and Tibshirani, 2003.
+         For most GWAS this is not necessary, since pi0 is extremely likely to be
+         1
+
+    Taken from https://github.com/nfusi/qvalue
+    but updated for python 3 (e.g., xrange -> range)
+
+    Copyright (c) 2012, Nicolo Fusi, University of Sheffield
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+        * Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+        * Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+        * Neither the name of the organization nor the
+        names of its contributors may be used to endorse or promote products
+        derived from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
+    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+    ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    """
+
+    assert pv.min() >= 0 and pv.max() <= 1, "p-values should be between 0 and 1"
+
+    original_shape = pv.shape
+    pv = pv.ravel()  # flattens the array in place, more efficient than flatten()
+
+    if m is None:
+        m = float(len(pv))
+    else:
+        # the user has supplied an m
+        m *= 1.0
+
+    # if the number of hypotheses is small, just set pi0 to 1
+    if len(pv) < 100 and pi0 is None:
+        pi0 = 1.0
+    elif pi0 is not None:
+        pi0 = pi0
+    else:
+        # evaluate pi0 for different lambdas
+        pi0 = []
+        lam = sp.arange(0, 0.90, 0.01)
+        counts = sp.array([(pv > i).sum() for i in sp.arange(0, 0.9, 0.01)])
+        for l in range(len(lam)):
+            pi0.append(counts[l] / (m * (1 - lam[l])))
+
+        pi0 = sp.array(pi0)
+
+        # fit natural cubic spline
+        tck = interpolate.splrep(lam, pi0, k=3)
+        pi0 = interpolate.splev(lam[-1], tck)
+        if verbose:
+            # print("qvalues pi0=%.3f, estimated proportion of null features " % pi0)
+            logging.info(
+                "qvalues pi0=%.3f, estimated proportion of null features " % pi0
+            )
+
+        if pi0 > 1:
+            if verbose:
+                # print(
+                #     "got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0
+                # )
+                logging.info(
+                    "got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0
+                )
+            pi0 = 1.0
+
+    assert pi0 >= 0 and pi0 <= 1, "pi0 is not between 0 and 1: %f" % pi0
+
+    if lowmem:
+        # low memory version, only uses 1 pv and 1 qv matrices
+        qv = sp.zeros((len(pv),))
+        last_pv = pv.argmax()
+        qv[last_pv] = (pi0 * pv[last_pv] * m) / float(m)
+        pv[last_pv] = -sp.inf
+        prev_qv = last_pv
+        for i in range(int(len(pv)) - 2, -1, -1):
+            cur_max = pv.argmax()
+            qv_i = pi0 * m * pv[cur_max] / float(i + 1)
+            pv[cur_max] = -sp.inf
+            qv_i1 = prev_qv
+            qv[cur_max] = min(qv_i, qv_i1)
+            prev_qv = qv[cur_max]
+
+    else:
+        p_ordered = sp.argsort(pv)
+        pv = pv[p_ordered]
+        qv = pi0 * m / len(pv) * pv
+        qv[-1] = min(qv[-1], 1.0)
+
+        for i in range(len(pv) - 2, -1, -1):
+            qv[i] = min(pi0 * m * pv[i] / (i + 1.0), qv[i + 1])
+
+        # reorder qvalues
+        qv_temp = qv.copy()
+        qv = sp.zeros_like(qv)
+        qv[p_ordered] = qv_temp
+
+    # reshape qvalues
+    qv = qv.reshape(original_shape)
+
+    return qv
 
 # endregion MISCELLANEOUS
 
@@ -538,7 +670,9 @@ def main(
         expression_tsv_path = os.path.join(
             expression_files_prefix, "expression_files", f"{celltype}_expression.tsv"
         )
+        pv_file_paths = list()
 
+        # loop over chromosomes
         for chromosome in chromosomes:
             geneloc_tsv_path = os.path.join(
                 expression_files_prefix,
@@ -546,11 +680,14 @@ def main(
                 f"GRCh38_geneloc_chr{chromosome}.tsv",
             )
 
+            # find genes in that chromosome
+            # loop over genes
             _genes = genes or get_genes_for_chromosome(
                 expression_tsv_path=expression_tsv_path,
                 geneloc_tsv_path=geneloc_tsv_path,
             )
 
+            # submit a job for each gene
             for gene in _genes:
                 job = batch.new_python_job(f"Preprocess: {gene}")
                 mt_path, _ = job.call(
@@ -560,6 +697,7 @@ def main(
                     window_size=50000,
                     plink_output_prefix=plink_output_prefix,
                 )
+                # do I need a new job for each task??
                 pheno_path, geno_path, _ = job.call(
                     prepare_input_files,
                     gene_name=gene,
@@ -577,40 +715,46 @@ def main(
                     genotype_mat_path=geno_path,
                     phenotype_vec_path=pheno_path
                 )
+                pv_file_paths.append(pv_file)
         # combine all p-values across all chromosomes, genes (per cell type)
+        pv_all = job.call(
+            summarise_association_results, 
+            pv_dfs = pv_file_paths)  # no idea how do to this (get previous job's dataframes and add them in a list)
 
     # determine for each chromosome
 
-    plink_job_reference_and_outputs_for_gene: dict[str, tuple[hb.Job, str]] = {}
+    # below is pseudocode from @illusional I don't understand but don't want to delete 
+
+    # plink_job_reference_and_outputs_for_gene: dict[str, tuple[hb.Job, str]] = {}
     # if you know the output, you need to wait for the actual job that processes it
     # so store the reference to the job that's producing the file
 
-    for chr_loc_file in gene_loc_files:
-        with AnyPath(chr_loc_file).open() as f:
-            for line in f:
-                # i have no idea, I'm just randomly guessing
-                gene = line.split("\t")[0]
-                job = batch.new_python_job(f"Preprocess: {gene}")
+    # for chr_loc_file in gene_loc_files:
+    #     with AnyPath(chr_loc_file).open() as f:
+    #         for line in f:
+    #             # i have no idea, I'm just randomly guessing
+    #             gene = line.split("\t")[0]
+    #             job = batch.new_python_job(f"Preprocess: {gene}")
 
-                plink_output_prefix = output_path(f"plink_files/{gene}_rare_promoter")
-                plink_job_reference_and_outputs_for_gene[gene] = (
-                    job,
-                    plink_output_prefix,
-                )
-                result = job.call(
-                    get_promoter_variants,
-                    gene_file=chr_loc_file,
-                    gene_name=gene,
-                    window_size=50_000,
-                    plink_output_prefix=plink_output_prefix,
-                )
+    #             plink_output_prefix = output_path(f"plink_files/{gene}_rare_promoter")
+    #             plink_job_reference_and_outputs_for_gene[gene] = (
+    #                 job,
+    #                 plink_output_prefix,
+    #             )
+    #             result = job.call(
+    #                 get_promoter_variants,
+    #                 gene_file=chr_loc_file,
+    #                 gene_name=gene,
+    #                 window_size=50_000,
+    #                 plink_output_prefix=plink_output_prefix,
+    #             )
 
-    _gene = "BRCA1"
-    dependent_job, output_prefix = plink_job_reference_and_outputs_for_gene[_gene]
-    downstream_job = batch.new_job("Downstream job")
-    downstream_job.depends_on(dependent_job)
+    # _gene = "BRCA1"
+    # dependent_job, output_prefix = plink_job_reference_and_outputs_for_gene[_gene]
+    # downstream_job = batch.new_job("Downstream job")
+    # downstream_job.depends_on(dependent_job)
 
-    # run that function
+    # # run that function
 
 
 if __name__ == "__main__":
