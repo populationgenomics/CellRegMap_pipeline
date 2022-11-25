@@ -56,6 +56,8 @@ logging.basicConfig(
 DEFAULT_JOINT_CALL_MT = dataset_path("mt/v7.mt")
 DEFAULT_ANNOTATION_HT = dataset_path("tob_wgs_vep/104/vep104.3_GRCh38.ht")  # atm VEP only
 
+CELLREGMAP_IMAGE = 'australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3'  # check
+
 # region SUBSET_VARIANTS
 
 
@@ -739,6 +741,7 @@ def main(
                 sample_mapping_file=sample_mapping_file,
             )
             run_job = batch.new_python_job(f"Run association for: {gene}")
+            run_job.image(CELLREGMAP_IMAGE)
             gene_run_jobs.append(run_job)
             pv_file[gene] = run_job.call(
                 run_gene_association,
