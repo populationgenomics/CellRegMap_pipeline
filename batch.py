@@ -145,8 +145,8 @@ def get_promoter_variants(
     # get relevant chromosome
     gene_df = pd.read_csv(AnyPath(dataset_path(gene_file)), sep="\t", index_col=0)
     chrom = gene_df[gene_df["gene_name"] == gene_name]["chr"]
-    # subset to chromosome
-    mt = mt.filter_rows(mt.locus.contig == ("chr" + chrom))
+    # # subset to chromosome
+    # mt = mt.filter_rows(mt.locus.contig == ("chr" + chrom))
 
     # subset to window
     # get gene body position (start and end) and build interval
@@ -178,7 +178,7 @@ def get_promoter_variants(
     # annotate using VEP
     vep_ht = hl.read_table(ht_path)
     mt = mt.annotate_rows(vep=vep_ht[mt.row_key].vep)
-    mt_path = output_path("vep_annotated.mt", "tmp")
+    mt_path = output_path(f"{gene_name}_vep_annotated.mt", "tmp")
     mt = mt.checkpoint(
         mt_path, overwrite=True
     )  # add checkpoint to avoid repeat evaluation
@@ -188,8 +188,8 @@ def get_promoter_variants(
     mt = mt.filter_rows(
         mt.vep.regulatory_feature_consequences["biotype"].contains("promoter")
     )
-    mt_path = output_path("promoter_variants.mt", "tmp")
-    mt = mt.checkpoint(mt_path, overwrite=True)  # checkpoint
+    promoter_path = output_path("promoter_variants.mt", "tmp")
+    mt = mt.checkpoint(promoter_path, overwrite=True)  # checkpoint
     logging.info(
         f"Number of rare variants (freq<5%) in promoter regions: {mt.count()[0]}"
     )
@@ -200,8 +200,8 @@ def get_promoter_variants(
     ht.write(ht_filename)
 
     # export MT object to PLINK (promoter variants)
-    mt_path = output_path(f"plink_files/{gene_name}_rare_promoter")
-    export_plink(mt, mt_path, ind_id=mt.s)
+    plink_path = output_path(f"plink_files/{gene_name}_rare_promoter")
+    export_plink(mt, plink_path, ind_id=mt.s)
 
     return mt_path, ht_filename
 
