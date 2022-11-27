@@ -201,244 +201,244 @@ def get_promoter_variants(
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
 
-# region PREPARE_INPUT_FILES
+# # region PREPARE_INPUT_FILES
 
 
-def prepare_input_files(
-    gene_name: str,
-    cell_type: str,
-    genotype_file_bed: str,
-    genotype_file_bim: str,
-    genotype_file_fam: str,
-    phenotype_file: str,
-    kinship_file: str,
-    sample_mapping_file: str,
-):
-    """Prepare association test input files
+# def prepare_input_files(
+#     gene_name: str,
+#     cell_type: str,
+#     genotype_file_bed: str,
+#     genotype_file_bim: str,
+#     genotype_file_fam: str,
+#     phenotype_file: str,
+#     kinship_file: str,
+#     sample_mapping_file: str,
+# ):
+#     """Prepare association test input files
 
-    Input:
-    genotype: plink files
-    phenotype: gene expression
+#     Input:
+#     genotype: plink files
+#     phenotype: gene expression
 
-    Output:
-    genotype matrix
-    phenotype vector
-    """
-    expression_filename = AnyPath(output_path(f"{gene_name}_{cell_type}.csv"))
-    genotype_filename = AnyPath(output_path(f"{gene_name}_rare_regulatory.csv"))
-    kinship_filename = AnyPath(output_path("kinship_common_samples.csv"))
+#     Output:
+#     genotype matrix
+#     phenotype vector
+#     """
+#     expression_filename = AnyPath(output_path(f"{gene_name}_{cell_type}.csv"))
+#     genotype_filename = AnyPath(output_path(f"{gene_name}_rare_regulatory.csv"))
+#     kinship_filename = AnyPath(output_path("kinship_common_samples.csv"))
 
-    # read in phenotype file (tsv)
-    phenotype = pd.read_csv(phenotype_file, sep="\t", index_col=0)
+#     # read in phenotype file (tsv)
+#     phenotype = pd.read_csv(phenotype_file, sep="\t", index_col=0)
 
-    phenotype = xr.DataArray(
-        phenotype.values,
-        dims=["sample", "gene"],
-        coords={"sample": phenotype.index.values, "gene": phenotype.columns.values},
-    )
+#     phenotype = xr.DataArray(
+#         phenotype.values,
+#         dims=["sample", "gene"],
+#         coords={"sample": phenotype.index.values, "gene": phenotype.columns.values},
+#     )
 
-    # read in genotype file (plink format)
-    to_path(genotype_file_bed).copy("temp.bed")  # bed
-    to_path(genotype_file_bim).copy("temp.bim")  # bim
-    to_path(genotype_file_fam).copy("temp.fam")  # fam
-    geno = read_plink1_bin("temp.bed")
+#     # read in genotype file (plink format)
+#     to_path(genotype_file_bed).copy("temp.bed")  # bed
+#     to_path(genotype_file_bim).copy("temp.bim")  # bim
+#     to_path(genotype_file_fam).copy("temp.fam")  # fam
+#     geno = read_plink1_bin("temp.bed")
 
-    # read in GRM (genotype relationship matrix; kinship matrix)
-    kinship = pd.read_csv(kinship_file, index_col=0)
-    kinship.index = kinship.index.astype("str")
-    assert all(kinship.columns == kinship.index)  # symmetric matrix, donors x donors
-    kinship = xr.DataArray(
-        kinship.values,
-        dims=["sample_0", "sample_1"],
-        coords={"sample_0": kinship.columns, "sample_1": kinship.index},
-    )
-    kinship = kinship.sortby("sample_0").sortby("sample_1")
+#     # read in GRM (genotype relationship matrix; kinship matrix)
+#     kinship = pd.read_csv(kinship_file, index_col=0)
+#     kinship.index = kinship.index.astype("str")
+#     assert all(kinship.columns == kinship.index)  # symmetric matrix, donors x donors
+#     kinship = xr.DataArray(
+#         kinship.values,
+#         dims=["sample_0", "sample_1"],
+#         coords={"sample_0": kinship.columns, "sample_1": kinship.index},
+#     )
+#     kinship = kinship.sortby("sample_0").sortby("sample_1")
 
-    # this file will map different IDs (and OneK1K ID to CPG ID)
-    sample_mapping = pd.read_csv(sample_mapping_file, sep="\t")
+#     # this file will map different IDs (and OneK1K ID to CPG ID)
+#     sample_mapping = pd.read_csv(sample_mapping_file, sep="\t")
 
-    # ensure samples are the same and in the same order across input files
-    # samples with expression data
-    donors_exprs = set(phenotype.sample.values).intersection(
-        set(sample_mapping["OneK1K_ID"].unique())
-    )
+#     # ensure samples are the same and in the same order across input files
+#     # samples with expression data
+#     donors_exprs = set(phenotype.sample.values).intersection(
+#         set(sample_mapping["OneK1K_ID"].unique())
+#     )
 
-    logging.info(f"Number of unique donors with expression data: {len(donors_exprs)}")
+#     logging.info(f"Number of unique donors with expression data: {len(donors_exprs)}")
 
-    # samples with genotype data
-    donors_geno = set(geno.sample.values).intersection(
-        set(sample_mapping["InternalID"].unique())
-    )
-    logging.info(f"Number of unique donors with genotype data: {len(donors_geno)}")
+#     # samples with genotype data
+#     donors_geno = set(geno.sample.values).intersection(
+#         set(sample_mapping["InternalID"].unique())
+#     )
+#     logging.info(f"Number of unique donors with genotype data: {len(donors_geno)}")
 
-    # samples with both (can this be done in one step?)
-    sample_mapping1 = sample_mapping.loc[sample_mapping["OneK1K_ID"].isin(donors_exprs)]
-    sample_mapping_both = sample_mapping1.loc[
-        sample_mapping1["InternalID"].isin(donors_geno)
-    ]
-    donors_e = sample_mapping_both["OneK1K_ID"].unique()
-    donors_g = sample_mapping_both["InternalID"].unique()
-    assert len(donors_e) == len(donors_g)
+#     # samples with both (can this be done in one step?)
+#     sample_mapping1 = sample_mapping.loc[sample_mapping["OneK1K_ID"].isin(donors_exprs)]
+#     sample_mapping_both = sample_mapping1.loc[
+#         sample_mapping1["InternalID"].isin(donors_geno)
+#     ]
+#     donors_e = sample_mapping_both["OneK1K_ID"].unique()
+#     donors_g = sample_mapping_both["InternalID"].unique()
+#     assert len(donors_e) == len(donors_g)
 
-    # samples in kinship
-    donors_e_short = [re.sub(".*_", "", donor) for donor in donors_e]
-    donors_k = sorted(set(list(kinship.sample_0.values)).intersection(donors_e_short))
+#     # samples in kinship
+#     donors_e_short = [re.sub(".*_", "", donor) for donor in donors_e]
+#     donors_k = sorted(set(list(kinship.sample_0.values)).intersection(donors_e_short))
 
-    logging.info(f"Number of unique common donors: {len(donors_g)}")
+#     logging.info(f"Number of unique common donors: {len(donors_g)}")
 
-    # subset files
+#     # subset files
 
-    # phenotype
-    phenotype = phenotype.sel(sample=donors_e)
-    # select gene
-    y = phenotype.sel(gene=gene_name)
-    y = quantile_gaussianize(y)
-    del phenotype  # delete to free up memory
-    # make data frame to save as csv
-    y_df = pd.DataFrame(
-        data=y.values.reshape(y.shape[0], 1), index=y.sample.values, columns=[gene_name]
-    )
+#     # phenotype
+#     phenotype = phenotype.sel(sample=donors_e)
+#     # select gene
+#     y = phenotype.sel(gene=gene_name)
+#     y = quantile_gaussianize(y)
+#     del phenotype  # delete to free up memory
+#     # make data frame to save as csv
+#     y_df = pd.DataFrame(
+#         data=y.values.reshape(y.shape[0], 1), index=y.sample.values, columns=[gene_name]
+#     )
 
-    # genotype
-    geno = geno.sel(sample=donors_g)
-    # make data frame to save as csv
-    data = geno.values
-    geno_df = pd.DataFrame(data, columns=geno.snp.values, index=geno.sample.values)
-    geno_df = geno_df.dropna(axis=1)
-    # delete large files to free up memory
-    del geno
+#     # genotype
+#     geno = geno.sel(sample=donors_g)
+#     # make data frame to save as csv
+#     data = geno.values
+#     geno_df = pd.DataFrame(data, columns=geno.snp.values, index=geno.sample.values)
+#     geno_df = geno_df.dropna(axis=1)
+#     # delete large files to free up memory
+#     del geno
 
-    # kinship
-    kinship = kinship.sel(sample_0=donors_k, sample_1=donors_k)
-    assert all(kinship.sample_0 == donors_k)
-    assert all(kinship.sample_1 == donors_k)
-    # make data frame to save as csv
-    kinship_df = pd.DataFrame(
-        kinship.values, columns=kinship.sample_0, index=kinship.sample_1
-    )
-    del kinship  # delete kinship to free up memory
+#     # kinship
+#     kinship = kinship.sel(sample_0=donors_k, sample_1=donors_k)
+#     assert all(kinship.sample_0 == donors_k)
+#     assert all(kinship.sample_1 == donors_k)
+#     # make data frame to save as csv
+#     kinship_df = pd.DataFrame(
+#         kinship.values, columns=kinship.sample_0, index=kinship.sample_1
+#     )
+#     del kinship  # delete kinship to free up memory
 
-    # save files
-    with expression_filename.open("w") as ef:
-        y_df.to_csv(ef, index=False)
+#     # save files
+#     with expression_filename.open("w") as ef:
+#         y_df.to_csv(ef, index=False)
 
-    with genotype_filename.open("w") as gf:
-        geno_df.to_csv(gf, index=False)
+#     with genotype_filename.open("w") as gf:
+#         geno_df.to_csv(gf, index=False)
 
-    with kinship_filename.open("w") as kf:
-        kinship_df.to_csv(kf, index=False)
+#     with kinship_filename.open("w") as kf:
+#         kinship_df.to_csv(kf, index=False)
 
-    return y_df, geno_df, kinship_df
-
-
-# endregion PREPARE_INPUT_FILES
+#     return y_df, geno_df, kinship_df
 
 
-# region GET_CRM_PVALUES
+# # endregion PREPARE_INPUT_FILES
 
 
-def get_crm_pvs(pheno, covs, genotypes, contexts=None):
-    """
-    CellRegMap-RV tests
-    * score test (variance)
-    * burden test (max, sum, comphet)
-    * omnibus (Cauchy) test
-
-    Input:
-    input files
-
-    Output:
-    list of p-values from the three tests
-    """
-    pv_norm = shapiro(pheno).pvalue
-    pv0 = run_gene_set_association(y=pheno, G=genotypes, W=covs, E=contexts)[0]
-    pv1 = run_burden_association(
-        y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.max"
-    )[0]
-    pv2 = run_burden_association(
-        y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.sum"
-    )[0]
-    pv3 = run_burden_association(
-        y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.comphet"
-    )[0]
-    pv4 = omnibus_set_association(np.array([pv0, pv1]))
-    pv5 = omnibus_set_association(np.array([pv0, pv2]))
-    pv6 = omnibus_set_association(np.array([pv0, pv3]))
-
-    return np.array([pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6])
+# # region GET_CRM_PVALUES
 
 
-# endregion GET_CRM_PVALUES
+# def get_crm_pvs(pheno, covs, genotypes, contexts=None):
+#     """
+#     CellRegMap-RV tests
+#     * score test (variance)
+#     * burden test (max, sum, comphet)
+#     * omnibus (Cauchy) test
 
-# region RUN_ASSOCIATION
+#     Input:
+#     input files
 
+#     Output:
+#     list of p-values from the three tests
+#     """
+#     pv_norm = shapiro(pheno).pvalue
+#     pv0 = run_gene_set_association(y=pheno, G=genotypes, W=covs, E=contexts)[0]
+#     pv1 = run_burden_association(
+#         y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.max"
+#     )[0]
+#     pv2 = run_burden_association(
+#         y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.sum"
+#     )[0]
+#     pv3 = run_burden_association(
+#         y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.comphet"
+#     )[0]
+#     pv4 = omnibus_set_association(np.array([pv0, pv1]))
+#     pv5 = omnibus_set_association(np.array([pv0, pv2]))
+#     pv6 = omnibus_set_association(np.array([pv0, pv3]))
 
-def run_gene_association(
-    gene_name: str,  # 'VPREB3'
-    genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
-    phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
-    output_prefix: str,  # 'Bnaive'
-):
-    """Run gene-set association test
-
-    Input:
-    input files  (genotype, phenotype)
-    * already in matrix / vector form
-    * only matching samples, correct irder
-
-    Output:
-    table with p-values
-    """
-    # get genotypes
-    # these are variants in and around gene VPREB3 on chrom 22
-    g_file = AnyPath(output_path(genotype_mat_path))
-    g_df = pd.read_csv(g_file)
-    # because the current matrix is counting the copies of the reference allele
-    # while we are interested in the alternative allele, flip the genotypes
-    genotypes = 2 - g_df
-
-    # get phenptypes
-    p_file = AnyPath(output_path(phenotype_vec_path))
-    p_df = pd.read_csv(p_file)
-    pheno = p_df.values
-
-    # covs
-    covs = ones((genotypes.shape[0], 1))  # intercept of ones as covariates
-
-    # contexts
-    contexts = eye(genotypes.shape[0])
-
-    # TODO: kinship
-
-    cols = [
-        "P_shapiro",
-        "P_CRM_VC",
-        "P_CRM_burden_max",
-        "P_CRM_burden_sum",
-        "P_CRM_burden_comphet",
-        "P_CRM_omnibus_max",
-        "P_CRM_omnibus_sum",
-        "P_CRM_omnibus_comphet",
-    ]
-
-    # create p-values data frame
-    pv_df = pd.DataFrame(
-        data=get_crm_pvs(pheno, covs, genotypes, contexts),
-        columns=cols,
-        index=gene_name,
-    )
-
-    pv_filename = AnyPath(output_path(f"{output_prefix}/{gene_name}_pvals.csv"))
-    with pv_filename.open("w") as pf:
-        pv_df.to_csv(pf, index=False)
-
-    return pv_filename
+#     return np.array([pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6])
 
 
-# endregion RUN_ASSOCIATION
+# # endregion GET_CRM_PVALUES
+
+# # region RUN_ASSOCIATION
 
 
-# region AGGREGATE_RESULTS
+# def run_gene_association(
+#     gene_name: str,  # 'VPREB3'
+#     genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
+#     phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
+#     output_prefix: str,  # 'Bnaive'
+# ):
+#     """Run gene-set association test
+
+#     Input:
+#     input files  (genotype, phenotype)
+#     * already in matrix / vector form
+#     * only matching samples, correct irder
+
+#     Output:
+#     table with p-values
+#     """
+#     # get genotypes
+#     # these are variants in and around gene VPREB3 on chrom 22
+#     g_file = AnyPath(output_path(genotype_mat_path))
+#     g_df = pd.read_csv(g_file)
+#     # because the current matrix is counting the copies of the reference allele
+#     # while we are interested in the alternative allele, flip the genotypes
+#     genotypes = 2 - g_df
+
+#     # get phenptypes
+#     p_file = AnyPath(output_path(phenotype_vec_path))
+#     p_df = pd.read_csv(p_file)
+#     pheno = p_df.values
+
+#     # covs
+#     covs = ones((genotypes.shape[0], 1))  # intercept of ones as covariates
+
+#     # contexts
+#     contexts = eye(genotypes.shape[0])
+
+#     # TODO: kinship
+
+#     cols = [
+#         "P_shapiro",
+#         "P_CRM_VC",
+#         "P_CRM_burden_max",
+#         "P_CRM_burden_sum",
+#         "P_CRM_burden_comphet",
+#         "P_CRM_omnibus_max",
+#         "P_CRM_omnibus_sum",
+#         "P_CRM_omnibus_comphet",
+#     ]
+
+#     # create p-values data frame
+#     pv_df = pd.DataFrame(
+#         data=get_crm_pvs(pheno, covs, genotypes, contexts),
+#         columns=cols,
+#         index=gene_name,
+#     )
+
+#     pv_filename = AnyPath(output_path(f"{output_prefix}/{gene_name}_pvals.csv"))
+#     with pv_filename.open("w") as pf:
+#         pv_df.to_csv(pf, index=False)
+
+#     return pv_filename
+
+
+# # endregion RUN_ASSOCIATION
+
+
+# # region AGGREGATE_RESULTS
 
 
 def summarise_association_results(
@@ -775,97 +775,9 @@ def crm_pipeline(
             window_size=window_size,
             plink_file=plink_file,
         )
+        # concatenate jobs so they can be depended on
         genotype_jobs.append(plink_job)
 
-    # the next phase will be done for each cell type
-    for celltype in celltypes:
-        expression_tsv_path = os.path.join(
-            expression_files_prefix, "expression_files", f"{celltype}_expression.tsv"
-        )
-
-        genes = extract_genes(expression_files_prefix, genes_of_interest)
-        # maybe this makes no sense (to loop over genes twice)
-        # but I also didn't want to re-select variants for the same gene repeatedly
-        # for every new cell type?
-        gene_prepare_jobs = []
-        gene_run_jobs = []
-        for gene in genes:
-            plink_output_prefix = gene_dict[gene]["plink"]
-            # prepare input files
-            prepare_input_job = batch.new_python_job(f"Prepare inputs for: {gene}")
-            prepare_input_job.depends_on(*genotype_jobs)
-            gene_prepare_jobs.append(prepare_input_job)
-            pheno_path, geno_path, _ = prepare_input_job.call(
-                prepare_input_files,
-                gene_name=gene,
-                cell_type=celltype,
-                genotype_file_bed=plink_output_prefix + ".bed",
-                genotype_file_bim=plink_output_prefix + ".bim",
-                genotype_file_fam=plink_output_prefix + ".fam",
-                phenotype_file=expression_tsv_path,
-                kinship_file=None,
-                sample_mapping_file=sample_mapping_file,
-            )
-            # run association
-            run_job = batch.new_python_job(f"Run association for: {gene}")
-            run_job.depends_on(prepare_input_job)
-            run_job.image(CELLREGMAP_IMAGE)
-            gene_run_jobs.append(run_job)
-            pv_file = run_job.call(
-                run_gene_association,
-                gene_name=gene,
-                genotype_mat_path=geno_path,
-                phenotype_vec_path=pheno_path,
-            )
-            # save pv filename as gene attribute
-            gene_dict[gene]["pv_file"] = pv_file
-
-        # combine all p-values across all chromosomes, genes (per cell type)
-        summarise_job = batch.new_python_job(f"Summarise all results for {celltype}")
-        summarise_job.depends_on(*gene_run_jobs)
-        pv_all = summarise_job.call(
-            summarise_association_results,
-            pv_dfs=[gene_dict[gene]["pv_file"] for gene in genes],
-        )  # no idea how do to this (get previous job's dataframes and add them in a list)
-
-        pv_filename = AnyPath(output_path(f"{celltype}_all_pvalues.csv"))
-        with pv_filename.open("w") as pf:
-            pv_all.to_csv(pf, index=False)
-
-    # determine for each chromosome
-
-    # below is pseudocode from @illusional I don't understand but don't want to delete
-
-    # plink_job_reference_and_outputs_for_gene: dict[str, tuple[hb.Job, str]] = {}
-    # if you know the output, you need to wait for the actual job that processes it
-    # so store the reference to the job that's producing the file
-
-    # for chr_loc_file in gene_loc_files:
-    #     with AnyPath(chr_loc_file).open() as f:
-    #         for line in f:
-    #             # i have no idea, I'm just randomly guessing
-    #             gene = line.split("\t")[0]
-    #             job = batch.new_python_job(f"Preprocess: {gene}")
-
-    #             plink_output_prefix = output_path(f"plink_files/{gene}_rare_promoter")
-    #             plink_job_reference_and_outputs_for_gene[gene] = (
-    #                 job,
-    #                 plink_output_prefix,
-    #             )
-    #             result = job.call(
-    #                 get_promoter_variants,
-    #                 gene_file=chr_loc_file,
-    #                 gene_name=gene,
-    #                 window_size=50_000,
-    #                 plink_output_prefix=plink_output_prefix,
-    #             )
-
-    # _gene = "BRCA1"
-    # dependent_job, output_prefix = plink_job_reference_and_outputs_for_gene[_gene]
-    # downstream_job = batch.new_job("Downstream job")
-    # downstream_job.depends_on(dependent_job)
-
-    # # run that function
 
 
 if __name__ == "__main__":
