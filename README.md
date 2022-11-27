@@ -30,6 +30,7 @@ Single [python script](batch.py), key steps (implemented as distinct functions):
 * CellRegMap-RV various tests are run (each chunk independently)
 * resulting p-values are aggregated across jobs and saved
 
+To run:
 ```
 analysis-runner \
     --dataset tob-wgs \
