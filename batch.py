@@ -745,7 +745,8 @@ def crm_pipeline(
             f"GRCh38_geneloc_chr{chromosome}.tsv",
         )
 
-        gene_dict = make_gene_loc_dict(geneloc_tsv_path)
+        # will this syntax work??
+        gene_dict.update(make_gene_loc_dict(geneloc_tsv_path))
 
     # isolate to the genes we're interested in
     genes_of_interest = genes or list[gene_dict.keys()]
