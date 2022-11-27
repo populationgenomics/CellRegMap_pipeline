@@ -712,6 +712,7 @@ def crm_pipeline(
     sample_mapping_file: str,
     mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
+    window_size: int = 50000,
     # fdr_threshold: float = 0.05,
 ):
 
@@ -745,13 +746,13 @@ def crm_pipeline(
             f"GRCh38_geneloc_chr{chromosome}.tsv",
         )
 
-        # will this syntax work??
+        # concatenating across chromosomes to have a single dict
         gene_dict.update(make_gene_loc_dict(geneloc_tsv_path))
 
-    # isolate to the genes we're interested in
+    # isolate to the genes we are interested in
     genes_of_interest = genes or list[gene_dict.keys()]
 
-    # for each gene, extract relevant variants
+    # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
     genotype_jobs = []
     for gene in genes_of_interest:
@@ -760,7 +761,7 @@ def crm_pipeline(
         plink_file = output_path(f"{plink_output_prefix}/{gene}")
         gene_dict[gene]["plink"] = plink_file
 
-        # if the plink output exists, don't regenerate it
+        # if the plink output exists, do not re-generate it
         if to_path(plink_file).exists():
             continue
 
@@ -771,12 +772,12 @@ def crm_pipeline(
             mt_path=output_mt_path,
             ht_path=anno_ht_path,
             gene_details=gene_dict[gene],
-            window_size=50000,
+            window_size=window_size,
             plink_file=plink_file,
         )
         genotype_jobs.append(plink_job)
 
-    # the next phase will be done across all cell types
+    # the next phase will be done for each cell type
     for celltype in celltypes:
         expression_tsv_path = os.path.join(
             expression_files_prefix, "expression_files", f"{celltype}_expression.tsv"
