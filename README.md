@@ -30,6 +30,19 @@ Single [python script](batch.py), key steps (implemented as distinct functions):
 * CellRegMap-RV various tests are run (each chunk independently)
 * resulting p-values are aggregated across jobs and saved
 
+```
+analysis-runner \
+    --dataset tob-wgs \
+    --access-level test \
+    --output-dir "tob_wgs_rv/pseudobulk_rv_association" \
+    --description "CellRegMap batch job" \
+    python3 batch.py \
+      --expression-file-prefix gs://cpg-tob-wgs-test/scrna-seq/grch38_association_files \
+      --sample-mapping-file scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv \
+      --chromosomes 22 \
+      --cell-types B_intermediate
+```
+
 ## CellRegMap pipeline v1
 
 A WDL workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
