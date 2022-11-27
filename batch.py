@@ -39,6 +39,9 @@ from scipy.stats import shapiro
 import scipy as sp
 from scipy import interpolate
 
+# make gene loc dict import
+from csv import DictReader
+
 import hail as hl
 import hailtop.batch as hb
 from hail.methods import export_plink
@@ -120,7 +123,7 @@ def filter_variants(
 def get_promoter_variants(
     mt_path: str,  # checkpoint from function above
     ht_path: str,
-    gene_dict: dict[str, str],  # ouput of make_gene_loc_dict
+    gene_details: dict[str, str],  # ouput of make_gene_loc_dict
     window_size: int,
     plink_output_prefix: str,  # 'tob_wgs_rv/pseudobulk_rv_association/{celltype}/'
 ):
@@ -144,16 +147,16 @@ def get_promoter_variants(
     init_batch()
     mt = hl.read_matrix_table(mt_path)
 
-    gene_name = gene_dict["gene_name"]
+    gene_name = gene_details["gene_name"]
 
     # get relevant chromosome
-    chrom = gene_dict["chrom"]
+    chrom = gene_details["chrom"]
 
     # subset to window
     # get gene body position (start and end) and build interval
-    left_boundary = max(1, int(gene_dict["gene-start"]) - window_size)
+    left_boundary = max(1, int(gene_details["gene-start"]) - window_size)
     right_boundary = min(
-        int(gene_dict["gene-end"]) + window_size,
+        int(gene_details["gene-end"]) + window_size,
         hl.get_reference("GRCh38").lengths[f"chr{chrom}"],
     )
     # get gene-specific genomic interval
@@ -372,13 +375,16 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
 
 def run_gene_association(
     gene_name: str,  # 'VPREB3'
-    genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
+    genotype_mat_path: str,   # 'VPREB3_50K_window/SNVs.csv'
     phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
+    output_prefix: str,       # 'Bnaive'
 ):
     """Run gene-set association test
 
     Input:
-    input files
+    input files  (genotype, phenotype)
+    * already in matrix / vector form
+    * only matching samples, correct irder
 
     Output:
     table with p-values
@@ -424,7 +430,7 @@ def run_gene_association(
 
     pv_filename = AnyPath(
         output_path(
-            "simulations/CRM/1000samples_10causal_singletons/10tested_samebeta.csv"
+            f"{output_prefix}/{gene_name}_pvals.csv"
         )
     )
     with pv_filename.open("w") as pf:
@@ -475,8 +481,6 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     Turn gene information into a dictionary
     to avoid opening this file for every gene
     """
-    from csv import DictReader
-
     gene_dict = {}
 
     with open(file) as handle:
@@ -698,7 +702,7 @@ config = get_config()
 
 
 @click.command()
-@click.option("--sc-samples")
+# @click.option("--sc-samples")
 @click.option("--chromosomes")
 @click.option("--genes")
 @click.option("--celltypes")
@@ -707,8 +711,8 @@ config = get_config()
 @click.option("--mt-path")
 @click.option("--anno-ht-path")
 # @click.option("--fdr-threshold")
-def main(
-    sc_samples: list["str"],
+def crm_pipeline(
+    # sc_samples: list["str"],
     chromosomes: list[str],
     genes: list[str],
     celltypes: list[str],
@@ -724,6 +728,10 @@ def main(
         remote_tmpdir=remote_tmpdir(),
     )
     batch = hb.Batch("CellRegMap pipeline", backend=sb)
+
+    # extract samples for which we have single-cell (sc) data
+    sample_mapping_file = remove_sc_outliers(sample_mapping_file)
+    sc_samples = sample_mapping_file['OneK1K_ID'].unique()
 
     # filter to QC-passing, rare, biallelic variants
     filter_job = batch.new_python_job(name="MT filter job")
@@ -768,7 +776,7 @@ def main(
         plink_job.call(
             get_promoter_variants,
             mt_path=output_mt_path,
-            gene_name=gene,
+            ht_path=anno_ht_path,
             gene_details=gene_dict[gene],
             window_size=50000,
             plink_file=plink_file,
@@ -867,4 +875,4 @@ def main(
 
 
 if __name__ == "__main__":
-    main()  # rename
+    crm_pipeline()  
