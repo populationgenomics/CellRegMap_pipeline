@@ -125,7 +125,7 @@ def get_promoter_variants(
     ht_path: str,
     gene_details: dict[str, str],  # ouput of make_gene_loc_dict
     window_size: int,
-    plink_output_prefix: str,  # 'tob_wgs_rv/pseudobulk_rv_association/{celltype}/'
+    plink_output_prefix: str,  # 'tob_wgs_rv/pseudobulk_rv_association/plink_files/'
 ):
     """Subset hail matrix table
 
