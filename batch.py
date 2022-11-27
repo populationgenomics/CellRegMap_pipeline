@@ -303,7 +303,6 @@ config = get_config()
 
 
 @click.command()
-# @click.option("--sc-samples")
 @click.option("--chromosomes")
 @click.option("--genes")
 @click.option("--celltypes")
@@ -311,7 +310,6 @@ config = get_config()
 @click.option("--sample-mapping-file")
 @click.option("--mt-path")
 @click.option("--anno-ht-path")
-# @click.option("--fdr-threshold")
 def crm_pipeline(
     # sc_samples: list["str"],
     chromosomes: list[str],
@@ -322,7 +320,6 @@ def crm_pipeline(
     mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     window_size: int = 50000,
-    # fdr_threshold: float = 0.05,
 ):
 
     sb = hb.ServiceBackend(
@@ -386,7 +383,6 @@ def crm_pipeline(
         )
         # concatenate jobs so they can be depended on
         genotype_jobs.append(plink_job)
-
 
 
 if __name__ == "__main__":
