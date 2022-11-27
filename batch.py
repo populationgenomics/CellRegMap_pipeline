@@ -375,9 +375,9 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
 
 def run_gene_association(
     gene_name: str,  # 'VPREB3'
-    genotype_mat_path: str,   # 'VPREB3_50K_window/SNVs.csv'
+    genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
     phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
-    output_prefix: str,       # 'Bnaive'
+    output_prefix: str,  # 'Bnaive'
 ):
     """Run gene-set association test
 
@@ -428,11 +428,7 @@ def run_gene_association(
         index=gene_name,
     )
 
-    pv_filename = AnyPath(
-        output_path(
-            f"{output_prefix}/{gene_name}_pvals.csv"
-        )
-    )
+    pv_filename = AnyPath(output_path(f"{output_prefix}/{gene_name}_pvals.csv"))
     with pv_filename.open("w") as pf:
         pv_df.to_csv(pf, index=False)
 
@@ -454,7 +450,7 @@ def summarise_association_results(
     p-values from all association tests
 
     Ouput:
-    one matrix (what format??) per cell type,
+    one csv table per cell type,
     combining results across all genes in a single file
     """
     pv_all_df = pd.concat([pv_dfs])  # test syntax
@@ -487,11 +483,7 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
         reader = DictReader(handle, delimiter="\t")
 
         for row in reader:
-            gene_dict[row["gene_name"]] = row  # just this???
-            # gene_dict[row["gene_name"]] = row["gene_name"]
-            # gene_dict[row["chrom"]] = row["chr"]
-            # gene_dict[row["gene_start"]] = row["start"]
-            # gene_dict[row["gene_end"]] = row["end"]
+            gene_dict[row["gene_name"]] = row
 
     return gene_dict
 
@@ -731,7 +723,7 @@ def crm_pipeline(
 
     # extract samples for which we have single-cell (sc) data
     sample_mapping_file = remove_sc_outliers(sample_mapping_file)
-    sc_samples = sample_mapping_file['OneK1K_ID'].unique()
+    sc_samples = sample_mapping_file["OneK1K_ID"].unique()
 
     # filter to QC-passing, rare, biallelic variants
     filter_job = batch.new_python_job(name="MT filter job")
@@ -830,13 +822,13 @@ def crm_pipeline(
         summarise_job = batch.new_python_job(f"Summarise all results for {celltype}")
         summarise_job.depends_on(*gene_run_jobs)
         pv_all = summarise_job.call(
-            summarise_association_results, pv_dfs=[gene_dict[gene]["pv_file"] for gene in genes]
+            summarise_association_results,
+            pv_dfs=[gene_dict[gene]["pv_file"] for gene in genes],
         )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
         pv_filename = AnyPath(output_path(f"{celltype}_all_pvalues.csv"))
         with pv_filename.open("w") as pf:
             pv_all.to_csv(pf, index=False)
-
 
     # determine for each chromosome
 
@@ -875,4 +867,4 @@ def crm_pipeline(
 
 
 if __name__ == "__main__":
-    crm_pipeline()  
+    crm_pipeline()
