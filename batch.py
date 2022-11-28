@@ -375,9 +375,9 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
 
 def run_gene_association(
     gene_name: str,  # 'VPREB3'
-    genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
+    genotype_mat_path: str,   # 'VPREB3_50K_window/SNVs.csv'
     phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
-    output_prefix: str,  # 'Bnaive'
+    output_prefix: str,       # 'Bnaive/'
 ):
     """Run gene-set association test
 
