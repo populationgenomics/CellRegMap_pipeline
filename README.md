@@ -36,6 +36,7 @@ analysis-runner \
     --dataset tob-wgs \
     --access-level test \
     --output-dir "tob_wgs_rv/pseudobulk_rv_association" \
+    --image australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3 \
     --description "CellRegMap batch job" \
     python3 batch.py \
       --expression-file-prefix scrna-seq/grch38_association_files \
