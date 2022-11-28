@@ -337,6 +337,7 @@ def crm_pipeline(
     # filter to QC-passing, rare, biallelic variants
     filter_job = batch.new_python_job(name="MT filter job")
     output_mt_path = output_path("tob_wgs_rv/densified_rv_only.mt")
+    filter_job.image(CELLREGMAP_IMAGE)
     filter_job.call(
         filter_variants,
         mt_path=mt_path,
@@ -375,6 +376,7 @@ def crm_pipeline(
 
         plink_job = batch.new_python_job(f"Create plink files for: {gene}")
         plink_job.depends_on(filter_job)
+        plink_job.image(CELLREGMAP_IMAGE)
         plink_job.call(
             get_promoter_variants,
             mt_path=output_mt_path,
