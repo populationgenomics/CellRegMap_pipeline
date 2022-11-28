@@ -46,11 +46,11 @@ import hail as hl
 import hailtop.batch as hb
 from hail.methods import export_plink
 
-from cellregmap import (  # figure out how to import this from github
-    run_gene_set_association,
-    run_burden_association,
-    omnibus_set_association,
-)
+# from cellregmap import (  # figure out how to import this from github
+#     run_gene_set_association,
+#     run_burden_association,
+#     omnibus_set_association,
+# )
 
 # use logging to print statements, display at info level
 logging.basicConfig(
