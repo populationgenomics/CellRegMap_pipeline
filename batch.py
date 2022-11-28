@@ -318,7 +318,7 @@ def crm_pipeline(
     celltypes: list[str],
     expression_files_prefix: str,  # 'scrna-seq/grch38_association_files'
     sample_mapping_file: str,
-    output_path: str, # 'tob_wgs_rv/pseudobulk_rv_association'
+    output_path: str,  # 'tob_wgs_rv/pseudobulk_rv_association'
     mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     window_size: int = 50000,
@@ -385,7 +385,7 @@ def crm_pipeline(
         )
         # concatenate jobs so they can be depended on
         genotype_jobs.append(plink_job)
-    
+
     # set jobs running
     batch.run(wait=False)
 
