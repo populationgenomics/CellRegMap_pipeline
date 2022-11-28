@@ -167,7 +167,7 @@ def get_promoter_variants(
     mt = hl.filter_intervals(
         mt, [hl.parse_locus_interval(gene_interval, reference_genome="GRCh38")]
     )
-    mt_path = output_path("in_window.mt", "tmp")
+    mt_path = output_path(f"{gene_name}_in_window.mt", "tmp")
     mt = mt.checkpoint(
         mt_path, overwrite=True
     )  # add checkpoint to avoid repeat evaluation
