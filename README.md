@@ -38,7 +38,7 @@ analysis-runner \
     --output-dir "tob_wgs_rv/pseudobulk_rv_association" \
     --description "CellRegMap batch job" \
     python3 batch.py \
-      --expression-file-prefix gs://cpg-tob-wgs-test/scrna-seq/grch38_association_files \
+      --expression-file-prefix scrna-seq/grch38_association_files \
       --sample-mapping-file scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv \
       -- genes VPREB3 \
       --chromosomes 22 \
