@@ -150,13 +150,13 @@ def get_promoter_variants(
     gene_name = gene_details["gene_name"]
 
     # get relevant chromosome
-    chrom = gene_details["chrom"]
+    chrom = gene_details["chr"]
 
     # subset to window
     # get gene body position (start and end) and build interval
-    left_boundary = max(1, int(gene_details["gene-start"]) - window_size)
+    left_boundary = max(1, int(gene_details["start"]) - window_size)
     right_boundary = min(
-        int(gene_details["gene-end"]) + window_size,
+        int(gene_details["end"]) + window_size,
         hl.get_reference("GRCh38").lengths[f"chr{chrom}"],
     )
     # get gene-specific genomic interval
@@ -383,6 +383,9 @@ def crm_pipeline(
         )
         # concatenate jobs so they can be depended on
         genotype_jobs.append(plink_job)
+    
+    # set jobs running
+    batch.run(wait=False)
 
 
 if __name__ == "__main__":
