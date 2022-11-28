@@ -389,7 +389,7 @@ def crm_pipeline(
         genotype_jobs.append(plink_job)
 
     # set jobs running
-    # batch.run(wait=False)
+    batch.run(wait=False)
 
 
 if __name__ == "__main__":
