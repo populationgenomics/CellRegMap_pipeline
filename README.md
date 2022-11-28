@@ -41,7 +41,7 @@ analysis-runner \
     python3 batch.py \
       --expression-file-prefix scrna-seq/grch38_association_files \
       --sample-mapping-file scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv \
-      -- genes VPREB3 \
+      --genes VPREB3 \
       --chromosomes 22 \
       --cell-types B_intermediate
 ```
