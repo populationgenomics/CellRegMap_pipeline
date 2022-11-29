@@ -245,7 +245,7 @@ def crm_pipeline(
     celltypes: list[str],
     expression_files_prefix: str,  # 'scrna-seq/grch38_association_files'
     sample_mapping_file: str,
-    output_path: str,  # 'tob_wgs_rv/pseudobulk_rv_association'
+    output_dir_path: str,  # 'tob_wgs_rv/pseudobulk_rv_association'
     mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
     window_size: int = 50000,
@@ -294,7 +294,7 @@ def crm_pipeline(
     for gene in genes_of_interest:
 
         # final path for this gene - generate first (check syntax)
-        plink_file = output_path(f"{output_path}/plink_files/{gene}")
+        plink_file = output_path(f"{output_dir_path}/plink_files/{gene}")
         gene_dict[gene]["plink"] = plink_file
 
         # if the plink output exists, do not re-generate it
