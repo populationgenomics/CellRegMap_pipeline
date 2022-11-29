@@ -228,9 +228,9 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 
 
 @click.command()
-@click.option("--chromosomes")
-@click.option("--genes")
-@click.option("--celltypes")
+@click.option("--chromosomes", type=list)
+@click.option("--genes", type=list)
+@click.option("--celltypes", type=list)
 @click.option("--expression-files-prefix", default="scrna-seq/grch38_association_files")
 @click.option(
     "--sample-mapping-file-tsv",
@@ -277,11 +277,11 @@ def crm_pipeline(
     # simpler if gene details are condensed to one file
     gene_dict: dict[str, dict] = {}
     for chromosome in chromosomes:
-        geneloc_tsv_path = os.path.join(
+        geneloc_tsv_path = dataset_path(os.path.join(
             expression_files_prefix,
             "gene_location_files",
             f"GRCh38_geneloc_chr{chromosome}.tsv",
-        )
+        ))
 
         # concatenating across chromosomes to have a single dict
         gene_dict.update(make_gene_loc_dict(geneloc_tsv_path))
