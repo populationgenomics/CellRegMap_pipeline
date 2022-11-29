@@ -834,6 +834,8 @@ def crm_pipeline(
         with pv_filename.open("w") as pf:
             pv_all.to_csv(pf, index=False)
 
+    # set jobs running
+    batch.run(wait=False)
 
 if __name__ == "__main__":
     crm_pipeline()
