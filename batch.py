@@ -228,7 +228,6 @@ def remove_sc_outliers(df):
 
 # endregion MISCELLANEOUS
 
-config = get_config()
 
 
 @click.command()
