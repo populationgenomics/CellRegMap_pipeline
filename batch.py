@@ -228,9 +228,13 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 
 
 @click.command()
-@click.option("--chromosomes", multiple=True)
-@click.option("--genes", multiple=True)
-@click.option("--celltypes", multiple=True)
+@click.option(
+    '--chromosomes',
+    help='List of chromosome numbers to run eQTL analysis on. '
+    'Space separated, as one argument (Default: all)',
+)
+@click.option("--genes")
+@click.option("--celltypes")
 @click.option("--expression-files-prefix", default="scrna-seq/grch38_association_files")
 @click.option(
     "--sample-mapping-file-tsv",
@@ -240,7 +244,7 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 @click.option("--mt-path", default="mt/v7.mt")
 @click.option("--anno-ht-path", default="tob_wgs_vep/104/vep104.3_GRCh38.ht")
 def crm_pipeline(
-    chromosomes: list[str],
+    chromosomes: str,
     genes: list[str],
     celltypes: list[str],
     expression_files_prefix: str,
@@ -276,7 +280,8 @@ def crm_pipeline(
     # grab all relevant genes across all chromosomes
     # simpler if gene details are condensed to one file
     gene_dict: dict[str, dict] = {}
-    for chromosome in chromosomes:
+    chromosomes_list = chromosomes.split(' ')
+    for chromosome in chromosomes_list:
         geneloc_tsv_path = dataset_path(os.path.join(
             expression_files_prefix,
             "gene_location_files",
