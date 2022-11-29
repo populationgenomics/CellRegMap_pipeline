@@ -260,7 +260,7 @@ def crm_pipeline(
     batch = hb.Batch("CellRegMap pipeline", backend=sb)
 
     # extract samples for which we have single-cell (sc) data
-    sc_samples = read_sample_ids(sample_mapping_file)
+    sc_samples = read_sample_ids(dataset_path(sample_mapping_file))
 
     # filter to QC-passing, rare, biallelic variants
     filter_job = batch.new_python_job(name="MT filter job")
