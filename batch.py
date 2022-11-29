@@ -217,11 +217,10 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
 
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
 # check whether it needs modifying
-def remove_sc_outliers(df):
+def remove_sc_outliers(df, outliers = ["966_967", "88_88"]):
     """
     Remove outlier samples, as identified by sc analysis
     """
-    outliers = ["966_967", "88_88"]
     df = df[-df.sampleid.isin(outliers)]
 
     return df
@@ -235,20 +234,20 @@ def remove_sc_outliers(df):
 @click.option("--chromosomes")
 @click.option("--genes")
 @click.option("--celltypes")
-@click.option("--expression-file-prefix")
-@click.option("--sample-mapping-file")
-@click.option("--output-path")
-@click.option("--mt-path")
-@click.option("--anno-ht-path")
+@click.option("--expression-file-prefix", default = 'scrna-seq/grch38_association_files')
+@click.option("--sample-mapping-file", default = 'scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv')
+@click.option("--output-dir-path", default = 'tob_wgs_rv/pseudobulk_rv_association')
+@click.option("--mt-path", default = 'mt/v7.mt')
+@click.option("--anno-ht-path", default = 'tob_wgs_vep/104/vep104.3_GRCh38.ht')
 def crm_pipeline(
     chromosomes: list[str],
     genes: list[str],
     celltypes: list[str],
-    expression_files_prefix: str,  # 'scrna-seq/grch38_association_files'
+    expression_files_prefix: str,  
     sample_mapping_file: str,
-    output_dir_path: str,  # 'tob_wgs_rv/pseudobulk_rv_association'
-    mt_path: str = DEFAULT_JOINT_CALL_MT,  # 'mt/v7.mt'
-    anno_ht_path: str = DEFAULT_ANNOTATION_HT,  # 'tob_wgs_vep/104/vep104.3_GRCh38.ht'
+    output_dir_path: str,  
+    mt_path: str = DEFAULT_JOINT_CALL_MT,
+    anno_ht_path: str = DEFAULT_ANNOTATION_HT,
     window_size: int = 50000,
 ):
 
