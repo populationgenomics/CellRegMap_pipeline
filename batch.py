@@ -75,7 +75,7 @@ def filter_variants(
     set of samples for which we have scRNA-seq data
 
     Output:
-    subsetted hail matrix table, containing only variants that:
+    subset hail matrix table, containing only variants that:
     1) are not ref-only, 2) biallelic, 3) meet QC filters, 4) are rare (MAF<5%)
     """
     # read hail matrix table object (WGS data)
