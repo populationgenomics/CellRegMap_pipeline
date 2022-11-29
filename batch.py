@@ -9,7 +9,7 @@ Hail Batch workflow for the rare-variant association analysis, including:
 - run association tests
 """
 
-# import python modules # is there a specific order, rationale for grouping imports??
+# import python modules
 import os
 import re
 
@@ -39,7 +39,7 @@ from scipy.stats import shapiro
 import scipy as sp
 from scipy import interpolate
 
-# make gene loc dict import
+# make_gene_loc_dict import
 from csv import DictReader
 
 import hail as hl
@@ -56,10 +56,10 @@ DEFAULT_ANNOTATION_HT = dataset_path(
     "tob_wgs_vep/104/vep104.3_GRCh38.ht"
 )  # atm VEP only
 
-# CELLREGMAP_IMAGE = (
-#     "australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3"
-# )
-CELLREGMAP_IMAGE = get_config()['workflow']['driver_image']
+
+CELLREGMAP_IMAGE = get_config()["workflow"][
+    "driver_image"
+]  # australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3
 
 # region SUBSET_VARIANTS
 
@@ -92,7 +92,7 @@ def filter_variants(
     # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
     mt = mt.filter_rows(  # check these filters!
         (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
-        & (hl.len(mt.alleles) == 2)    # remove hom-ref
+        & (hl.len(mt.alleles) == 2)  # remove hom-ref
         & (mt.n_unsplit_alleles == 2)  # biallelic
         & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNVs
     )
@@ -116,7 +116,7 @@ def filter_variants(
 
 
 def get_promoter_variants(
-    mt_path: str,  # checkpoint from function above
+    mt_path: str,  # ouput path from function above
     ht_path: str,
     gene_details: dict[str, str],  # ouput of make_gene_loc_dict
     window_size: int,
@@ -217,10 +217,11 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
 
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
 # check whether it needs modifying
-def remove_sc_outliers(df, outliers = ["966_967", "88_88"]):
+def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
     """
-    Remove outlier samples, as identified by sc analysis
+    Remove outlier samples, as identified by single-cell analysis
     """
+    # check syntax based on specific file
     df = df[-df.sampleid.isin(outliers)]
 
     return df
@@ -229,23 +230,25 @@ def remove_sc_outliers(df, outliers = ["966_967", "88_88"]):
 # endregion MISCELLANEOUS
 
 
-
 @click.command()
 @click.option("--chromosomes")
 @click.option("--genes")
 @click.option("--celltypes")
-@click.option("--expression-file-prefix", default = 'scrna-seq/grch38_association_files')
-@click.option("--sample-mapping-file", default = 'scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv')
-@click.option("--output-dir-path", default = 'tob_wgs_rv/pseudobulk_rv_association')
-@click.option("--mt-path", default = 'mt/v7.mt')
-@click.option("--anno-ht-path", default = 'tob_wgs_vep/104/vep104.3_GRCh38.ht')
+@click.option("--expression-file-prefix", default="scrna-seq/grch38_association_files")
+@click.option(
+    "--sample-mapping-file",
+    default="scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv",
+)
+@click.option("--output-dir-path", default="tob_wgs_rv/pseudobulk_rv_association")
+@click.option("--mt-path", default="mt/v7.mt")
+@click.option("--anno-ht-path", default="tob_wgs_vep/104/vep104.3_GRCh38.ht")
 def crm_pipeline(
     chromosomes: list[str],
     genes: list[str],
     celltypes: list[str],
-    expression_files_prefix: str,  
+    expression_files_prefix: str,
     sample_mapping_file: str,
-    output_dir_path: str,  
+    output_dir_path: str,
     mt_path: str = DEFAULT_JOINT_CALL_MT,
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,
     window_size: int = 50000,
@@ -297,7 +300,7 @@ def crm_pipeline(
         gene_dict[gene]["plink"] = plink_file
 
         # if the plink output exists, do not re-generate it
-        if to_path(f'{plink_file}.bim').exists():
+        if to_path(f"{plink_file}.bim").exists():
             continue
 
         plink_job = batch.new_python_job(f"Create plink files for: {gene}")
