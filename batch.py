@@ -291,7 +291,6 @@ def crm_pipeline(
 
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
-    genotype_jobs = []
     for gene in genes_of_interest:
 
         # final path for this gene - generate first (check syntax)
@@ -313,8 +312,6 @@ def crm_pipeline(
             window_size=window_size,
             plink_file=plink_file,
         )
-        # concatenate jobs so they can be depended on
-        genotype_jobs.append(plink_job)
 
     # set jobs running
     batch.run(wait=False)
