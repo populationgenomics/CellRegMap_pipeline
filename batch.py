@@ -215,11 +215,10 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     return gene_dict
 
 
-def remove_sc_outliers(df_tsv, outliers=["966_967", "88_88"]):
+def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
     """
     Remove outlier samples, as identified by single-cell analysis
     """
-    df = pd.read_csv(df_tsv, sep="\t")
     df = df[-df['OneK1K_ID'].isin(outliers)]
 
     return df
@@ -245,7 +244,7 @@ def crm_pipeline(
     genes: list[str],
     celltypes: list[str],
     expression_files_prefix: str,
-    sample_mapping_file: str,
+    sample_mapping_file_tsv: str,
     output_dir_path: str,
     mt_path: str = DEFAULT_JOINT_CALL_MT,
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,
@@ -259,6 +258,7 @@ def crm_pipeline(
     batch = hb.Batch("CellRegMap pipeline", backend=sb)
 
     # extract samples for which we have single-cell (sc) data
+    sample_mapping_file = pd.read_csv(dataset_path(sample_mapping_file_tsv), sep="\t")
     sample_mapping_file = remove_sc_outliers(sample_mapping_file)
     sc_samples = sample_mapping_file["InternalID"].unique()
 
