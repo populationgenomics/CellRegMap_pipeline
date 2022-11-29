@@ -221,7 +221,10 @@ def read_sample_ids(df_tsv: str, outliers: list[str] = ["966_967", "88_88"]) -> 
     Remove any outlier samples, as identified by single-cell analysis
     """
     df = pd.read_csv(df_tsv, sep="\t")
-    df = df[-df["OneK1K_ID"].isin(outliers)]
+
+    # if there are outliers, remove them
+    if outliers:
+        df = df[-df["OneK1K_ID"].isin(outliers)]
 
     return df["InternalID"].unique()
 
