@@ -233,7 +233,7 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 @click.option("--celltypes")
 @click.option("--expression-files-prefix", default="scrna-seq/grch38_association_files")
 @click.option(
-    "--sample-mapping-file",
+    "--sample-mapping-file-tsv",
     default="scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv",
 )
 @click.option("--output-dir-path", default="tob_wgs_rv/pseudobulk_rv_association")
