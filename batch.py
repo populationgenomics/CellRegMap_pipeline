@@ -103,7 +103,7 @@ def filter_variants(
         (mt.variant_qc.AF[1] < 0.05) & (mt.variant_qc.AF[1] > 0)
         | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
     )
-    mt = mt.write(output_mt_path)
+    mt.write(output_mt_path)
     logging.info(
         f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}"
     )
