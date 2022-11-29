@@ -215,7 +215,7 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     return gene_dict
 
 
-def read_sample_ids(df_tsv: str, outliers: list[str] = ["966_967", "88_88"]) -> str:
+def read_sample_ids(df_tsv: str, outliers: list[str] = ["966_967", "88_88"]) -> list[str]:
     """
     Get sample IDs from the dataframe
     Remove any outlier samples, as identified by single-cell analysis
