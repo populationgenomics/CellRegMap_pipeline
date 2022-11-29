@@ -120,24 +120,25 @@ def get_promoter_variants(
     ht_path: str,
     gene_details: dict[str, str],  # ouput of make_gene_loc_dict
     window_size: int,
-    plink_output_prefix: str,  # 'tob_wgs_rv/pseudobulk_rv_association/plink_files/'
+    plink_file: str,  # 'tob_wgs_rv/pseudobulk_rv_association/plink_files/GENE'
 ):
     """Subset hail matrix table
 
     Input:
     mt_path: path to already subsetted hail matrix table
-    gene_file: path to a tsv file with information on
-    the chrom, start and end location of genes (rows)
-
+    ht_path: path to VEP HT
+    gene_details: dict of info for current gene
+    window_size: int, size of flanking region around genes
+    plink_file: str, file prefix for writing plink data
+    
     Output:
     For retained variants, that are: 1) in promoter regions and
     2) within 50kb up or down-stream of the gene body (or in the gene body itself)
     (on top of all filters done above)
 
-    returns:
-    - Path to plink prefix for genotype files (plink format: .bed, .bim, .fam)
-    - Path to hail table with variant (rows) stats for downstream analyses
+    returns nothing
     """
+    
     # read hail matrix table object (pre-filtered)
     init_batch()
     mt = hl.read_matrix_table(mt_path)
@@ -188,10 +189,7 @@ def get_promoter_variants(
     ht.write(ht_path)
 
     # export MT object to PLINK (promoter variants)
-    plink_path = output_path(f"{plink_output_prefix}/{gene_name}")
-    export_plink(mt, plink_path, ind_id=mt.s)
-
-    return plink_path
+    export_plink(mt, plink_file, ind_id=mt.s)
 
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
@@ -240,7 +238,6 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
     "--sample-mapping-file-tsv",
     default="scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv",
 )
-@click.option("--output-dir-path", default="tob_wgs_rv/pseudobulk_rv_association")
 @click.option("--mt-path", default="mt/v7.mt")
 @click.option("--anno-ht-path", default="tob_wgs_vep/104/vep104.3_GRCh38.ht")
 def crm_pipeline(
@@ -249,7 +246,6 @@ def crm_pipeline(
     celltypes: str,
     expression_files_prefix: str,
     sample_mapping_file_tsv: str,
-    output_dir_path: str,
     mt_path: str = DEFAULT_JOINT_CALL_MT,
     anno_ht_path: str = DEFAULT_ANNOTATION_HT,
     window_size: int = 50000,
@@ -300,7 +296,7 @@ def crm_pipeline(
     for gene in genes_of_interest:
 
         # final path for this gene - generate first (check syntax)
-        plink_file = output_path(f"{output_dir_path}/plink_files/{gene}")
+        plink_file = output_path(f"plink_files/{gene}")
         gene_dict[gene]["plink"] = plink_file
 
         # if the plink output exists, do not re-generate it
