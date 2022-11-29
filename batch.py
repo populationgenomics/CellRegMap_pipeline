@@ -56,9 +56,10 @@ DEFAULT_ANNOTATION_HT = dataset_path(
     "tob_wgs_vep/104/vep104.3_GRCh38.ht"
 )  # atm VEP only
 
-CELLREGMAP_IMAGE = (
-    "australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3"
-)
+# CELLREGMAP_IMAGE = (
+#     "australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3"
+# )
+CELLREGMAP_IMAGE = get_config()['workflow']['driver_image']
 
 # region SUBSET_VARIANTS
 
