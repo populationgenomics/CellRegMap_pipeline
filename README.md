@@ -30,8 +30,25 @@ Single [python script](batch.py), key steps (implemented as distinct functions):
 * CellRegMap-RV various tests are run (each chunk independently)
 * resulting p-values are aggregated across jobs and saved
 
+To run:
+```
+analysis-runner \
+    --dataset tob-wgs \
+    --access-level test \
+    --output-dir "tob_wgs_rv/pseudobulk_rv_association" \
+    --image australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3 \
+    --description "CellRegMap batch job" \
+    python3 batch.py \
+      --expression-file-prefix scrna-seq/grch38_association_files \
+      --sample-mapping-file scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv \
+      --genes VPREB3 \
+      --chromosomes 22 \
+      --cell-types B_intermediate
+```
+
 ## CellRegMap pipeline v1
 
+A WDL workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
 A WDL workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
 A container to run the workflow is available [on Dockerhub](https://hub.docker.com/repository/docker/annasecuomo/cellregmap_pipeline).
 

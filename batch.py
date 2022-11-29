@@ -9,7 +9,7 @@ Hail Batch workflow for the rare-variant association analysis, including:
 - run association tests
 """
 
-# import python modules # is there a specific order, rationale for grouping imports??
+# import python modules
 import os
 import re
 
@@ -39,7 +39,7 @@ from scipy.stats import shapiro
 import scipy as sp
 from scipy import interpolate
 
-# make gene loc dict import
+# make_gene_loc_dict import
 from csv import DictReader
 
 import hail as hl
@@ -62,9 +62,10 @@ DEFAULT_ANNOTATION_HT = dataset_path(
     "tob_wgs_vep/104/vep104.3_GRCh38.ht"
 )  # atm VEP only
 
-CELLREGMAP_IMAGE = (
-    "australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3"
-)
+
+CELLREGMAP_IMAGE = get_config()["workflow"][
+    "driver_image"
+]  # australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3
 
 # region SUBSET_VARIANTS
 
@@ -81,7 +82,7 @@ def filter_variants(
     set of samples for which we have scRNA-seq data
 
     Output:
-    subsetted hail matrix table, containing only variants that:
+    subset hail matrix table, containing only variants that:
     1) are not ref-only, 2) biallelic, 3) meet QC filters, 4) are rare (MAF<5%)
     """
     # read hail matrix table object (WGS data)
@@ -108,7 +109,7 @@ def filter_variants(
         (mt.variant_qc.AF[1] < 0.05) & (mt.variant_qc.AF[1] > 0)
         | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
     )
-    mt = mt.checkpoint(output_mt_path, overwrite=True)
+    mt.write(output_mt_path)
     logging.info(
         f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}"
     )
@@ -121,11 +122,11 @@ def filter_variants(
 
 
 def get_promoter_variants(
-    mt_path: str,  # checkpoint from function above
+    mt_path: str,  # ouput path from function above
     ht_path: str,
     gene_details: dict[str, str],  # ouput of make_gene_loc_dict
     window_size: int,
-    plink_output_prefix: str,  # 'tob_wgs_rv/pseudobulk_rv_association/{celltype}/'
+    plink_output_prefix: str,  # 'tob_wgs_rv/pseudobulk_rv_association/plink_files/'
 ):
     """Subset hail matrix table
 
@@ -150,13 +151,13 @@ def get_promoter_variants(
     gene_name = gene_details["gene_name"]
 
     # get relevant chromosome
-    chrom = gene_details["chrom"]
+    chrom = gene_details["chr"]
 
     # subset to window
     # get gene body position (start and end) and build interval
-    left_boundary = max(1, int(gene_details["gene-start"]) - window_size)
+    left_boundary = max(1, int(gene_details["start"]) - window_size)
     right_boundary = min(
-        int(gene_details["gene-end"]) + window_size,
+        int(gene_details["end"]) + window_size,
         hl.get_reference("GRCh38").lengths[f"chr{chrom}"],
     )
     # get gene-specific genomic interval
@@ -167,7 +168,7 @@ def get_promoter_variants(
     mt = hl.filter_intervals(
         mt, [hl.parse_locus_interval(gene_interval, reference_genome="GRCh38")]
     )
-    mt_path = output_path("in_window.mt", "tmp")
+    mt_path = output_path(f"{gene_name}_in_window.mt", "tmp")
     mt = mt.checkpoint(
         mt_path, overwrite=True
     )  # add checkpoint to avoid repeat evaluation
@@ -724,11 +725,12 @@ def crm_pipeline(
 
     # extract samples for which we have single-cell (sc) data
     sample_mapping_file = remove_sc_outliers(sample_mapping_file)
-    sc_samples = sample_mapping_file["OneK1K_ID"].unique()
+    sc_samples = sample_mapping_file["InternalID"].unique()
 
     # filter to QC-passing, rare, biallelic variants
     filter_job = batch.new_python_job(name="MT filter job")
     output_mt_path = output_path("tob_wgs_rv/densified_rv_only.mt")
+    filter_job.image(CELLREGMAP_IMAGE)
     filter_job.call(
         filter_variants,
         mt_path=mt_path,
@@ -831,41 +833,6 @@ def crm_pipeline(
         pv_filename = AnyPath(output_path(f"{celltype}_all_pvalues.csv"))
         with pv_filename.open("w") as pf:
             pv_all.to_csv(pf, index=False)
-
-    # determine for each chromosome
-
-    # below is pseudocode from @illusional I don't understand but don't want to delete
-
-    # plink_job_reference_and_outputs_for_gene: dict[str, tuple[hb.Job, str]] = {}
-    # if you know the output, you need to wait for the actual job that processes it
-    # so store the reference to the job that's producing the file
-
-    # for chr_loc_file in gene_loc_files:
-    #     with AnyPath(chr_loc_file).open() as f:
-    #         for line in f:
-    #             # i have no idea, I'm just randomly guessing
-    #             gene = line.split("\t")[0]
-    #             job = batch.new_python_job(f"Preprocess: {gene}")
-
-    #             plink_output_prefix = output_path(f"plink_files/{gene}_rare_promoter")
-    #             plink_job_reference_and_outputs_for_gene[gene] = (
-    #                 job,
-    #                 plink_output_prefix,
-    #             )
-    #             result = job.call(
-    #                 get_promoter_variants,
-    #                 gene_file=chr_loc_file,
-    #                 gene_name=gene,
-    #                 window_size=50_000,
-    #                 plink_output_prefix=plink_output_prefix,
-    #             )
-
-    # _gene = "BRCA1"
-    # dependent_job, output_prefix = plink_job_reference_and_outputs_for_gene[_gene]
-    # downstream_job = batch.new_job("Downstream job")
-    # downstream_job.depends_on(dependent_job)
-
-    # # run that function
 
 
 if __name__ == "__main__":
