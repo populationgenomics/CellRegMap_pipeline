@@ -252,7 +252,7 @@ def crm_pipeline(
 ):
 
     sb = hb.ServiceBackend(
-        billing_project=config["hail"]["billing_project"],
+        billing_project=get_config()["hail"]["billing_project"],
         remote_tmpdir=remote_tmpdir(),
     )
     batch = hb.Batch("CellRegMap pipeline", backend=sb)
