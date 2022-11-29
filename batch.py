@@ -228,9 +228,9 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 
 
 @click.command()
-@click.option("--chromosomes", type=list)
-@click.option("--genes", type=list)
-@click.option("--celltypes", type=list)
+@click.option("--chromosomes", multiple=True)
+@click.option("--genes", multiple=True)
+@click.option("--celltypes", multiple=True)
 @click.option("--expression-files-prefix", default="scrna-seq/grch38_association_files")
 @click.option(
     "--sample-mapping-file-tsv",
