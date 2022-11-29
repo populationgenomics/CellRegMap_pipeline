@@ -245,8 +245,8 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 @click.option("--anno-ht-path", default="tob_wgs_vep/104/vep104.3_GRCh38.ht")
 def crm_pipeline(
     chromosomes: str,
-    genes: list[str],
-    celltypes: list[str],
+    genes: str,
+    celltypes: str,
     expression_files_prefix: str,
     sample_mapping_file_tsv: str,
     output_dir_path: str,
