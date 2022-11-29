@@ -43,7 +43,7 @@ analysis-runner \
       --sample-mapping-file scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv \
       --genes VPREB3 \
       --chromosomes 22 \
-      --cell-types B_intermediate
+      --celltypes B_intermediate
 ```
 
 ## CellRegMap pipeline v1
