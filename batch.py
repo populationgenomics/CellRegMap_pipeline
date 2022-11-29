@@ -215,14 +215,15 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     return gene_dict
 
 
-def remove_sc_outliers(df_tsv, outliers=["966_967", "88_88"]):
+def read_sample_ids(df_tsv: str, outliers: list[str] = ["966_967", "88_88"]) -> str:
     """
-    Remove outlier samples, as identified by single-cell analysis
+    Get sample IDs from the dataframe
+    Remove any outlier samples, as identified by single-cell analysis
     """
     df = pd.read_csv(df_tsv, sep="\t")
-    df = df[-df['OneK1K_ID'].isin(outliers)]
+    df = df[-df["OneK1K_ID"].isin(outliers)]
 
-    return df
+    return df["InternalID"].unique()
 
 
 # endregion MISCELLANEOUS
@@ -259,8 +260,7 @@ def crm_pipeline(
     batch = hb.Batch("CellRegMap pipeline", backend=sb)
 
     # extract samples for which we have single-cell (sc) data
-    sample_mapping_file = remove_sc_outliers(sample_mapping_file)
-    sc_samples = sample_mapping_file["InternalID"].unique()
+    sc_samples = read_sample_ids(sample_mapping_file)
 
     # filter to QC-passing, rare, biallelic variants
     filter_job = batch.new_python_job(name="MT filter job")
