@@ -215,14 +215,12 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     return gene_dict
 
 
-# copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
-# check whether it needs modifying
-def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
+def remove_sc_outliers(df_tsv, outliers=["966_967", "88_88"]):
     """
     Remove outlier samples, as identified by single-cell analysis
     """
-    # check syntax based on specific file
-    df = df[-df.sampleid.isin(outliers)]
+    df = pd.read_csv(df_tsv, sep="\t")
+    df = df[-df['OneK1K_ID'].isin(outliers)]
 
     return df
 
