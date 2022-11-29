@@ -292,7 +292,8 @@ def crm_pipeline(
         gene_dict.update(make_gene_loc_dict(geneloc_tsv_path))
 
     # isolate to the genes we are interested in
-    genes_of_interest = genes or list[gene_dict.keys()]
+    gene_list = genes.split(' ')
+    genes_of_interest = gene_list or list[gene_dict.keys()]
 
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
