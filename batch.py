@@ -206,7 +206,7 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     """
     gene_dict = {}
 
-    with open(file) as handle:
+    with open(to_path(file)) as handle:
         reader = DictReader(handle, delimiter="\t")
 
         for row in reader:
