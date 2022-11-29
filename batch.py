@@ -46,12 +46,6 @@ import hail as hl
 import hailtop.batch as hb
 from hail.methods import export_plink
 
-# from cellregmap import (  # figure out how to import this from github
-#     run_gene_set_association,
-#     run_burden_association,
-#     omnibus_set_association,
-# )
-
 # use logging to print statements, display at info level
 logging.basicConfig(
     format="%(levelname)s:%(message)s", level=logging.INFO
@@ -220,71 +214,6 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     return gene_dict
 
 
-# can probably be merged with below
-def extract_genes(gene_list, expression_tsv_path) -> list[str]:
-    """
-    Takes a list of all genes and subsets to only those
-    present in the expression file of interest
-    """
-    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep="\t")
-    expression_df = filter_lowly_expressed_genes(expression_df)
-    gene_ids = set(list(expression_df.columns.values)[1:])
-    genes = set(gene_list).intersection(gene_ids)
-    return list(sorted(genes))
-
-
-# copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
-# check whether it needs modifying
-def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[str]:
-    """get index of total number of genes
-    Input:
-    expression_df: a data frame with samples as rows and genes as columns,
-    containing normalised expression values (i.e., the average number of molecules
-    for each gene detected in each person).
-    geneloc_df: a data frame with the gene location (chromosome, start, and
-    end locations as columns) specified for each gene (rows).
-    Returns:
-    The number of genes (as an int) after filtering for lowly expressed genes.
-    This integer number gets fed into the number of scatters to run.
-    """
-    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep="\t")
-    geneloc_df = pd.read_csv(AnyPath(geneloc_tsv_path), sep="\t")
-
-    # expression_df = filter_lowly_expressed_genes(expression_df) # I might add this in but not for now
-    gene_ids = set(list(expression_df.columns.values)[1:])
-
-    genes = set(geneloc_df.gene_name).intersection(gene_ids)
-    return list(sorted(genes))
-
-
-# copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
-# generalised to specify min pct samples as input
-def filter_lowly_expressed_genes(expression_df, min_pct=10):
-    """Remove genes with low expression in all samples
-    Input:
-    expression_df: a data frame with samples as rows and genes as columns,
-    containing normalised expression values (i.e., the average number of molecules
-    for each gene detected in each person).
-    Returns:
-    A filtered version of the input data frame, after removing columns (genes)
-    with 0 values in more than 10% of the rows (samples).
-    """
-    # Remove genes with 0 expression in all samples
-    expression_df = expression_df.loc[:, (expression_df != 0).any(axis=0)]
-    genes_not_equal_zero = expression_df.iloc[:, 1:].values != 0
-    n_expr_over_zero = pd.DataFrame(genes_not_equal_zero.sum(axis=0))
-    percent_expr_over_zero = (n_expr_over_zero / len(expression_df.index)) * 100
-    percent_expr_over_zero.index = expression_df.columns[1:]
-
-    # Filter genes with less than 10 percent individuals with non-zero expression
-    atleastNpercent = percent_expr_over_zero[(percent_expr_over_zero > min_pct)[0]]
-    sample_ids = expression_df["sampleid"]
-    expression_df = expression_df[atleastNpercent.index]
-    expression_df.insert(loc=0, column="sampleid", value=sample_ids)
-
-    return expression_df
-
-
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
 # check whether it needs modifying
 def remove_sc_outliers(df):
@@ -312,7 +241,6 @@ config = get_config()
 @click.option("--mt-path")
 @click.option("--anno-ht-path")
 def crm_pipeline(
-    # sc_samples: list["str"],
     chromosomes: list[str],
     genes: list[str],
     celltypes: list[str],
@@ -332,7 +260,7 @@ def crm_pipeline(
 
     # extract samples for which we have single-cell (sc) data
     sample_mapping_file = remove_sc_outliers(sample_mapping_file)
-    sc_samples = sample_mapping_file["OneK1K_ID"].unique()
+    sc_samples = sample_mapping_file["InternalID"].unique()
 
     # filter to QC-passing, rare, biallelic variants
     filter_job = batch.new_python_job(name="MT filter job")
