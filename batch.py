@@ -79,6 +79,7 @@ def filter_variants(
     subset hail matrix table, containing only variants that:
     1) are not ref-only, 2) biallelic, 3) meet QC filters, 4) are rare (MAF<5%)
     """
+    return
     # read hail matrix table object (WGS data)
     init_batch()
     mt = hl.read_matrix_table(mt_path)
@@ -138,6 +139,7 @@ def get_promoter_variants(
 
     returns nothing
     """
+    return
     
     # read hail matrix table object (pre-filtered)
     init_batch()
