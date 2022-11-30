@@ -34,7 +34,7 @@ To run:
 ```
 analysis-runner \
     --dataset tob-wgs \
-    --access-level test \
+    --access-level standard \
     --output-dir "tob_wgs_rv/pseudobulk_rv_association" \
     --image australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3 \
     --description "CellRegMap batch job" \
@@ -48,6 +48,7 @@ analysis-runner \
 
 ## CellRegMap pipeline v1
 
+A WDL workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
 A WDL workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
 A container to run the workflow is available [on Dockerhub](https://hub.docker.com/repository/docker/annasecuomo/cellregmap_pipeline).
 
