@@ -19,6 +19,7 @@ import logging
 from cloudpathlib import AnyPath
 from cpg_utils import to_path
 from cpg_utils.hail_batch import (
+    copy_common_env,
     dataset_path,
     get_config,
     init_batch,
@@ -152,7 +153,7 @@ def get_promoter_variants(
     left_boundary = max(1, int(gene_details["start"]) - window_size)
     right_boundary = min(
         int(gene_details["end"]) + window_size,
-        hl.get_reference("GRCh38").lengths[f"chr{chrom}"],
+        hl.get_reference("GRCh38").lengths[chrom],
     )
     # get gene-specific genomic interval
     gene_interval = f"{chrom}:{left_boundary}-{right_boundary}"
@@ -238,16 +239,16 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
     "--sample-mapping-file-tsv",
     default="scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv",
 )
-@click.option("--mt-path", default="mt/v7.mt")
-@click.option("--anno-ht-path", default="tob_wgs_vep/104/vep104.3_GRCh38.ht")
+@click.option("--mt-path", default=DEFAULT_JOINT_CALL_MT)
+@click.option("--anno-ht-path", default=DEFAULT_ANNOTATION_HT)
 def crm_pipeline(
     chromosomes: str,
     genes: str,
     celltypes: str,
     expression_files_prefix: str,
     sample_mapping_file_tsv: str,
-    mt_path: str = DEFAULT_JOINT_CALL_MT,
-    anno_ht_path: str = DEFAULT_ANNOTATION_HT,
+    mt_path: str,
+    anno_ht_path: str,
     window_size: int = 50000,
 ):
 
@@ -263,15 +264,18 @@ def crm_pipeline(
     sc_samples = sample_mapping_file["InternalID"].unique()
 
     # filter to QC-passing, rare, biallelic variants
-    filter_job = batch.new_python_job(name="MT filter job")
-    output_mt_path = output_path("tob_wgs_rv/densified_rv_only.mt")
-    filter_job.image(CELLREGMAP_IMAGE)
-    filter_job.call(
-        filter_variants,
-        mt_path=mt_path,
-        samples=sc_samples,
-        output_mt_path=output_mt_path,
-    )
+    output_mt_path = output_path("densified_rv_only.mt")
+    if not to_path(output_mt_path).exists():
+
+        filter_job = batch.new_python_job(name="MT filter job")
+        copy_common_env(filter_job)
+        filter_job.image(CELLREGMAP_IMAGE)
+        filter_job.call(
+            filter_variants,
+            mt_path=mt_path,
+            samples=sc_samples,
+            output_mt_path=output_mt_path,
+        )
 
     # grab all relevant genes across all chromosomes
     # simpler if gene details are condensed to one file
@@ -304,7 +308,9 @@ def crm_pipeline(
             continue
 
         plink_job = batch.new_python_job(f"Create plink files for: {gene}")
-        plink_job.depends_on(filter_job)
+        copy_common_env(plink_job)
+        if filter_job:
+            plink_job.depends_on(filter_job)
         plink_job.image(CELLREGMAP_IMAGE)
         plink_job.call(
             get_promoter_variants,
