@@ -44,7 +44,6 @@ from csv import DictReader
 
 import hail as hl
 import hailtop.batch as hb
-from hail.methods import export_plink
 
 # use logging to print statements, display at info level
 logging.basicConfig(
@@ -189,6 +188,7 @@ def get_promoter_variants(
     ht.write(ht_path)
 
     # export MT object to PLINK (promoter variants)
+    from hail.methods import export_plink
     export_plink(mt, plink_file, ind_id=mt.s)
 
 
