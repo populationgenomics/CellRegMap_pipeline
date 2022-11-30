@@ -187,7 +187,6 @@ def get_promoter_variants(
     ht_path = output_path(f"{gene_name}_rare_promoter_summary.ht")
     ht = mt.rows()
     ht.write(ht_path)
-    return
 
     # export MT object to PLINK (promoter variants)
     export_plink(mt, plink_file, ind_id=mt.s)
