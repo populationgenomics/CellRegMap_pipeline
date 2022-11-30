@@ -19,6 +19,7 @@ import logging
 from cloudpathlib import AnyPath
 from cpg_utils import to_path
 from cpg_utils.hail_batch import (
+    copy_common_env,
     dataset_path,
     get_config,
     init_batch,
@@ -733,6 +734,7 @@ def crm_pipeline(
     if not to_path(output_mt_path).exists():
 
         filter_job = batch.new_python_job(name="MT filter job")
+        copy_common_env(filter_job)
         filter_job.image(CELLREGMAP_IMAGE)
         filter_job.call(
             filter_variants,
@@ -772,11 +774,14 @@ def crm_pipeline(
         gene_dict[gene]["plink"] = plink_file
 
         # if the plink output exists, do not re-generate it
-        if to_path(plink_file).exists():
+        if to_path(f"{plink_file}.bim").exists():
             continue
 
         plink_job = batch.new_python_job(f"Create plink files for: {gene}")
-        plink_job.depends_on(filter_job)
+        copy_common_env(plink_job)
+        if filter_job:
+            plink_job.depends_on(filter_job)
+        plink_job.image(CELLREGMAP_IMAGE)
         plink_job.call(
             get_promoter_variants,
             mt_path=output_mt_path,
