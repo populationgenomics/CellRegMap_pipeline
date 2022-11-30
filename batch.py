@@ -130,7 +130,7 @@ def get_promoter_variants(
     gene_details: dict of info for current gene
     window_size: int, size of flanking region around genes
     plink_file: str, file prefix for writing plink data
-    
+
     Output:
     For retained variants, that are: 1) in promoter regions and
     2) within 50kb up or down-stream of the gene body (or in the gene body itself)
@@ -138,7 +138,7 @@ def get_promoter_variants(
 
     returns nothing
     """
-    
+
     # read hail matrix table object (pre-filtered)
     init_batch()
     mt = hl.read_matrix_table(mt_path)
@@ -190,6 +190,7 @@ def get_promoter_variants(
 
     # export MT object to PLINK (promoter variants)
     from hail.methods import export_plink
+
     export_plink(mt, plink_file, ind_id=mt.s)
 
 
@@ -218,7 +219,7 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
     """
     Remove outlier samples, as identified by single-cell analysis
     """
-    df = df[-df['OneK1K_ID'].isin(outliers)]
+    df = df[-df["OneK1K_ID"].isin(outliers)]
 
     return df
 
@@ -227,11 +228,6 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 
 
 @click.command()
-@click.option(
-    '--chromosomes',
-    help='List of chromosome numbers to run eQTL analysis on. '
-    'Space separated, as one argument (Default: all)',
-)
 @click.option("--celltypes")
 @click.option("--expression-files-prefix", default="scrna-seq/grch38_association_files")
 @click.option(
@@ -240,14 +236,19 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 )
 @click.option("--mt-path", default=DEFAULT_JOINT_CALL_MT)
 @click.option("--anno-ht-path", default=DEFAULT_ANNOTATION_HT)
+@click.option(
+    "--chromosomes",
+    help="List of chromosome numbers to run rare variant association analysis on. "
+    "Space separated, as one argument (Default: all)",
+)
 @click.option("--genes", default=None)
 def crm_pipeline(
-    chromosomes: str,
     celltypes: str,
     expression_files_prefix: str,
     sample_mapping_file_tsv: str,
     mt_path: str,
     anno_ht_path: str,
+    chromosomes: str = "all",
     genes: str | None = None,
     window_size: int = 50000,
 ):
@@ -278,29 +279,32 @@ def crm_pipeline(
         )
 
     else:
-        logging.info('File already exist no need to filter')
+        logging.info("File already exist no need to filter")
         filter_job = None
 
     # grab all relevant genes across all chromosomes
     # simpler if gene details are condensed to one file
     gene_dict: dict[str, dict] = {}
-    if chromosomes == 'all':
-        chromosomes_list = list(np.arange(22)+1)
+    if chromosomes == "all":
+        # autosomes only for now
+        chromosomes_list = list(np.arange(22) + 1)
     else:
-        chromosomes_list = chromosomes.split(' ')
+        chromosomes_list = chromosomes.split(" ")
     for chromosome in chromosomes_list:
-        geneloc_tsv_path = dataset_path(os.path.join(
-            expression_files_prefix,
-            "gene_location_files",
-            f"GRCh38_geneloc_chr{chromosome}.tsv",
-        ))
+        geneloc_tsv_path = dataset_path(
+            os.path.join(
+                expression_files_prefix,
+                "gene_location_files",
+                f"GRCh38_geneloc_chr{chromosome}.tsv",
+            )
+        )
 
         # concatenating across chromosomes to have a single dict
         gene_dict.update(make_gene_loc_dict(geneloc_tsv_path))
 
     # isolate to the genes we are interested in
     if genes is not None:
-        genes_of_interest = genes.split(' ')
+        genes_of_interest = genes.split(" ")
     else:
         genes_of_interest = list(gene_dict.keys())
 
