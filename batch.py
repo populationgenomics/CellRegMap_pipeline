@@ -274,7 +274,7 @@ def crm_pipeline(
         filter_job.call(
             filter_variants,
             mt_path=mt_path,
-            samples=sc_samples,
+            samples=list(sc_samples),
             output_mt_path=output_mt_path,
         )
 
