@@ -39,11 +39,11 @@ analysis-runner \
     --image australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3 \
     --description "CellRegMap batch job" \
     python3 batch.py \
-      --expression-file-prefix scrna-seq/grch38_association_files \
-      --sample-mapping-file scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv \
+      --expression-files-prefix scrna-seq/grch38_association_files \
+      --sample-mapping-file-tsv scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv \
       --genes VPREB3 \
       --chromosomes 22 \
-      --cell-types B_intermediate
+      --celltypes B_intermediate
 ```
 
 ## CellRegMap pipeline v1
