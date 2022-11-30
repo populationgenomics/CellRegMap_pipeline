@@ -232,7 +232,6 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
     help='List of chromosome numbers to run eQTL analysis on. '
     'Space separated, as one argument (Default: all)',
 )
-@click.option("--genes")
 @click.option("--celltypes")
 @click.option("--expression-files-prefix", default="scrna-seq/grch38_association_files")
 @click.option(
@@ -241,14 +240,15 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 )
 @click.option("--mt-path", default=DEFAULT_JOINT_CALL_MT)
 @click.option("--anno-ht-path", default=DEFAULT_ANNOTATION_HT)
+@click.option("--genes", default=None)
 def crm_pipeline(
     chromosomes: str,
-    genes: str,
     celltypes: str,
     expression_files_prefix: str,
     sample_mapping_file_tsv: str,
     mt_path: str,
     anno_ht_path: str,
+    genes: str | None = None,
     window_size: int = 50000,
 ):
 
@@ -277,6 +277,10 @@ def crm_pipeline(
             output_mt_path=output_mt_path,
         )
 
+    else:
+        logging.info('File already exist no need to filter')
+        filter_job = None
+
     # grab all relevant genes across all chromosomes
     # simpler if gene details are condensed to one file
     gene_dict: dict[str, dict] = {}
@@ -292,8 +296,10 @@ def crm_pipeline(
         gene_dict.update(make_gene_loc_dict(geneloc_tsv_path))
 
     # isolate to the genes we are interested in
-    gene_list = genes.split(' ')
-    genes_of_interest = gene_list or list[gene_dict.keys()]
+    if genes is not None:
+        genes_of_interest = genes.split(' ')
+    else:
+        genes_of_interest = list(gene_dict.keys())
 
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
@@ -311,6 +317,7 @@ def crm_pipeline(
         copy_common_env(plink_job)
         if filter_job:
             plink_job.depends_on(filter_job)
+
         plink_job.image(CELLREGMAP_IMAGE)
         plink_job.call(
             get_promoter_variants,
