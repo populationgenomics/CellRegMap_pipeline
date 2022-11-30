@@ -103,7 +103,7 @@ def filter_variants(
         (mt.variant_qc.AF[1] < 0.05) & (mt.variant_qc.AF[1] > 0)
         | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
     )
-    mt.write(output_mt_path)
+    mt.write(output_mt_path, overwrite=True)
     logging.info(
         f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}"
     )
@@ -186,7 +186,7 @@ def get_promoter_variants(
     # export this as a Hail table for downstream analysis
     ht_path = output_path(f"{gene_name}_rare_promoter_summary.ht")
     ht = mt.rows()
-    ht.write(ht_path)
+    ht.write(ht_path, overwrite=True)
 
     # export MT object to PLINK (promoter variants)
     from hail.methods import export_plink
