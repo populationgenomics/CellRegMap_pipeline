@@ -284,7 +284,10 @@ def crm_pipeline(
     # grab all relevant genes across all chromosomes
     # simpler if gene details are condensed to one file
     gene_dict: dict[str, dict] = {}
-    chromosomes_list = chromosomes.split(' ')
+    if chromosomes == 'all':
+        chromosomes_list = list(np.arange(22)+1)
+    else:
+        chromosomes_list = chromosomes.split(' ')
     for chromosome in chromosomes_list:
         geneloc_tsv_path = dataset_path(os.path.join(
             expression_files_prefix,
