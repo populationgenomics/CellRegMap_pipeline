@@ -105,7 +105,7 @@ def filter_variants(
     )
     mt.write(output_mt_path, overwrite=True)
     logging.info(
-        f'Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}'
+        f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}"
     )
 
 
@@ -340,4 +340,4 @@ def crm_pipeline(
 
 
 if __name__ == '__main__':
-    crm_pipeline()
+    crm_pipeline()  # pylint: disable=no-value-for-parameter

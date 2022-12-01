@@ -189,4 +189,4 @@ def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
 
 
 if __name__ == '__main__':
-    main()
+    main()  # pylint: disable=no-value-for-parameter

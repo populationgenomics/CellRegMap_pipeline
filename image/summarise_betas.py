@@ -74,4 +74,4 @@ def main(file_with_filenames_1: str, file_with_filenames_2: str, output_folder: 
 
 
 if __name__ == '__main__':
-    main()
+    main()  # pylint: disable=no-value-for-parameter
