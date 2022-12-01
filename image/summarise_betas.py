@@ -1,8 +1,11 @@
+# pylint: disable=missing-function-docstring
+
 import os
+from typing import Any, Dict, List
+
 import click
 import pandas as pd
 import numpy as np
-from typing import Any, Dict, List
 from collections import defaultdict
 
 

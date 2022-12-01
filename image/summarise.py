@@ -1,11 +1,15 @@
+# pylint: disable=missing-function-docstring
+
 import os
 import logging
-import click
-import pandas as pd
-import numpy as np
-import scipy as sp
-from scipy import interpolate
 from typing import Any, Dict, List
+
+import click
+import numpy as np
+import pandas as pd
+import scipy as sp
+
+from scipy import interpolate
 from collections import defaultdict
 
 # use logging to print statements, display at info level

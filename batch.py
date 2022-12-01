@@ -111,7 +111,7 @@ def filter_variants(
     )
     mt.write(output_mt_path, overwrite=True)
     logging.info(
-        f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}"
+        f'Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}'
     )
 
 
@@ -226,67 +226,67 @@ def prepare_input_files(
     genotype matrix
     phenotype vector
     """
-    expression_filename = AnyPath(output_path(f"{gene_name}_{cell_type}.csv"))
-    genotype_filename = AnyPath(output_path(f"{gene_name}_rare_regulatory.csv"))
-    kinship_filename = AnyPath(output_path("kinship_common_samples.csv"))
+    expression_filename = AnyPath(output_path(f"{gene_name}_{cell_type}.csv'))
+    genotype_filename = AnyPath(output_path(f'{gene_name}_rare_regulatory.csv'))
+    kinship_filename = AnyPath(output_path('kinship_common_samples.csv'))
 
     # read in phenotype file (tsv)
-    phenotype = pd.read_csv(phenotype_file, sep="\t", index_col=0)
+    phenotype = pd.read_csv(phenotype_file, sep='\t', index_col=0)
 
     phenotype = xr.DataArray(
         phenotype.values,
-        dims=["sample", "gene"],
-        coords={"sample": phenotype.index.values, "gene": phenotype.columns.values},
+        dims=['sample', 'gene'],
+        coords={'sample': phenotype.index.values, 'gene': phenotype.columns.values},
     )
 
     # read in genotype file (plink format)
-    to_path(genotype_file_bed).copy("temp.bed")  # bed
-    to_path(genotype_file_bim).copy("temp.bim")  # bim
-    to_path(genotype_file_fam).copy("temp.fam")  # fam
-    geno = read_plink1_bin("temp.bed")
+    to_path(genotype_file_bed).copy('temp.bed')  # bed
+    to_path(genotype_file_bim).copy('temp.bim')  # bim
+    to_path(genotype_file_fam).copy('temp.fam')  # fam
+    geno = read_plink1_bin('temp.bed')
 
     # read in GRM (genotype relationship matrix; kinship matrix)
     kinship = pd.read_csv(kinship_file, index_col=0)
-    kinship.index = kinship.index.astype("str")
+    kinship.index = kinship.index.astype('str')
     assert all(kinship.columns == kinship.index)  # symmetric matrix, donors x donors
     kinship = xr.DataArray(
         kinship.values,
-        dims=["sample_0", "sample_1"],
-        coords={"sample_0": kinship.columns, "sample_1": kinship.index},
+        dims=['sample_0', 'sample_1'],
+        coords={'sample_0': kinship.columns, 'sample_1': kinship.index},
     )
-    kinship = kinship.sortby("sample_0").sortby("sample_1")
+    kinship = kinship.sortby('sample_0').sortby('sample_1')
 
     # this file will map different IDs (and OneK1K ID to CPG ID)
-    sample_mapping = pd.read_csv(sample_mapping_file, sep="\t")
+    sample_mapping = pd.read_csv(sample_mapping_file, sep='\t')
 
     # ensure samples are the same and in the same order across input files
     # samples with expression data
     donors_exprs = set(phenotype.sample.values).intersection(
-        set(sample_mapping["OneK1K_ID"].unique())
+        set(sample_mapping['OneK1K_ID'].unique())
     )
 
-    logging.info(f"Number of unique donors with expression data: {len(donors_exprs)}")
+    logging.info(f'Number of unique donors with expression data: {len(donors_exprs)}')
 
     # samples with genotype data
     donors_geno = set(geno.sample.values).intersection(
-        set(sample_mapping["InternalID"].unique())
+        set(sample_mapping['InternalID'].unique())
     )
-    logging.info(f"Number of unique donors with genotype data: {len(donors_geno)}")
+    logging.info(f'Number of unique donors with genotype data: {len(donors_geno)}')
 
     # samples with both (can this be done in one step?)
-    sample_mapping1 = sample_mapping.loc[sample_mapping["OneK1K_ID"].isin(donors_exprs)]
+    sample_mapping1 = sample_mapping.loc[sample_mapping['OneK1K_ID'].isin(donors_exprs)]
     sample_mapping_both = sample_mapping1.loc[
-        sample_mapping1["InternalID"].isin(donors_geno)
+        sample_mapping1['InternalID'].isin(donors_geno)
     ]
-    donors_e = sample_mapping_both["OneK1K_ID"].unique()
-    donors_g = sample_mapping_both["InternalID"].unique()
+    donors_e = sample_mapping_both['OneK1K_ID'].unique()
+    donors_g = sample_mapping_both['InternalID'].unique()
     assert len(donors_e) == len(donors_g)
 
     # samples in kinship
-    donors_e_short = [re.sub(".*_", "", donor) for donor in donors_e]
+    donors_e_short = [re.sub('.*_', '', donor) for donor in donors_e]
     donors_k = sorted(set(list(kinship.sample_0.values)).intersection(donors_e_short))
 
-    logging.info(f"Number of unique common donors: {len(donors_g)}")
+    logging.info(f'Number of unique common donors: {len(donors_g)}')
 
     # subset files
 
@@ -321,13 +321,13 @@ def prepare_input_files(
     del kinship  # delete kinship to free up memory
 
     # save files
-    with expression_filename.open("w") as ef:
+    with expression_filename.open('w') as ef:
         y_df.to_csv(ef, index=False)
 
-    with genotype_filename.open("w") as gf:
+    with genotype_filename.open('w') as gf:
         geno_df.to_csv(gf, index=False)
 
-    with kinship_filename.open("w") as kf:
+    with kinship_filename.open('w') as kf:
         kinship_df.to_csv(kf, index=False)
 
     return y_df, geno_df, kinship_df
@@ -355,13 +355,13 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
     pv_norm = shapiro(pheno).pvalue
     pv0 = run_gene_set_association(y=pheno, G=genotypes, W=covs, E=contexts)[0]
     pv1 = run_burden_association(
-        y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.max"
+        y=pheno, G=genotypes, W=covs, E=contexts, mask='mask.max'
     )[0]
     pv2 = run_burden_association(
-        y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.sum"
+        y=pheno, G=genotypes, W=covs, E=contexts, mask='mask.sum'
     )[0]
     pv3 = run_burden_association(
-        y=pheno, G=genotypes, W=covs, E=contexts, mask="mask.comphet"
+        y=pheno, G=genotypes, W=covs, E=contexts, mask='mask.comphet'
     )[0]
     pv4 = omnibus_set_association(np.array([pv0, pv1]))
     pv5 = omnibus_set_association(np.array([pv0, pv2]))
@@ -413,14 +413,14 @@ def run_gene_association(
     # TODO: kinship
 
     cols = [
-        "P_shapiro",
-        "P_CRM_VC",
-        "P_CRM_burden_max",
-        "P_CRM_burden_sum",
-        "P_CRM_burden_comphet",
-        "P_CRM_omnibus_max",
-        "P_CRM_omnibus_sum",
-        "P_CRM_omnibus_comphet",
+        'P_shapiro',
+        'P_CRM_VC',
+        'P_CRM_burden_max',
+        'P_CRM_burden_sum',
+        'P_CRM_burden_comphet',
+        'P_CRM_omnibus_max',
+        'P_CRM_omnibus_sum',
+        'P_CRM_omnibus_comphet',
     ]
 
     # create p-values data frame
@@ -430,8 +430,8 @@ def run_gene_association(
         index=gene_name,
     )
 
-    pv_filename = AnyPath(output_path(f"{output_prefix}/{gene_name}_pvals.csv"))
-    with pv_filename.open("w") as pf:
+    pv_filename = AnyPath(output_path(f'{output_prefix}/{gene_name}_pvals.csv'))
+    with pv_filename.open('w') as pf:
         pv_df.to_csv(pf, index=False)
 
     return pv_filename
@@ -458,13 +458,13 @@ def summarise_association_results(
     pv_all_df = pd.concat([pv_dfs])  # test syntax
 
     # run qvalues for all tests
-    pv_all_df["Q_CRM_VC"] = qvalue(pv_all_df["P_CRM_VC"])
-    pv_all_df["Q_CRM_burden_max"] = qvalue(pv_all_df["P_CRM_burden_max"])
-    pv_all_df["Q_CRM_burden_sum"] = qvalue(pv_all_df["P_CRM_burden_sum"])
-    pv_all_df["Q_CRM_burden_comphet"] = qvalue(pv_all_df["P_CRM_burden_comphet"])
-    pv_all_df["Q_CRM_omnibus_max"] = qvalue(pv_all_df["P_CRM_omnibus_max"])
-    pv_all_df["Q_CRM_omnibus_sum"] = qvalue(pv_all_df["P_CRM_omnibus_sum"])
-    pv_all_df["Q_CRM_omnibus_comphet"] = qvalue(pv_all_df["P_CRM_omnibus_comphet"])
+    pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
+    pv_all_df['Q_CRM_burden_max'] = qvalue(pv_all_df['P_CRM_burden_max'])
+    pv_all_df['Q_CRM_burden_sum'] = qvalue(pv_all_df['P_CRM_burden_sum'])
+    pv_all_df['Q_CRM_burden_comphet'] = qvalue(pv_all_df['P_CRM_burden_comphet'])
+    pv_all_df['Q_CRM_omnibus_max'] = qvalue(pv_all_df['P_CRM_omnibus_max'])
+    pv_all_df['Q_CRM_omnibus_sum'] = qvalue(pv_all_df['P_CRM_omnibus_sum'])
+    pv_all_df['Q_CRM_omnibus_comphet'] = qvalue(pv_all_df['P_CRM_omnibus_comphet'])
 
     return pv_all_df
 
@@ -496,7 +496,7 @@ def extract_genes(gene_list, expression_tsv_path) -> list[str]:
     Takes a list of all genes and subsets to only those
     present in the expression file of interest
     """
-    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep="\t")
+    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep='\t')
     expression_df = filter_lowly_expressed_genes(expression_df)
     gene_ids = set(list(expression_df.columns.values)[1:])
     genes = set(gene_list).intersection(gene_ids)
@@ -517,8 +517,8 @@ def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[s
     The number of genes (as an int) after filtering for lowly expressed genes.
     This integer number gets fed into the number of scatters to run.
     """
-    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep="\t")
-    geneloc_df = pd.read_csv(AnyPath(geneloc_tsv_path), sep="\t")
+    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep='\t')
+    geneloc_df = pd.read_csv(AnyPath(geneloc_tsv_path), sep='\t')
 
     # expression_df = filter_lowly_expressed_genes(expression_df) # I might add this in but not for now
     gene_ids = set(list(expression_df.columns.values)[1:])
@@ -548,15 +548,15 @@ def filter_lowly_expressed_genes(expression_df, min_pct=10):
 
     # Filter genes with less than 10 percent individuals with non-zero expression
     atleastNpercent = percent_expr_over_zero[(percent_expr_over_zero > min_pct)[0]]
-    sample_ids = expression_df["sampleid"]
+    sample_ids = expression_df['sampleid']
     expression_df = expression_df[atleastNpercent.index]
-    expression_df.insert(loc=0, column="sampleid", value=sample_ids)
+    expression_df.insert(loc=0, column='sampleid', value=sample_ids)
 
     return expression_df
 
 
 
-def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
+def remove_sc_outliers(df, outliers=['966_967', '88_88']):
     """
     Remove outlier samples, as identified by sc analysis
     """
@@ -606,7 +606,7 @@ def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     """
 
-    assert pv.min() >= 0 and pv.max() <= 1, "p-values should be between 0 and 1"
+    assert pv.min() >= 0 and pv.max() <= 1, 'p-values should be between 0 and 1'
 
     original_shape = pv.shape
     pv = pv.ravel()  # flattens the array in place, more efficient than flatten()
@@ -636,22 +636,22 @@ def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
         tck = interpolate.splrep(lam, pi0, k=3)
         pi0 = interpolate.splev(lam[-1], tck)
         if verbose:
-            # print("qvalues pi0=%.3f, estimated proportion of null features " % pi0)
+            # print('qvalues pi0=%.3f, estimated proportion of null features ' % pi0)
             logging.info(
-                "qvalues pi0=%.3f, estimated proportion of null features " % pi0
+                'qvalues pi0=%.3f, estimated proportion of null features ' % pi0
             )
 
         if pi0 > 1:
             if verbose:
                 # print(
-                #     "got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0
+                #     'got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1' % pi0
                 # )
                 logging.info(
-                    "got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0
+                    'got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1' % pi0
                 )
             pi0 = 1.0
 
-    assert pi0 >= 0 and pi0 <= 1, "pi0 is not between 0 and 1: %f" % pi0
+    assert pi0 >= 0 and pi0 <= 1, 'pi0 is not between 0 and 1: %f' % pi0
 
     if lowmem:
         # low memory version, only uses 1 pv and 1 qv matrices
@@ -723,14 +723,14 @@ def crm_pipeline(
     sample_mapping_file_tsv: str,
     mt_path: str,
     anno_ht_path: str,
-    chromosomes: str = "all",
+    chromosomes: str = 'all',
     genes: str | None = None,
     window_size: int = 50000,
     max_gene_concurrency=50,
 ):
 
     sb = hb.ServiceBackend(
-        billing_project=get_config()["hail"]["billing_project"],
+        billing_project=get_config()['hail']['billing_project'],
         remote_tmpdir=remote_tmpdir(),
     )
     batch = hb.Batch('CellRegMap pipeline', backend=sb)
@@ -808,7 +808,7 @@ def crm_pipeline(
         if to_path(f'{plink_file}.bim').exists():
             continue
 
-        plink_job = batch.new_python_job(f"Create plink files for: {gene}")
+        plink_job = batch.new_python_job(f'Create plink files for: {gene}')
         copy_common_env(plink_job)
         if filter_job:
             plink_job.depends_on(filter_job)
@@ -827,7 +827,7 @@ def crm_pipeline(
     # the next phase will be done for each cell type
     for celltype in celltypes:
         expression_tsv_path = os.path.join(
-            expression_files_prefix, "expression_files", f"{celltype}_expression.tsv"
+            expression_files_prefix, 'expression_files', f'{celltype}_expression.tsv'
         )
 
         genes = extract_genes(expression_files_prefix, genes_of_interest)
@@ -837,24 +837,24 @@ def crm_pipeline(
         gene_prepare_jobs = []
         gene_run_jobs = []
         for gene in genes:
-            plink_output_prefix = gene_dict[gene]["plink"]
+            plink_output_prefix = gene_dict[gene]['plink']
             # prepare input files
-            prepare_input_job = batch.new_python_job(f"Prepare inputs for: {gene}")
+            prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             prepare_input_job.depends_on(*genotype_jobs)
             gene_prepare_jobs.append(prepare_input_job)
             pheno_path, geno_path, _ = prepare_input_job.call(
                 prepare_input_files,
                 gene_name=gene,
                 cell_type=celltype,
-                genotype_file_bed=plink_output_prefix + ".bed",
-                genotype_file_bim=plink_output_prefix + ".bim",
-                genotype_file_fam=plink_output_prefix + ".fam",
+                genotype_file_bed=plink_output_prefix + '.bed',
+                genotype_file_bim=plink_output_prefix + '.bim',
+                genotype_file_fam=plink_output_prefix + '.fam',
                 phenotype_file=expression_tsv_path,
                 kinship_file=None,
                 sample_mapping_file=sample_mapping_file,
             )
             # run association
-            run_job = batch.new_python_job(f"Run association for: {gene}")
+            run_job = batch.new_python_job(f'Run association for: {gene}')
             run_job.depends_on(prepare_input_job)
             run_job.image(CELLREGMAP_IMAGE)
             gene_run_jobs.append(run_job)
@@ -865,23 +865,23 @@ def crm_pipeline(
                 phenotype_vec_path=pheno_path,
             )
             # save pv filename as gene attribute
-            gene_dict[gene]["pv_file"] = pv_file
+            gene_dict[gene]['pv_file'] = pv_file
 
         # combine all p-values across all chromosomes, genes (per cell type)
-        summarise_job = batch.new_python_job(f"Summarise all results for {celltype}")
+        summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
         summarise_job.depends_on(*gene_run_jobs)
         pv_all = summarise_job.call(
             summarise_association_results,
-            pv_dfs=[gene_dict[gene]["pv_file"] for gene in genes],
+            pv_dfs=[gene_dict[gene]['pv_file'] for gene in genes],
         )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
-        pv_filename = AnyPath(output_path(f"{celltype}_all_pvalues.csv"))
-        with pv_filename.open("w") as pf:
+        pv_filename = AnyPath(output_path(f'{celltype}_all_pvalues.csv'))
+        with pv_filename.open('w') as pf:
             pv_all.to_csv(pf, index=False)
 
     # set jobs running
     batch.run(wait=False)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     crm_pipeline()
