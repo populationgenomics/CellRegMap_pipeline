@@ -32,7 +32,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     '--output-folder', required=False, default=''
 )  # by default current directory, where you are running your script from
 @click.option('--n-contexts', required=False, type=int)
-def run_interaction(
+def main(
     gene_name: str,
     sample_mapping_file: str,
     genotype_file: str,
@@ -213,4 +213,4 @@ def run_interaction(
 
 
 if __name__ == '__main__':
-    run_interaction()  # pylint: disable=no-value-for-parameter
+    main()  # pylint: disable=no-value-for-parameter

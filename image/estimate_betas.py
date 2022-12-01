@@ -34,7 +34,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 )  # by default current directory, where you are running your script from
 @click.option('--n-contexts', required=False, type=int)
 @click.option('--maf-file', required=False)
-def estimate_betas(
+def main(
     gene_name: str,
     sample_mapping_file: str,
     genotype_file: str,
@@ -233,4 +233,4 @@ def estimate_betas(
 
 
 if __name__ == '__main__':
-    estimate_betas()  # pylint: disable=no-value-for-parameter
+    main()  # pylint: disable=no-value-for-parameter
