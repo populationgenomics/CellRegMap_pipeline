@@ -320,22 +320,15 @@ def crm_pipeline(
         genes_of_interest = list(gene_dict.keys())
 
     # Setup MAX concurrency by genes
-    _prev_dependent_jobs: list[hb.job.Job] = []
-    _new_dependent_jobs: list[hb.job.Job] = []
+    _dependent_jobs: list[hb.job.Job] = []
 
     def manage_concurrency_for_job(job: hb.job.Job):
         """
         To avoid having too many jobs running at once, we have to limit concurrency.
         """
-        global _prev_dependent_jobs, _new_dependent_jobs
-
-        job.depends_on(*_prev_dependent_jobs)  # type: ignore
-        _new_dependent_jobs.append(job)  # type: ignore
-        if len(_new_dependent_jobs) >= max_gene_concurrency:  # type: ignore
-            # do the cross-over
-            # start the list again
-            _prev_dependent_jobs = _new_dependent_jobs  # type: ignore
-            _new_dependent_jobs = []  # type: ignore
+        if len(_dependent_jobs) >= max_gene_concurrency:
+            job.depends_on(_dependent_jobs[-max_gene_concurrency])
+        _dependent_jobs.append(job)
 
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
