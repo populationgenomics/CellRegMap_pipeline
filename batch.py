@@ -787,6 +787,7 @@ def crm_pipeline(
     # Setup MAX concurrency by genes
     _dependent_jobs: list[hb.job.Job] = []
 
+    # move out of main?
     def manage_concurrency_for_job(job: hb.job.Job):
         """
         To avoid having too many jobs running at once, we have to limit concurrency.
@@ -809,6 +810,7 @@ def crm_pipeline(
             continue
 
         plink_job = batch.new_python_job(f'Create plink files for: {gene}')
+        manage_concurrency_for_job(plink_job)
         copy_common_env(plink_job)
         if filter_job:
             plink_job.depends_on(filter_job)
@@ -840,6 +842,7 @@ def crm_pipeline(
             plink_output_prefix = gene_dict[gene]['plink']
             # prepare input files
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
+            manage_concurrency_for_job(prepare_input_job)
             prepare_input_job.depends_on(*genotype_jobs)
             gene_prepare_jobs.append(prepare_input_job)
             pheno_path, geno_path, _ = prepare_input_job.call(
@@ -855,6 +858,7 @@ def crm_pipeline(
             )
             # run association
             run_job = batch.new_python_job(f'Run association for: {gene}')
+            manage_concurrency_for_job(run_job)
             run_job.depends_on(prepare_input_job)
             run_job.image(CELLREGMAP_IMAGE)
             gene_run_jobs.append(run_job)
