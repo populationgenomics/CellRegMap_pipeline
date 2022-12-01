@@ -86,19 +86,21 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
         # fit natural cubic spline
         tck = interpolate.splrep(lam, pi0, k=3)
         pi0 = interpolate.splev(lam[-1], tck)
-        if verbose:
-            # print('qvalues pi0=%.3f, estimated proportion of null features ' % pi0)
+        if verbose:  # check if they are equivalent?
+            # logging.info(
+            #     'qvalues pi0=%.3f, estimated proportion of null features ' % pi0
+            # )
             logging.info(
-                'qvalues pi0=%.3f, estimated proportion of null features ' % pi0
+                f'qvalues pi0={pi0}, estimated proportion of null features'
             )
 
         if pi0 > 1:
             if verbose:
-                # print(
+                # logging.info(
                 #     'got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1' % pi0
                 # )
                 logging.info(
-                    'got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1' % pi0
+                    f'got pi0 > 1 ({pi0}) while estimating qvalues, setting it to 1'
                 )
             pi0 = 1.0
 
