@@ -30,7 +30,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     '--output-folder', required=False, default=''
 )  # by default current directory, where you are running your script from
 @click.option('--n-contexts', required=False, type=int)
-def main(
+def run_interaction(
     chrom: str,
     gene_name: str,
     sample_mapping_file: str,
@@ -43,11 +43,9 @@ def main(
     n_contexts: int = 10,
 ):
 
-    ######################################
-    ###### sample mapping file (SMF) #####
-    ######################################
+    # region SAMPLE_MAPPING_FILE
 
-    ## this file will map cells to donors
+    # this file will map cells to donors
     sample_mapping = pd.read_csv(
         sample_mapping_file,
         dtype={
@@ -63,21 +61,18 @@ def main(
     donors0.sort()
     logging.info(f'Number of unique donors: {len(donors0)}')
 
-    ######################################################
-    ###### check if gene output file already exists ######
-    ######################################################
+    # endregion SAMPLE_MAPPING_FILE
 
+    # check if gene output file already exists ######
     outfilename = os.path.join(output_folder, f'{gene_name}.csv')
 
     if os.path.exists(outfilename):
         logging.info('File already exists, exiting')
         sys.exit()
 
-    ######################################
-    ############ kinship file ############
-    ######################################
+    # region KINSHIP_FILE
 
-    ## read in GRM (genotype relationship matrix; kinship matrix)
+    # read in GRM (genotype relationship matrix; kinship matrix)
     K = pd.read_csv(kinship_file, index_col=0)
     K.index = K.index.astype('str')
     assert all(K.columns == K.index)  # symmetric matrix, donors x donors
@@ -91,12 +86,12 @@ def main(
     donors = sorted(set(list(K.sample_0.values)).intersection(donors0))
     logging.info(f'Number of donors after kinship intersection: {len(donors)}')
 
-    ## subset to relevant donors
+    # subset to relevant donors
     K = K.sel(sample_0=donors, sample_1=donors)
     assert all(K.sample_0 == donors)
     assert all(K.sample_1 == donors)
 
-    ## and decompose such as K = hK @ hK.T (using Cholesky decomposition)
+    # and decompose such as K = hK @ hK.T (using Cholesky decomposition)
     hK = cholesky(K.values)
     hK = xr.DataArray(hK, dims=['sample', 'col'], coords={'sample': K.sample_0.values})
     assert all(hK.sample.values == K.sample_0.values)
@@ -105,7 +100,7 @@ def main(
     logging.info(
        f'Sample mapping number of rows BEFORE intersection: {sample_mapping.shape[0]}'
     )
-    ## subsample sample mapping file to donors in the kinship matrix
+    # subsample sample mapping file to donors in the kinship matrix
     sample_mapping = sample_mapping[
         sample_mapping['genotype_individual_id'].isin(donors)
     ]
@@ -113,20 +108,20 @@ def main(
         f'Sample mapping number of rows AFTER intersection: {sample_mapping.shape[0]}'
     )
 
-    ## use sel from xarray to expand hK (using the sample mapping file)
+    # use sel from xarray to expand hK (using the sample mapping file)
     hK_expanded = hK.sel(sample=sample_mapping['genotype_individual_id'].values)
     assert all(
         hK_expanded.sample.values == sample_mapping['genotype_individual_id'].values
     )
 
-    ######################################
-    ############ genotype file ###########
-    ######################################
+    # endregion KINSHIP_FILE
 
-    ## read in genotype file (plink format)
+    # region GENOTYPE_FILE
+
+    # read in genotype file (plink format)
     G = read_plink1_bin(genotype_file)
 
-    ## select relavant SNPs based on feature variant filter file
+    # select relavant SNPs based on feature variant filter file
     fvf = pd.read_csv(feature_variant_file, index_col=0)
     leads = fvf[fvf['feature'] == gene_name]['snp_id'].unique()
     G_sel = G[:, G['snp'].isin(leads)]
@@ -139,9 +134,10 @@ def main(
     del G
     del G_sel
 
-    ######################################
-    ############ context file ############
-    ######################################
+    # endregion GENOTYPE_FILE
+
+
+    # region CONTEXT_FILE
 
     # cells by contexts
     C = pd.read_pickle(context_file)
@@ -153,9 +149,10 @@ def main(
     C = C.sel(cell=sample_mapping['phenotype_sample_id'].values)
     assert all(C.cell.values == sample_mapping['phenotype_sample_id'].values)
 
-    ######################################
-    ########### phenotype file ###########
-    ######################################
+    # endregion CONTEXT_FILE
+    
+
+    # region PHENOTYPE_FILE
 
     # open anndata
     adata = sc.read(phenotype_file)
@@ -177,9 +174,9 @@ def main(
     del mat
     del mat_df
 
-    ######################################
-    ########### Prepare model ############
-    ######################################
+    # endregion PHENOTYPE_FILE
+
+    # region PREPARE_MODEL
 
     n_cells = phenotype.shape[1]
     W = ones((n_cells, 1))  # just intercept as covariates
@@ -194,9 +191,10 @@ def main(
 
     GG = G_expanded.values
 
-    ##################################
-    ########### Run model ############
-    ##################################
+    # endregion PREPARE_MODEL
+    
+    
+    # region RUN_MODEL
 
     logging.info(f'Running for gene {gene_name}')
 
@@ -213,6 +211,8 @@ def main(
     )
     pv.to_csv(outfilename)
 
+    # endregion RUN_MODEL
+
 
 if __name__ == '__main__':
-    main()  # pylint: disable=no-value-for-parameter
+    run_interaction()  # pylint: disable=no-value-for-parameter
