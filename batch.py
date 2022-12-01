@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=wrong-import-position,import-error
+# pylint: disable=wrong-import-position,import-error,too-many-arguments
 
 """
 Hail Batch workflow for the rare-variant association analysis, including:
@@ -98,7 +98,7 @@ def filter_variants(
     # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
     mt = mt.filter_rows(  # check these filters!
         (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
-        & (hl.len(mt.alleles) == 2)    # remove hom-ref
+        & (hl.len(mt.alleles) == 2)  # remove hom-ref
         & (mt.n_unsplit_alleles == 2)  # biallelic
         & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNVs
     )
@@ -226,7 +226,7 @@ def prepare_input_files(
     genotype matrix
     phenotype vector
     """
-    expression_filename = AnyPath(output_path(f"{gene_name}_{cell_type}.csv'))
+    expression_filename = AnyPath(output_path(f'{gene_name}_{cell_type}.csv'))
     genotype_filename = AnyPath(output_path(f'{gene_name}_rare_regulatory.csv'))
     kinship_filename = AnyPath(output_path('kinship_common_samples.csv'))
 
@@ -376,10 +376,10 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
 
 
 def run_gene_association(
-    gene_name: str,           # 'VPREB3'
-    genotype_mat_path: str,   # 'VPREB3_50K_window/SNVs.csv'
+    gene_name: str,  # 'VPREB3'
+    genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
     phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
-    output_prefix: str,       # 'Bnaive/'
+    output_prefix: str,  # 'Bnaive/'
 ):
     """Run gene-set association test
 
@@ -553,7 +553,6 @@ def filter_lowly_expressed_genes(expression_df, min_pct=10):
     expression_df.insert(loc=0, column='sampleid', value=sample_ids)
 
     return expression_df
-
 
 
 def remove_sc_outliers(df, outliers=['966_967', '88_88']):
