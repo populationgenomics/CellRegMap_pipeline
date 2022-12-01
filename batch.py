@@ -248,8 +248,8 @@ def remove_sc_outliers(df, outliers=['966_967', '88_88']):
     type=int,
     default=50,
     help=(
-        'To avoid deadlocking resources, set this concurrency to limit horizontal scale. '
-        'Higher numbers have a better walltime, but risk deadlocks (which are expensive)'
+        'To avoid resource starvation, set this concurrency to limit horizontal scale. '
+        'Higher numbers have a better walltime, but risk jobs that are stuck (which are expensive)'
     ),
 )
 def crm_pipeline(
