@@ -1,12 +1,12 @@
 version development
 
-# Tasks to intersect all input files and perform CellRegMap 
+# Tasks to intersect all input files and perform CellRegMap
 # functions for a specific chromosome-gene pair
 
 
 task RunInteraction { # CellRegMap's run_interaction()
     input {
-        String chrom 
+        String chrom
         String geneName
         File sampleMappingFile
         File genotypeFile
@@ -15,8 +15,8 @@ task RunInteraction { # CellRegMap's run_interaction()
         File phenotypeFile
         File contextFile
         File kinshipFile
-        File featureVariantFile 
-        Int nContexts = 10 
+        File featureVariantFile
+        Int nContexts = 10
     }
 
     command <<<
@@ -26,8 +26,8 @@ task RunInteraction { # CellRegMap's run_interaction()
 
         # for now, use conda, but when we're closer,
         # remove this in favor of 'container' in the runtime section
-        # eval "$(conda shell.bash hook)" 
-        # conda activate cellregmap_notebook 
+        # eval "$(conda shell.bash hook)"
+        # conda activate cellregmap_notebook
 
         python /app/run_interaction.py \
             --chrom ~{chrom} \
@@ -38,7 +38,7 @@ task RunInteraction { # CellRegMap's run_interaction()
             --context-file ~{contextFile} \
             --kinship-file ~{kinshipFile} \
             --feature-variant-file ~{featureVariantFile} \
-            --n-contexts ~{nContexts} 
+            --n-contexts ~{nContexts}
     >>>
 
     output {
@@ -54,7 +54,7 @@ task RunInteraction { # CellRegMap's run_interaction()
 
 task EstimateBetas { # CellRegMap's estimate_betas()
     input {
-        Int chrom 
+        Int chrom
         String geneName
         File sampleMappingFile
         File genotypeFile
@@ -72,9 +72,9 @@ task EstimateBetas { # CellRegMap's estimate_betas()
         # make sure secondaries are paired together
         cp -f '~{genotypeFilesBim}' "$(echo '~{genotypeFile}' | sed 's/\.[^.]*$//').bim"
         cp -f '~{genotypeFilesFam}' "$(echo '~{genotypeFile}' | sed 's/\.[^.]*$//').fam"
-        
+
         # leave this until containers are used
-        # eval "$(conda shell.bash hook)" 
+        # eval "$(conda shell.bash hook)"
         # conda activate cellregmap_notebook
 
         python /app/estimate_betas.py \

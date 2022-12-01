@@ -21,7 +21,7 @@ assert len(columns_to_select) == 2
 with open("~{csvFile}") as f, open("outputPairs.tsv", "w+") as w:
     reader = csv.reader(f)
 
-    # get headers list to get a header to indices 
+    # get headers list to get a header to indices
     headers = next(reader)
     # this will fail if column isn't in the header
     indices_to_select = [headers.index(h) for h in columns_to_select]

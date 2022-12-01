@@ -12,11 +12,11 @@ For simulations, the pipeline also needs to run alternative methods (including t
 For real data, the pipeline also needs to use Hail Query to query genetic variants and annotations stored as Hail Matrix Tables and Hail Tables.
 
 ### Structure of repo:
-* WDL workflow 
+* WDL workflow
   * this does not contain input files generation (does not require Hail Query) and takes pre-generated input files
   * should work for both simulated and real data (see below)
   * contains both python and R scripts as tasks (and respective Docker images)
-  * returns p-values and other summary statistics for all results (original CellRegMap, new CellRegMap, R-implemented tests) 
+  * returns p-values and other summary statistics for all results (original CellRegMap, new CellRegMap, R-implemented tests)
 * Hail Batch workflow
   * single-script end-to-end (Python) workflow from data collection / input file generation (using Hail Query) to association testing to returning summary stats (for new CellRegMap specifically, to run internally)
 * (Python) scripts to generate both real and simulated input files to feed to the WDL workflow

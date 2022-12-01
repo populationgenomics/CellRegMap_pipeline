@@ -5,7 +5,7 @@
 Hail Batch workflow for the rare-variant association analysis, including:
 
 - get relevant variants around a gene and export genotypes as plink files
-- generate input files for association tests 
+- generate input files for association tests
 - run association tests
 """
 
@@ -48,26 +48,26 @@ import hailtop.batch as hb
 
 # use logging to print statements, display at info level
 logging.basicConfig(
-    format="%(levelname)s:%(message)s", level=logging.INFO
+    format='%(levelname)s:%(message)s', level=logging.INFO
 )  # consider removing some print statements?
 
-DEFAULT_JOINT_CALL_MT = dataset_path("mt/v7.mt")
+DEFAULT_JOINT_CALL_MT = dataset_path('mt/v7.mt')
 DEFAULT_ANNOTATION_HT = dataset_path(
-    "tob_wgs_vep/104/vep104.3_GRCh38.ht"
+    'tob_wgs_vep/104/vep104.3_GRCh38.ht'
 )  # atm VEP only
 
 
-CELLREGMAP_IMAGE = get_config()["workflow"][
-    "driver_image"
+CELLREGMAP_IMAGE = get_config()['workflow'][
+    'driver_image'
 ]  # australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3
 
 # region SUBSET_VARIANTS
 
 
 def filter_variants(
-    mt_path: str,  # "mt/v7.mt"
+    mt_path: str,  # 'mt/v7.mt'
     samples: list[str],
-    output_mt_path: str,  # "tob_wgs_rv/densified_rv_only.mt"
+    output_mt_path: str,  # 'tob_wgs_rv/densified_rv_only.mt'
 ):
     """Subset hail matrix table
 
@@ -143,31 +143,31 @@ def get_promoter_variants(
     init_batch()
     mt = hl.read_matrix_table(mt_path)
 
-    gene_name = gene_details["gene_name"]
+    gene_name = gene_details['gene_name']
 
     # get relevant chromosome
-    chrom = gene_details["chr"]
+    chrom = gene_details['chr']
 
     # subset to window
     # get gene body position (start and end) and build interval
-    left_boundary = max(1, int(gene_details["start"]) - window_size)
+    left_boundary = max(1, int(gene_details['start']) - window_size)
     right_boundary = min(
-        int(gene_details["end"]) + window_size,
-        hl.get_reference("GRCh38").lengths[chrom],
+        int(gene_details['end']) + window_size,
+        hl.get_reference('GRCh38').lengths[chrom],
     )
     # get gene-specific genomic interval
-    gene_interval = f"{chrom}:{left_boundary}-{right_boundary}"
-    logging.info(f"Interval considered: {gene_interval}")  # 'chr22:23219960-23348287'
+    gene_interval = f'{chrom}:{left_boundary}-{right_boundary}'
+    logging.info(f'Interval considered: {gene_interval}')  # 'chr22:23219960-23348287'
 
     # include variants up to {window size} up- and downstream
     mt = hl.filter_intervals(
-        mt, [hl.parse_locus_interval(gene_interval, reference_genome="GRCh38")]
+        mt, [hl.parse_locus_interval(gene_interval, reference_genome='GRCh38')]
     )
-    mt_path = output_path(f"{gene_name}_in_window.mt", "tmp")
+    mt_path = output_path(f'{gene_name}_in_window.mt', 'tmp')
     mt = mt.checkpoint(
         mt_path, overwrite=True
     )  # add checkpoint to avoid repeat evaluation
-    logging.info(f"Number of variants within interval: {mt.count()[0]}")
+    logging.info(f'Number of variants within interval: {mt.count()[0]}')
 
     # annotate using VEP
     vep_ht = hl.read_table(ht_path)
@@ -175,20 +175,21 @@ def get_promoter_variants(
 
     # filter variants found to be in promoter regions
     mt = mt.filter_rows(
-        mt.vep.regulatory_feature_consequences["biotype"].contains("promoter")
+        mt.vep.regulatory_feature_consequences['biotype'].contains('promoter')
     )
-    promoter_path = output_path(f"{gene_name}promoter_variants.mt", "tmp")
+    promoter_path = output_path(f'{gene_name}promoter_variants.mt', 'tmp')
     mt = mt.checkpoint(promoter_path, overwrite=True)  # checkpoint
     logging.info(
-        f"Number of rare (freq<5%) QC-passing, biallelic SNPs in promoter regions: {mt.count()[0]}"
+        f'Number of rare (freq<5%) QC-passing, biallelic SNPs in promoter regions: {mt.count()[0]}'
     )
 
     # export this as a Hail table for downstream analysis
-    ht_path = output_path(f"{gene_name}_rare_promoter_summary.ht")
+    ht_path = output_path(f'{gene_name}_rare_promoter_summary.ht')
     ht = mt.rows()
     ht.write(ht_path, overwrite=True)
 
     # export MT object to PLINK (promoter variants)
+    # pylint: disable=import-outside-toplevel
     from hail.methods import export_plink
 
     export_plink(mt, plink_file, ind_id=mt.s)
@@ -207,19 +208,19 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     gene_dict = {}
 
     with open(to_path(file)) as handle:
-        reader = DictReader(handle, delimiter="\t")
+        reader = DictReader(handle, delimiter='\t')
 
         for row in reader:
-            gene_dict[row["gene_name"]] = row
+            gene_dict[row['gene_name']] = row
 
     return gene_dict
 
 
-def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
+def remove_sc_outliers(df, outliers=['966_967', '88_88']):
     """
     Remove outlier samples, as identified by single-cell analysis
     """
-    df = df[-df["OneK1K_ID"].isin(outliers)]
+    df = df[-df['OneK1K_ID'].isin(outliers)]
 
     return df
 
@@ -228,47 +229,47 @@ def remove_sc_outliers(df, outliers=["966_967", "88_88"]):
 
 
 @click.command()
-@click.option("--celltypes")
-@click.option("--expression-files-prefix", default="scrna-seq/grch38_association_files")
+@click.option('--celltypes')
+@click.option('--expression-files-prefix', default='scrna-seq/grch38_association_files')
 @click.option(
-    "--sample-mapping-file-tsv",
-    default="scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv",
+    '--sample-mapping-file-tsv',
+    default='scrna-seq/grch38_association_files/OneK1K_CPG_IDs.tsv',
 )
-@click.option("--mt-path", default=DEFAULT_JOINT_CALL_MT)
-@click.option("--anno-ht-path", default=DEFAULT_ANNOTATION_HT)
+@click.option('--mt-path', default=DEFAULT_JOINT_CALL_MT)
+@click.option('--anno-ht-path', default=DEFAULT_ANNOTATION_HT)
 @click.option(
-    "--chromosomes",
-    help="List of chromosome numbers to run rare variant association analysis on. "
-    "Space separated, as one argument (Default: all)",
+    '--chromosomes',
+    help='List of chromosome numbers to run rare variant association analysis on. '
+    'Space separated, as one argument (Default: all)',
 )
-@click.option("--genes", default=None)
+@click.option('--genes', default=None)
 def crm_pipeline(
     celltypes: str,
     expression_files_prefix: str,
     sample_mapping_file_tsv: str,
     mt_path: str,
     anno_ht_path: str,
-    chromosomes: str = "all",
+    chromosomes: str = 'all',
     genes: str | None = None,
     window_size: int = 50000,
 ):
 
     sb = hb.ServiceBackend(
-        billing_project=get_config()["hail"]["billing_project"],
+        billing_project=get_config()['hail']['billing_project'],
         remote_tmpdir=remote_tmpdir(),
     )
-    batch = hb.Batch("CellRegMap pipeline", backend=sb)
+    batch = hb.Batch('CellRegMap pipeline', backend=sb)
 
     # extract samples for which we have single-cell (sc) data
-    sample_mapping_file = pd.read_csv(dataset_path(sample_mapping_file_tsv), sep="\t")
+    sample_mapping_file = pd.read_csv(dataset_path(sample_mapping_file_tsv), sep='\t')
     sample_mapping_file = remove_sc_outliers(sample_mapping_file)
-    sc_samples = sample_mapping_file["InternalID"].unique()
+    sc_samples = sample_mapping_file['InternalID'].unique()
 
     # filter to QC-passing, rare, biallelic variants
-    output_mt_path = output_path("densified_rv_only.mt")
+    output_mt_path = output_path('densified_rv_only.mt')
     if not to_path(output_mt_path).exists():
 
-        filter_job = batch.new_python_job(name="MT filter job")
+        filter_job = batch.new_python_job(name='MT filter job')
         copy_common_env(filter_job)
         filter_job.image(CELLREGMAP_IMAGE)
         filter_job.call(
@@ -279,23 +280,23 @@ def crm_pipeline(
         )
 
     else:
-        logging.info("File already exist no need to filter")
+        logging.info('File already exist no need to filter')
         filter_job = None
 
     # grab all relevant genes across all chromosomes
     # simpler if gene details are condensed to one file
     gene_dict: dict[str, dict] = {}
-    if chromosomes == "all":
+    if chromosomes == 'all':
         # autosomes only for now
         chromosomes_list = list(np.arange(22) + 1)
     else:
-        chromosomes_list = chromosomes.split(" ")
+        chromosomes_list = chromosomes.split(' ')
     for chromosome in chromosomes_list:
         geneloc_tsv_path = dataset_path(
             os.path.join(
                 expression_files_prefix,
-                "gene_location_files",
-                f"GRCh38_geneloc_chr{chromosome}.tsv",
+                'gene_location_files',
+                f'GRCh38_geneloc_chr{chromosome}.tsv',
             )
         )
 
@@ -304,7 +305,7 @@ def crm_pipeline(
 
     # isolate to the genes we are interested in
     if genes is not None:
-        genes_of_interest = genes.split(" ")
+        genes_of_interest = genes.split(' ')
     else:
         genes_of_interest = list(gene_dict.keys())
 
@@ -313,14 +314,14 @@ def crm_pipeline(
     for gene in genes_of_interest:
 
         # final path for this gene - generate first (check syntax)
-        plink_file = output_path(f"plink_files/{gene}")
-        gene_dict[gene]["plink"] = plink_file
+        plink_file = output_path(f'plink_files/{gene}')
+        gene_dict[gene]['plink'] = plink_file
 
         # if the plink output exists, do not re-generate it
-        if to_path(f"{plink_file}.bim").exists():
+        if to_path(f'{plink_file}.bim').exists():
             continue
 
-        plink_job = batch.new_python_job(f"Create plink files for: {gene}")
+        plink_job = batch.new_python_job(f'Create plink files for: {gene}')
         copy_common_env(plink_job)
         if filter_job:
             plink_job.depends_on(filter_job)
@@ -339,5 +340,5 @@ def crm_pipeline(
     batch.run(wait=False)
 
 
-if __name__ == "__main__":
-    crm_pipeline()
+if __name__ == '__main__':
+    crm_pipeline()  # pylint: disable=no-value-for-parameter

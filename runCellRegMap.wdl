@@ -1,5 +1,5 @@
 # tells WDL to use most recent version
-version development 
+version development
 
 import "tasks/cellregmap.wdl" as C
 import "tasks/utils.wdl" as u
@@ -60,7 +60,7 @@ workflow RunCellRegMap {
             columnsToSelect=["chrom", "gene"],
     }
 
-    scatter (outputPair in GetGeneChrPairsBetas.outputPairs) { 
+    scatter (outputPair in GetGeneChrPairsBetas.outputPairs) {
 
         String EstimateBetaChr = outputPair[0]
 
