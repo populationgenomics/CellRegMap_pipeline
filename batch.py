@@ -190,7 +190,7 @@ def get_promoter_variants(
     )
 
     # export this as a Hail table for downstream analysis
-    ht_path = output_path(f'{gene_name}_rare_promoter_summary.ht')
+    ht_path = output_path(f'summary_hts/{gene_name}_rare_promoter_summary.ht')
     ht = mt.rows()
     ht.write(ht_path, overwrite=True)
 

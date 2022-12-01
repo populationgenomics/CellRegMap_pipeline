@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import scipy as sp
 from scipy import interpolate
-from typing import Dict, List
+from typing import Any, Dict, List
 from collections import defaultdict
 
 # use logging to print statements, display at info level
@@ -143,7 +143,7 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
 )  # by default current directory, where you are running your script from
 def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
 
-    table: Dict[str, List[any]] = defaultdict(list)
+    table: Dict[str, List[Any]] = defaultdict(list)
 
     with open(file_with_filenames, encoding='utf-8') as f:
         list_of_files = [line.strip() for line in f.readlines() if line.strip()]

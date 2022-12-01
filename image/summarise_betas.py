@@ -2,7 +2,7 @@ import os
 import click
 import pandas as pd
 import numpy as np
-from typing import Dict, List
+from typing import Any, Dict, List
 from collections import defaultdict
 
 
@@ -17,7 +17,7 @@ def main(file_with_filenames_1: str, file_with_filenames_2: str, output_folder: 
     # betaG
     # summarise persistent effect sizes
     # each row here is a SNP-gene pair
-    table: Dict[str, List[any]] = defaultdict(list)
+    table: Dict[str, List[Any]] = defaultdict(list)
 
     with open(file_with_filenames_1, encoding='utf-8') as f:
         list_of_files1 = [line.strip() for line in f.readlines() if line.strip()]
