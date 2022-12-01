@@ -61,7 +61,7 @@ def main(
     ## extract unique individuals
     donors0 = sample_mapping['genotype_individual_id'].unique()
     donors0.sort()
-    logging.info('Number of unique donors: {}'.format(len(donors0)))
+    logging.info(f'Number of unique donors: {len(donors0)}')
 
     ######################################################
     ###### check if gene output file already exists ######
@@ -89,7 +89,7 @@ def main(
     )
     K = K.sortby('sample_0').sortby('sample_1')
     donors = sorted(set(list(K.sample_0.values)).intersection(donors0))
-    logging.info('Number of donors after kinship intersection: {}'.format(len(donors)))
+    logging.info(f'Number of donors after kinship intersection: {len(donors)}')
 
     ## subset to relevant donors
     K = K.sel(sample_0=donors, sample_1=donors)
@@ -103,18 +103,14 @@ def main(
 
     del K  # delete K to free up memory
     logging.info(
-        'Sample mapping number of rows BEFORE intersection: {}'.format(
-            sample_mapping.shape[0]
-        )
+       f'Sample mapping number of rows BEFORE intersection: {sample_mapping.shape[0]}'
     )
     ## subsample sample mapping file to donors in the kinship matrix
     sample_mapping = sample_mapping[
         sample_mapping['genotype_individual_id'].isin(donors)
     ]
     logging.info(
-        'Sample mapping number of rows AFTER intersection: {}'.format(
-            sample_mapping.shape[0]
-        )
+        f'Sample mapping number of rows AFTER intersection: {sample_mapping.shape[0]}'
     )
 
     ## use sel from xarray to expand hK (using the sample mapping file)
@@ -202,7 +198,7 @@ def main(
     ########### Run model ############
     ##################################
 
-    logging.info('Running for gene {}'.format(gene_name))
+    logging.info(f'Running for gene {gene_name}')
 
     pvals = run_interaction(
         y=y, W=W, E=C.values[:, 0:n_contexts], G=GG, hK=hK_expanded
