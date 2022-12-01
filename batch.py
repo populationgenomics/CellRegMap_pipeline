@@ -189,6 +189,7 @@ def get_promoter_variants(
     ht.write(ht_path, overwrite=True)
 
     # export MT object to PLINK (promoter variants)
+    # pylint: disable=import-outside-toplevel
     from hail.methods import export_plink
 
     export_plink(mt, plink_file, ind_id=mt.s)
