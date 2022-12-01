@@ -9,7 +9,8 @@ from typing import Dict, List
 from collections import defaultdict
 
 # use logging to print statements, display at info level
-logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+
 
 def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
     """
@@ -40,7 +41,7 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
         names of its contributors may be used to endorse or promote products
         derived from this software without specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS' AND
     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY
@@ -52,7 +53,7 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     """
 
-    assert pv.min() >= 0 and pv.max() <= 1, "p-values should be between 0 and 1"
+    assert pv.min() >= 0 and pv.max() <= 1, 'p-values should be between 0 and 1'
 
     original_shape = pv.shape
     pv = pv.ravel()  # flattens the array in place, more efficient than flatten()
@@ -82,22 +83,22 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
         tck = interpolate.splrep(lam, pi0, k=3)
         pi0 = interpolate.splev(lam[-1], tck)
         if verbose:
-            # print("qvalues pi0=%.3f, estimated proportion of null features " % pi0)
+            # print('qvalues pi0=%.3f, estimated proportion of null features ' % pi0)
             logging.info(
-                "qvalues pi0=%.3f, estimated proportion of null features " % pi0
+                'qvalues pi0=%.3f, estimated proportion of null features ' % pi0
             )
 
         if pi0 > 1:
             if verbose:
                 # print(
-                #     "got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0
+                #     'got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1' % pi0
                 # )
                 logging.info(
-                    "got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1" % pi0
+                    'got pi0 > 1 (%.3f) while estimating qvalues, setting it to 1' % pi0
                 )
             pi0 = 1.0
 
-    assert pi0 >= 0 and pi0 <= 1, "pi0 is not between 0 and 1: %f" % pi0
+    assert pi0 >= 0 and pi0 <= 1, 'pi0 is not between 0 and 1: %f' % pi0
 
     if lowmem:
         # low memory version, only uses 1 pv and 1 qv matrices
@@ -135,16 +136,16 @@ def qv_estimate(pv, m=None, verbose=False, lowmem=False, pi0=None):
 
 
 @click.command()
-@click.option("--file-with-filenames", required=True)
-@click.option("--fdr-threshold", required=False, default=0.05)
+@click.option('--file-with-filenames', required=True)
+@click.option('--fdr-threshold', required=False, default=0.05)
 @click.option(
-    "--output-folder", required=False, default=""
+    '--output-folder', required=False, default=''
 )  # by default current directory, where you are running your script from
 def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
 
     table: Dict[str, List[any]] = defaultdict(list)
 
-    with open(file_with_filenames, encoding="utf-8") as f:
+    with open(file_with_filenames, encoding='utf-8') as f:
         list_of_files = [line.strip() for line in f.readlines() if line.strip()]
 
     for file in list_of_files:
@@ -153,19 +154,19 @@ def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
         if nsnps == 0:
             continue
         gene = os.path.splitext(os.path.basename(file))[0]
-        chrom = df["chrom"].values[0]
+        chrom = df['chrom'].values[0]
         for i in range(nsnps):
             temp = {}
-            temp["chrom"] = chrom
-            temp["gene"] = gene
-            temp["n_snps"] = nsnps
-            temp["snp_id"] = df["variant"].values[i]
-            temp["pv_raw"] = df["pv"].values[i]
-            temp["pv_Bonf"] = nsnps * temp["pv_raw"]
-            if temp["pv_Bonf"] > 1:
-                temp["pv_Bonf"] = 1
-            if temp["pv_Bonf"] < 0:
-                temp["pv_Bonf"] = 0
+            temp['chrom'] = chrom
+            temp['gene'] = gene
+            temp['n_snps'] = nsnps
+            temp['snp_id'] = df['variant'].values[i]
+            temp['pv_raw'] = df['pv'].values[i]
+            temp['pv_Bonf'] = nsnps * temp['pv_raw']
+            if temp['pv_Bonf'] > 1:
+                temp['pv_Bonf'] = 1
+            if temp['pv_Bonf'] < 0:
+                temp['pv_Bonf'] = 0
 
         for key in temp.keys():
             table[key].append(temp[key])
@@ -174,18 +175,18 @@ def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
         table[key] = np.array(table[key])
 
     df = pd.DataFrame.from_dict(table)
-    outfile = "summary.csv"
+    outfile = 'summary.csv'
     myp = os.path.join(output_folder, outfile)
     df.to_csv(myp)
 
     # apply multiple testing correction (q-value)
-    df["qv"] = qv_estimate(df["pv_Bonf"])
+    df['qv'] = qv_estimate(df['pv_Bonf'])
     # select only significant results (at given FDR threshold)
-    df_sign = df[df["qv"] <= fdr_threshold]
-    outfile = "significant_results.csv"
+    df_sign = df[df['qv'] <= fdr_threshold]
+    outfile = 'significant_results.csv'
     myp = os.path.join(output_folder, outfile)
     df_sign.to_csv(myp)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    main()  # pylint: disable=no-value-for-parameter

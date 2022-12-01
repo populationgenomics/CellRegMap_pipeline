@@ -1,14 +1,14 @@
 version development
- 
-# Tasks to aggregate results from multiple scatters 
+
+# Tasks to aggregate results from multiple scatters
 # (chromosome-gene pairs) each running CellRegMap functions
 
-# takes as input one file per scatter, returns both 
+# takes as input one file per scatter, returns both
 # all results and all significant results (at a given FDR)
 
 task AggregateInteractionResults { # results from RunInteraction
     input {
-        Array[File] listOfFiles 
+        Array[File] listOfFiles
         Float fdrThreshold # false discovery rate
     }
 
@@ -18,14 +18,14 @@ cat << EOF >> path-results.txt
 ~{sep("\n", listOfFiles)}
 EOF
 
-    # eval "$(conda shell.bash hook)" 
+    # eval "$(conda shell.bash hook)"
     # conda activate cellregmap_notebook
 
     python /app/summarise.py \
         --fdr-threshold ~{fdrThreshold} \
         --file-with-filenames path-results.txt
     >>>
-    
+
     output {
         File allResults = "summary.csv"
         File significantResults = "significant_results.csv"
@@ -37,7 +37,7 @@ EOF
     }
 }
 
-# takes as input one file per scatter, returns both 
+# takes as input one file per scatter, returns both
 # two sets of parameters (betaG and betaGxC) across all scatters
 
 task AggregateBetaResults { # results from EstimateBetas
@@ -55,7 +55,7 @@ cat << EOF >> path-results-betaGxC.txt
 ~{sep("\n", listOfFilesBetaGxC)}
 EOF
 
-    # eval "$(conda shell.bash hook)" 
+    # eval "$(conda shell.bash hook)"
     # conda activate cellregmap_notebook
 
     python /app/summarise_betas.py \
