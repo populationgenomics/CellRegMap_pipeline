@@ -243,6 +243,15 @@ def remove_sc_outliers(df, outliers=['966_967', '88_88']):
     'Space separated, as one argument (Default: all)',
 )
 @click.option('--genes', default=None)
+@click.option(
+    '--max-gene-concurrency',
+    type=int,
+    default=50,
+    help=(
+        'To avoid resource starvation, set this concurrency to limit horizontal scale. '
+        'Higher numbers have a better walltime, but risk jobs that are stuck (which are expensive)'
+    ),
+)
 def crm_pipeline(
     celltypes: str,
     expression_files_prefix: str,
@@ -252,6 +261,7 @@ def crm_pipeline(
     chromosomes: str = 'all',
     genes: str | None = None,
     window_size: int = 50000,
+    max_gene_concurrency=50,
 ):
 
     sb = hb.ServiceBackend(
@@ -309,6 +319,17 @@ def crm_pipeline(
     else:
         genes_of_interest = list(gene_dict.keys())
 
+    # Setup MAX concurrency by genes
+    _dependent_jobs: list[hb.job.Job] = []
+
+    def manage_concurrency_for_job(job: hb.job.Job):
+        """
+        To avoid having too many jobs running at once, we have to limit concurrency.
+        """
+        if len(_dependent_jobs) >= max_gene_concurrency:
+            job.depends_on(_dependent_jobs[-max_gene_concurrency])
+        _dependent_jobs.append(job)
+
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
     for gene in genes_of_interest:
@@ -322,6 +343,7 @@ def crm_pipeline(
             continue
 
         plink_job = batch.new_python_job(f'Create plink files for: {gene}')
+        manage_concurrency_for_job(plink_job)
         copy_common_env(plink_job)
         if filter_job:
             plink_job.depends_on(filter_job)
