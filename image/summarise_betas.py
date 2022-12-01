@@ -1,12 +1,12 @@
 # pylint: disable=missing-function-docstring
 
 import os
+from collections import defaultdict
 from typing import Any, Dict, List
 
 import click
 import pandas as pd
 import numpy as np
-from collections import defaultdict
 
 
 @click.command()
@@ -41,7 +41,7 @@ def main(file_with_filenames_1: str, file_with_filenames_2: str, output_folder: 
             temp['snp_id'] = df['variant'].values[i]
             temp['betaG'] = df['betaG'].values[i]
 
-        for key in temp.keys():
+        for key in temp():
             table[key].append(temp[key])
 
     for key in table.keys():
