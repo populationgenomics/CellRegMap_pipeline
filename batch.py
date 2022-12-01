@@ -5,7 +5,7 @@
 Hail Batch workflow for the rare-variant association analysis, including:
 
 - get relevant variants around a gene and export genotypes as plink files
-- generate input files for association tests 
+- generate input files for association tests
 - run association tests
 """
 

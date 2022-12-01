@@ -41,7 +41,7 @@ def main(
     kinship_file: str,
     beta_feature_variant_file: str,
     output_folder: str,
-    maf_file: str=None,
+    maf_file: str = None,
     n_contexts: int = 10,
 ):
 
