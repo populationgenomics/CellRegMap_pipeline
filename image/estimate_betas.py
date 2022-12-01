@@ -1,15 +1,17 @@
-import click
 import os
 import sys
 import logging
+
+import click
 import numpy as np
-import scanpy as sc
 import pandas as pd
+import scanpy as sc
 import xarray as xr
-from numpy import ones
-from pandas_plink import read_plink1_bin
-from numpy.linalg import cholesky
+
 from limix.qc import quantile_gaussianize
+from numpy import ones
+from numpy.linalg import cholesky
+from pandas_plink import read_plink1_bin
 
 from cellregmap import estimate_betas
 
@@ -18,7 +20,6 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 
 @click.command()
-@click.option('--chrom', required=True)
 @click.option('--gene-name', required=True)
 @click.option('--sample-mapping-file', required=True)
 @click.option('--genotype-file', required=True)
@@ -31,8 +32,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 )  # by default current directory, where you are running your script from
 @click.option('--n-contexts', required=False, type=int)
 @click.option('--maf-file', required=False)
-def main(
-    chrom: str,
+def estimate_betas(
     gene_name: str,
     sample_mapping_file: str,
     genotype_file: str,
@@ -45,9 +45,7 @@ def main(
     n_contexts: int = 10,
 ):
 
-    ######################################
-    ###### sample mapping file (SMF) #####
-    ######################################
+    # region SAMPLE_MAPPING_FILE
 
     ## this file will map cells to donors
     sample_mapping = pd.read_csv(
@@ -59,14 +57,14 @@ def main(
         },
         index_col=0,
     )
-    ## extract unique individuals
+    # extract unique individuals
     donors0 = sample_mapping['genotype_individual_id'].unique()
     donors0.sort()
     logging.info(f'Number of unique donors: {len(donors0)}')
 
-    ######################################################
-    ###### check if gene output file already exists ######
-    ######################################################
+    # endregion SAMPLE_MAPPING_FILE
+
+    # check if gene output file already exists
 
     outfilename = f'{output_folder}{gene_name}'
     outfilename_betaGxC = outfilename + '_betaGxC.csv'
@@ -75,9 +73,7 @@ def main(
         logging.info('File already exists, exiting')
         sys.exit()
 
-    ######################################
-    ############ kinship file ############
-    ######################################
+    # region KINSHIP_FILE
 
     ## read in GRM (genotype relationship matrix; kinship matrix)
     K = pd.read_csv(kinship_file, index_col=0)
@@ -93,12 +89,12 @@ def main(
     donors = sorted(set(list(K.sample_0.values)).intersection(donors0))
     logging.info(f'Number of donors after kinship intersection: {len(donors)}')
 
-    ## subset to relevant donors
+    # subset to relevant donors
     K = K.sel(sample_0=donors, sample_1=donors)
     assert all(K.sample_0 == donors)
     assert all(K.sample_1 == donors)
 
-    ## and decompose such as K = hK @ hK.T (using Cholesky decomposition)
+    # and decompose such as K = hK @ hK.T (using Cholesky decomposition)
     hK = cholesky(K.values)
     hK = xr.DataArray(hK, dims=['sample', 'col'], coords={'sample': K.sample_0.values})
     assert all(hK.sample.values == K.sample_0.values)
@@ -107,7 +103,7 @@ def main(
     logging.info(
         f'Sample mapping number of rows BEFORE intersection: {sample_mapping.shape[0]}'
     )
-    ## subsample sample mapping file to donors in the kinship matrix
+    # subsample sample mapping file to donors in the kinship matrix
     sample_mapping = sample_mapping[
         sample_mapping['genotype_individual_id'].isin(donors)
     ]
@@ -115,17 +111,15 @@ def main(
         f'Sample mapping number of rows AFTER intersection: {sample_mapping.shape[0]}'
     )
 
-    ## use sel from xarray to expand hK (using the sample mapping file)
+    # use sel from xarray to expand hK (using the sample mapping file)
     hK_expanded = hK.sel(sample=sample_mapping['genotype_individual_id'].values)
     assert all(
         hK_expanded.sample.values == sample_mapping['genotype_individual_id'].values
     )
 
-    ######################################
-    ############ genotype file ###########
-    ######################################
+    # region GENOTYPE_FILE
 
-    ## read in genotype file (plink format)
+    # read in genotype file (plink format)
     G = read_plink1_bin(genotype_file)
 
     ## select relavant SNPs based on feature variant filter file
@@ -140,9 +134,9 @@ def main(
     del G
     del G_sel
 
-    ######################################
-    ############ context file ############
-    ######################################
+    # endregion GENOTYPE_FILE
+
+    # region CONTEXT_FILE
 
     # cells by contexts
     C = pd.read_pickle(context_file)
@@ -154,9 +148,9 @@ def main(
     C = C.sel(cell=sample_mapping['phenotype_sample_id'].values)
     assert all(C.cell.values == sample_mapping['phenotype_sample_id'].values)
 
-    ######################################
-    ########### phenotype file ###########
-    ######################################
+    # endregion CONTEXT_FILE
+
+    # region PHENOTYPE_FILE
 
     # open anndata
     adata = sc.read(phenotype_file)
@@ -178,9 +172,9 @@ def main(
     del mat
     del mat_df
 
-    ######################################
-    ########### Prepare model ############
-    ######################################
+    # endregion PHENOTYPE_FILE
+
+    # region PREPARE_MODEL
 
     n_cells = phenotype.shape[1]
     W = ones((n_cells, 1))  # just intercept as covariates
@@ -208,9 +202,9 @@ def main(
         for snp in snps:
             mafs = np.append(mafs, df_maf[df_maf['SNP'] == snp]['MAF'].values)
 
-    ##################################
-    ########### Run model ############
-    ##################################
+    # endregion PREPARE_MODEL
+
+    # region RUN_MODEL
 
     logging.info(f'Running for gene {gene_name}')
 
@@ -233,6 +227,8 @@ def main(
     beta_GxC_df = pd.DataFrame(data=beta_GxC, columns=snps, index=cells)
     beta_GxC_df.to_csv(outfilename_betaGxC)
 
+    # endregion RUN_MODEL
+
 
 if __name__ == '__main__':
-    main()  # pylint: disable=no-value-for-parameter
+    estimate_betas()  # pylint: disable=no-value-for-parameter

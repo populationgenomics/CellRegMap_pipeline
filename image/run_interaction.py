@@ -1,14 +1,16 @@
 import os
 import sys
 import logging
+
 import click
-import scanpy as sc
 import pandas as pd
+import scanpy as sc
 import xarray as xr
-from numpy import ones
-from pandas_plink import read_plink1_bin
-from numpy.linalg import cholesky
+
 from limix.qc import quantile_gaussianize
+from numpy import ones
+from numpy.linalg import cholesky
+from pandas_plink import read_plink1_bin
 
 from cellregmap import run_interaction, __version__
 
@@ -17,8 +19,6 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 
 @click.command()
-# @click.version_option(version=__version__)
-@click.option('--chrom', required=True, help='More info here')
 @click.option('--gene-name', required=True)
 @click.option('--sample-mapping-file', required=True)
 @click.option('--genotype-file', required=True)
@@ -31,7 +31,6 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 )  # by default current directory, where you are running your script from
 @click.option('--n-contexts', required=False, type=int)
 def run_interaction(
-    chrom: str,
     gene_name: str,
     sample_mapping_file: str,
     genotype_file: str,
@@ -63,7 +62,7 @@ def run_interaction(
 
     # endregion SAMPLE_MAPPING_FILE
 
-    # check if gene output file already exists ######
+    # check if gene output file already exists
     outfilename = os.path.join(output_folder, f'{gene_name}.csv')
 
     if os.path.exists(outfilename):
@@ -98,7 +97,7 @@ def run_interaction(
 
     del K  # delete K to free up memory
     logging.info(
-       f'Sample mapping number of rows BEFORE intersection: {sample_mapping.shape[0]}'
+        f'Sample mapping number of rows BEFORE intersection: {sample_mapping.shape[0]}'
     )
     # subsample sample mapping file to donors in the kinship matrix
     sample_mapping = sample_mapping[
@@ -136,7 +135,6 @@ def run_interaction(
 
     # endregion GENOTYPE_FILE
 
-
     # region CONTEXT_FILE
 
     # cells by contexts
@@ -150,7 +148,6 @@ def run_interaction(
     assert all(C.cell.values == sample_mapping['phenotype_sample_id'].values)
 
     # endregion CONTEXT_FILE
-    
 
     # region PHENOTYPE_FILE
 
@@ -192,8 +189,7 @@ def run_interaction(
     GG = G_expanded.values
 
     # endregion PREPARE_MODEL
-    
-    
+
     # region RUN_MODEL
 
     logging.info(f'Running for gene {gene_name}')
