@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=import-error,no-value-for-parameter,too-many-arguments,wrong-import-position
+# pylint: disable=import-error,no-value-for-parameter,too-many-arguments,too-many-locals,wrong-import-position
 
 """
 Hail Batch workflow for the rare-variant association analysis, including:
@@ -553,10 +553,11 @@ def filter_lowly_expressed_genes(expression_df, min_pct=10):
     return expression_df
 
 
-def remove_sc_outliers(df, outliers=['966_967', '88_88']):
+def remove_sc_outliers(df, outliers=None):
     """
-    Remove outlier samples, as identified by sc analysis
+    Remove outlier samples, as identified by single-cell analysis
     """
+    outliers = outliers.append(['966_967', '88_88'])  # ok??
     df = df[-df['OneK1K_ID'].isin(outliers)]
 
     return df
