@@ -2,15 +2,12 @@
 
 import os
 import logging
+from collections import defaultdict
 from typing import Any, Dict, List
 
 import click
 import numpy as np
 import pandas as pd
-import scipy as sp
-
-from scipy import interpolate
-from collections import defaultdict
 
 from _utils import qv_estimate
 

@@ -36,10 +36,6 @@ from numpy import eye, ones
 from pandas_plink import read_plink1_bin
 from scipy.stats import shapiro
 
-# qvalue imports
-import scipy as sp
-from scipy import interpolate
-
 # make_gene_loc_dict import
 from csv import DictReader
 

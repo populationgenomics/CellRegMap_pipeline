@@ -1,4 +1,4 @@
-# pylint: disable=no-value-for-parameter
+# pylint: disable=no-value-for-parameter,too-many-locals
 
 import os
 import sys
