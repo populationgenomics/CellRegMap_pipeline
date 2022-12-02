@@ -1,4 +1,4 @@
-# pylint: disable=no-value-for-parameter,too-many-locals
+# pylint: disable=no-value-for-parameter,missing-function-docstring,too-many-locals
 
 import os
 import sys
@@ -14,7 +14,7 @@ from numpy import ones
 from numpy.linalg import cholesky
 from pandas_plink import read_plink1_bin
 
-from cellregmap import run_interaction, __version__
+from cellregmap import run_interaction  # , __version__
 
 # use logging to print statements, display at info level
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=import-error,no-value-for-parameter,too-many-arguments,too-many-locals,wrong-import-position
+# pylint: disable=import-error,missing-function-docstring,no-value-for-parameter,too-many-arguments,too-many-locals,wrong-import-position
 
 """
 Hail Batch workflow for the rare-variant association analysis, including:
@@ -12,6 +12,9 @@ Hail Batch workflow for the rare-variant association analysis, including:
 # import python modules
 import os
 import re
+
+# make_gene_loc_dict import
+from csv import DictReader
 
 import click
 import logging
@@ -36,19 +39,16 @@ from numpy import eye, ones
 from pandas_plink import read_plink1_bin
 from scipy.stats import shapiro
 
-# make_gene_loc_dict import
-from csv import DictReader
-
 import hail as hl
 import hailtop.batch as hb
-
-from _utils import qv_estimate as qvalue  # syntax?
 
 from cellregmap import (  # figure out how to import this from github
     run_gene_set_association,
     run_burden_association,
     omnibus_set_association,
 )
+
+from _utils import qv_estimate as qvalue  # syntax?
 
 # use logging to print statements, display at info level
 logging.basicConfig(
@@ -90,7 +90,7 @@ def filter_variants(
     # subset to relevant samples (samples we have scRNA-seq data for)
     mt = mt.filter_cols(hl.set(samples).contains(mt.s))
 
-    # densify (can this be done at the end?)
+    # densify
     mt = hl.experimental.densify(mt)
 
     # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
@@ -502,30 +502,6 @@ def extract_genes(gene_list, expression_tsv_path) -> list[str]:
 
 
 # copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
-# check whether it needs modifying
-def get_genes_for_chromosome(*, expression_tsv_path, geneloc_tsv_path) -> list[str]:
-    """get index of total number of genes
-    Input:
-    expression_df: a data frame with samples as rows and genes as columns,
-    containing normalised expression values (i.e., the average number of molecules
-    for each gene detected in each person).
-    geneloc_df: a data frame with the gene location (chromosome, start, and
-    end locations as columns) specified for each gene (rows).
-    Returns:
-    The number of genes (as an int) after filtering for lowly expressed genes.
-    This integer number gets fed into the number of scatters to run.
-    """
-    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep='\t')
-    geneloc_df = pd.read_csv(AnyPath(geneloc_tsv_path), sep='\t')
-
-    # expression_df = filter_lowly_expressed_genes(expression_df) # I might add this in but not for now
-    gene_ids = set(list(expression_df.columns.values)[1:])
-
-    genes = set(geneloc_df.gene_name).intersection(gene_ids)
-    return list(sorted(genes))
-
-
-# copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
 # generalised to specify min pct samples as input
 def filter_lowly_expressed_genes(expression_df, min_pct=10):
     """Remove genes with low expression in all samples
@@ -601,7 +577,7 @@ def crm_pipeline(
     chromosomes: str = 'all',
     genes: str | None = None,
     window_size: int = 50000,
-    max_gene_concurrency=50,
+    max_gene_concurrency=50,  # redundant default?
 ):
 
     sb = hb.ServiceBackend(
@@ -657,7 +633,9 @@ def crm_pipeline(
     if genes is not None:
         genes_of_interest = genes.split(' ')
     else:
-        genes_of_interest = list(gene_dict.keys())
+        genes_of_interest = list(
+            gene_dict.keys()
+        )  # consider intersecting with genes in at least one expression file
 
     # Setup MAX concurrency by genes
     _dependent_jobs: list[hb.job.Job] = []
@@ -685,6 +663,7 @@ def crm_pipeline(
             continue
 
         plink_job = batch.new_python_job(f'Create plink files for: {gene}')
+        gene_dict[gene]['plink_job'] = plink_job
         manage_concurrency_for_job(plink_job)
         copy_common_env(plink_job)
         if filter_job:
@@ -711,15 +690,16 @@ def crm_pipeline(
         # maybe this makes no sense (to loop over genes twice)
         # but I also didn't want to re-select variants for the same gene repeatedly
         # for every new cell type?
-        gene_prepare_jobs = []
+        # gene_prepare_jobs = []
         gene_run_jobs = []
         for gene in genes_list:
             plink_output_prefix = gene_dict[gene]['plink']
             # prepare input files
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             manage_concurrency_for_job(prepare_input_job)
-            prepare_input_job.depends_on(*genotype_jobs)
-            gene_prepare_jobs.append(prepare_input_job)
+            # prepare_input_job.depends_on(*genotype_jobs)
+            prepare_input_job.depends_on(gene_dict[gene]['plink_job'])
+            # gene_prepare_jobs.append(prepare_input_job)
             pheno_path, geno_path, _ = prepare_input_job.call(
                 prepare_input_files,
                 gene_name=gene,
