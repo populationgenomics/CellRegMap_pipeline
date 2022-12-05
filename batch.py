@@ -226,7 +226,7 @@ def prepare_input_files(
     """
     expression_filename = AnyPath(output_path(f'{gene_name}_{cell_type}.csv'))
     genotype_filename = AnyPath(output_path(f'{gene_name}_rare_regulatory.csv'))
-    kinship_filename = AnyPath(output_path('kinship_common_samples.csv'))
+    kinship_filename = AnyPath(output_path(f'{gene_name}_kinship_common_samples.csv'))
 
     # read in phenotype file (tsv)
     phenotype = pd.read_csv(phenotype_file, sep='\t', index_col=0)
