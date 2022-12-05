@@ -746,7 +746,7 @@ def crm_pipeline(
         summarise_job.depends_on(*gene_run_jobs)
         pv_all = summarise_job.call(
             summarise_association_results,
-            *[gene_dict[gene]['pv_file'] for gene in genes],
+            *[gene_dict[gene]['pv_file'] for gene in genes_list],
         )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
         pv_filename = AnyPath(output_path(f'{celltype}_all_pvalues.csv'))
