@@ -623,6 +623,7 @@ def crm_pipeline(
     for chromosome in chromosomes_list:
         geneloc_tsv_path = dataset_path(
             os.path.join(
+                'gs://cpg-tob-wgs-main/',
                 expression_files_prefix,
                 'gene_location_files',
                 f'GRCh38_geneloc_chr{chromosome}.tsv',
