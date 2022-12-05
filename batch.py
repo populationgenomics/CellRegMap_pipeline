@@ -534,8 +534,9 @@ def remove_sc_outliers(df, outliers=None):
     Remove outlier samples, as identified by single-cell analysis
     """
     if outliers is None: 
-        outliers = []
-    outliers = outliers.extend(['966_967', '88_88'])  
+        outliers = ['966_967', '88_88']
+    else:
+        outliers = outliers.extend(['966_967', '88_88'])  
     df = df[-df['OneK1K_ID'].isin(outliers)]
 
     return df
