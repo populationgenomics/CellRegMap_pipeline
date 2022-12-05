@@ -749,9 +749,11 @@ def crm_pipeline(
             *[gene_dict[gene]['pv_file'] for gene in genes_list],
         )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
-        pv_filename = AnyPath(output_path(f'{celltype}_all_pvalues.csv'))
-        with pv_filename.open('w') as pf:
-            pv_all.to_csv(pf, index=False)
+        pv_filename = AnyPath(output_path(f'{celltype}_all_pvalues.txt'))
+        batch.write_output(pv_all.as_str(), pv_filename)
+        # pv_filename = AnyPath(output_path(f'{celltype}_all_pvalues.csv'))
+        # with pv_filename.open('w') as pf:
+        #     pv_all.to_csv(pf, index=False)
 
     # set jobs running
     batch.run(wait=False)
