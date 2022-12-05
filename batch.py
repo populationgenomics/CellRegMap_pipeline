@@ -442,7 +442,7 @@ def run_gene_association(
 
 
 def summarise_association_results(
-    pv_dfs: list[str],
+    *pv_dfs: list[str],
 ):
     """Summarise results
 
@@ -453,7 +453,7 @@ def summarise_association_results(
     one csv table per cell type,
     combining results across all genes in a single file
     """
-    pv_all_df = pd.concat([pv_dfs])  # test syntax
+    pv_all_df = pd.concat(pv_dfs)  # test syntax
 
     # run qvalues for all tests
     pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
@@ -533,7 +533,9 @@ def remove_sc_outliers(df, outliers=None):
     """
     Remove outlier samples, as identified by single-cell analysis
     """
-    outliers = outliers.append(['966_967', '88_88'])  # ok??
+    if outliers is None: 
+        outliers = []
+    outliers = outliers.extend(['966_967', '88_88'])  
     df = df[-df['OneK1K_ID'].isin(outliers)]
 
     return df
@@ -731,7 +733,7 @@ def crm_pipeline(
         summarise_job.depends_on(*gene_run_jobs)
         pv_all = summarise_job.call(
             summarise_association_results,
-            pv_dfs=[gene_dict[gene]['pv_file'] for gene in genes],
+            *[gene_dict[gene]['pv_file'] for gene in genes],
         )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
         pv_filename = AnyPath(output_path(f'{celltype}_all_pvalues.csv'))

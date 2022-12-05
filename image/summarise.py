@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # pylint: disable=missing-function-docstring
 
 import os
@@ -9,7 +10,7 @@ import click
 import numpy as np
 import pandas as pd
 
-from _utils import qv_estimate
+from _utils import qv_estimate  # will not work, move inside image, consider linking (ln tool?)
 
 # use logging to print statements, display at info level
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
