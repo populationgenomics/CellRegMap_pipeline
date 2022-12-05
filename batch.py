@@ -701,9 +701,9 @@ def crm_pipeline(
             # prepare input files
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             manage_concurrency_for_job(prepare_input_job)
-            # prepare_input_job.depends_on(*genotype_jobs)
-            prepare_input_job.depends_on(gene_dict[gene]['plink_job'])
-            # gene_prepare_jobs.append(prepare_input_job)
+            plink_dep = gene_dict[gene].get('plink_job')
+            if plink_dep:
+                prepare_input_job.depends_on(plink_dep)
             pheno_path, geno_path, _ = prepare_input_job.call(
                 prepare_input_files,
                 gene_name=gene,
