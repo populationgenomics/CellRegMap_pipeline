@@ -684,7 +684,8 @@ def crm_pipeline(
         genotype_jobs.append(plink_job)
 
     # the next phase will be done for each cell type
-    for celltype in celltypes:
+    celltype_list = celltypes.split(' ')
+    for celltype in celltype_list:
         expression_tsv_path = os.path.join(
             expression_files_prefix, 'expression_files', f'{celltype}_expression.tsv'
         )
