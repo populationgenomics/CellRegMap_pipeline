@@ -623,7 +623,6 @@ def crm_pipeline(
     for chromosome in chromosomes_list:
         geneloc_tsv_path = dataset_path(
             os.path.join(
-                'gs://cpg-tob-wgs-main/',
                 expression_files_prefix,
                 'gene_location_files',
                 f'GRCh38_geneloc_chr{chromosome}.tsv',
@@ -687,9 +686,9 @@ def crm_pipeline(
     # the next phase will be done for each cell type
     celltype_list = celltypes.split(' ')
     for celltype in celltype_list:
-        expression_tsv_path = os.path.join(
+        expression_tsv_path = dataset_path(os.path.join(
             expression_files_prefix, 'expression_files', f'{celltype}_expression.tsv'
-        )
+        ))
 
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
         # maybe this makes no sense (to loop over genes twice)
