@@ -431,7 +431,7 @@ def run_gene_association(
     pv_df = pd.DataFrame(
         data=get_crm_pvs(pheno, covs, genotypes, contexts),
         columns=cols,
-        index=gene_name,
+        index=[gene_name],
     )
 
     pv_filename = AnyPath(output_path(f'{output_prefix}/{gene_name}_pvals.csv'))
