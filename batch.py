@@ -220,7 +220,7 @@ def prepare_input_files(
     phenotype vector
     """
     from pandas_plink import read_plink1_bin
-    
+
     expression_filename = AnyPath(output_path(f'{gene_name}_{cell_type}.csv'))
     genotype_filename = AnyPath(output_path(f'{gene_name}_rare_regulatory.csv'))
     kinship_filename = AnyPath(output_path(f'{gene_name}_kinship_common_samples.csv'))
@@ -244,7 +244,9 @@ def prepare_input_files(
         # read in GRM (genotype relationship matrix; kinship matrix)
         kinship = pd.read_csv(kinship_file, index_col=0)
         kinship.index = kinship.index.astype('str')
-        assert all(kinship.columns == kinship.index)  # symmetric matrix, donors x donors
+        assert all(
+            kinship.columns == kinship.index
+        )  # symmetric matrix, donors x donors
         kinship = xr.DataArray(
             kinship.values,
             dims=['sample_0', 'sample_1'],
@@ -281,7 +283,9 @@ def prepare_input_files(
     if kinship_file is not None:
         # samples in kinship
         donors_e_short = [re.sub('.*_', '', donor) for donor in donors_e]
-        donors_k = sorted(set(list(kinship.sample_0.values)).intersection(donors_e_short))
+        donors_k = sorted(
+            set(list(kinship.sample_0.values)).intersection(donors_e_short)
+        )
 
     logging.info(f'Number of unique common donors: {len(donors_g)}')
 
@@ -328,7 +332,8 @@ def prepare_input_files(
     if kinship_file is not None:
         with kinship_filename.open('w') as kf:
             kinship_df.to_csv(kf, index=False)
-    else: kinship_df = None
+    else:
+        kinship_df = None
 
     return y_df, geno_df, kinship_df
 
@@ -422,15 +427,14 @@ def run_gene_association(
         'P_CRM_omnibus_sum',
         'P_CRM_omnibus_comphet',
     ]
-    print(f'Pheno dim: {pheno.shape}')
-    print(f'Geno dim: {genotypes.shape}')
-    print(f'Covs dim: {covs.shape}')
-    print(f'Contexts dim: {contexts.shape}')
+    # print(f'Data dim: {pheno.shape}')
+    # print(f'Index dim: {genotypes.shape}')
+    print(f'Cols dim: {cols.shape}')
 
     # create p-values data frame
     pv_df = pd.DataFrame(
         data=get_crm_pvs(pheno, covs, genotypes, contexts),
-        columns=cols,
+        columns=cols.T,
         index=[gene_name],
     )
 
@@ -461,7 +465,7 @@ def summarise_association_results(
     """
     from _utils import qv_estimate as qvalue
 
-    pv_all_df = pd.concat(pv_dfs)  
+    pv_all_df = pd.concat(pv_dfs)
 
     # run qvalues for all tests
     pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
