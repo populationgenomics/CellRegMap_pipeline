@@ -242,16 +242,17 @@ def prepare_input_files(
     to_path(genotype_file_fam).copy('temp.fam')  # fam
     geno = read_plink1_bin('temp.bed')
 
-    # read in GRM (genotype relationship matrix; kinship matrix)
-    kinship = pd.read_csv(kinship_file, index_col=0)
-    kinship.index = kinship.index.astype('str')
-    assert all(kinship.columns == kinship.index)  # symmetric matrix, donors x donors
-    kinship = xr.DataArray(
-        kinship.values,
-        dims=['sample_0', 'sample_1'],
-        coords={'sample_0': kinship.columns, 'sample_1': kinship.index},
-    )
-    kinship = kinship.sortby('sample_0').sortby('sample_1')
+    if kinship_file is not None:
+        # read in GRM (genotype relationship matrix; kinship matrix)
+        kinship = pd.read_csv(kinship_file, index_col=0)
+        kinship.index = kinship.index.astype('str')
+        assert all(kinship.columns == kinship.index)  # symmetric matrix, donors x donors
+        kinship = xr.DataArray(
+            kinship.values,
+            dims=['sample_0', 'sample_1'],
+            coords={'sample_0': kinship.columns, 'sample_1': kinship.index},
+        )
+        kinship = kinship.sortby('sample_0').sortby('sample_1')
 
     # this file will map different IDs (and OneK1K ID to CPG ID)
     sample_mapping = pd.read_csv(sample_mapping_file, sep='\t')
@@ -279,9 +280,10 @@ def prepare_input_files(
     donors_g = sample_mapping_both['InternalID'].unique()
     assert len(donors_e) == len(donors_g)
 
-    # samples in kinship
-    donors_e_short = [re.sub('.*_', '', donor) for donor in donors_e]
-    donors_k = sorted(set(list(kinship.sample_0.values)).intersection(donors_e_short))
+    if kinship_file is not None:
+        # samples in kinship
+        donors_e_short = [re.sub('.*_', '', donor) for donor in donors_e]
+        donors_k = sorted(set(list(kinship.sample_0.values)).intersection(donors_e_short))
 
     logging.info(f'Number of unique common donors: {len(donors_g)}')
 
@@ -307,15 +309,16 @@ def prepare_input_files(
     # delete large files to free up memory
     del geno
 
-    # kinship
-    kinship = kinship.sel(sample_0=donors_k, sample_1=donors_k)
-    assert all(kinship.sample_0 == donors_k)
-    assert all(kinship.sample_1 == donors_k)
-    # make data frame to save as csv
-    kinship_df = pd.DataFrame(
-        kinship.values, columns=kinship.sample_0, index=kinship.sample_1
-    )
-    del kinship  # delete kinship to free up memory
+    if kinship_file is not None:
+        # kinship
+        kinship = kinship.sel(sample_0=donors_k, sample_1=donors_k)
+        assert all(kinship.sample_0 == donors_k)
+        assert all(kinship.sample_1 == donors_k)
+        # make data frame to save as csv
+        kinship_df = pd.DataFrame(
+            kinship.values, columns=kinship.sample_0, index=kinship.sample_1
+        )
+        del kinship  # delete kinship to free up memory
 
     # save files
     with expression_filename.open('w') as ef:
@@ -324,8 +327,10 @@ def prepare_input_files(
     with genotype_filename.open('w') as gf:
         geno_df.to_csv(gf, index=False)
 
-    with kinship_filename.open('w') as kf:
-        kinship_df.to_csv(kf, index=False)
+    if kinship_file is not None:
+        with kinship_filename.open('w') as kf:
+            kinship_df.to_csv(kf, index=False)
+    else: kinship_df = None
 
     return y_df, geno_df, kinship_df
 
