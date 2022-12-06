@@ -711,7 +711,7 @@ def crm_pipeline(
             plink_dep = gene_dict[gene].get('plink_job')
             if plink_dep:
                 prepare_input_job.depends_on(plink_dep)
-
+            prepare_input_job.image(CELLREGMAP_IMAGE)
             # the python_job.call only returns one object
             # the object is a file containing y_df, geno_df, kinship_df
             # all pickled into a file
