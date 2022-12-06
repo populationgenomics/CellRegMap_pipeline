@@ -731,7 +731,7 @@ def crm_pipeline(
                 genotype_file_fam=plink_output_prefix + '.fam',
                 phenotype_file=expression_tsv_path,
                 kinship_file=None,
-                sample_mapping_file=sample_mapping_file,
+                sample_mapping_file=sample_mapping_file_tsv,
             )
             # run association
             run_job = batch.new_python_job(f'Run association for: {gene}')
