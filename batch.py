@@ -492,7 +492,7 @@ def summarise_association_results(
     pv_all_df['Q_CRM_omnibus_sum'] = qvalue(pv_all_df['P_CRM_omnibus_sum'])
     pv_all_df['Q_CRM_omnibus_comphet'] = qvalue(pv_all_df['P_CRM_omnibus_comphet'])
 
-    with AnyPath(pv_filename).open('w') as pf:
+    with dataset_path(AnyPath(pv_filename)).open('w') as pf:
         pv_all_df.to_csv(pf, index=False)
     # return pv_all_df
 
