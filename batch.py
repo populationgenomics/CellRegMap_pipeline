@@ -436,15 +436,8 @@ def run_gene_association(
         ]
     )
 
-    pvalues = get_crm_pvs(pheno, covs, genotypes, contexts)
-    # print(f'Data shape: {pvalues.shape}')
-    # print(pvalues.reshape(pvalues.shape[0], 1))
-    # print(f'cols shape: {cols.shape}')
-    # print(cols.reshape(cols.shape[0], 1))
-    # print(f'index shape: {np.array([gene_name]).shape}')
-    # print(np.array([gene_name]).reshape(1, 1))
-
     # create p-values data frame
+    pvalues = get_crm_pvs(pheno, covs, genotypes, contexts)
     pv_df = pd.DataFrame(
         data=pvalues.reshape(pvalues.shape[0], 1).T,
         columns=cols,
@@ -452,7 +445,7 @@ def run_gene_association(
     )
 
     pv_filename = AnyPath(output_path(f'{output_prefix}/{gene_name}_pvals.csv'))
-    print(pv_filename)
+    # print(pv_filename)
     with pv_filename.open('w') as pf:
         pv_df.to_csv(pf, index=False)
 
@@ -493,7 +486,11 @@ def summarise_association_results(
     pv_all_df['Q_CRM_omnibus_sum'] = qvalue(pv_all_df['P_CRM_omnibus_sum'])
     pv_all_df['Q_CRM_omnibus_comphet'] = qvalue(pv_all_df['P_CRM_omnibus_comphet'])
 
-    with AnyPath(dataset_path(pv_filename)).open('w') as pf:
+    print(pv_all_df.head)
+
+    pv_all_filename = AnyPath(dataset_path(pv_filename))
+    print(pv_all_filename)
+    with pv_all_filename.open('w') as pf:
         pv_all_df.to_csv(pf, index=False)
     # return pv_all_df
 
