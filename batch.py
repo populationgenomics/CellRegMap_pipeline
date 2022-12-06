@@ -13,9 +13,6 @@ Hail Batch workflow for the rare-variant association analysis, including:
 import os
 import re
 
-# make_gene_loc_dict import
-from csv import DictReader
-
 import click
 import logging
 
@@ -479,6 +476,8 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     Turn gene information into a dictionary
     to avoid opening this file for every gene
     """
+    from csv import DictReader
+    
     gene_dict = {}
 
     with open(to_path(file)) as handle:
@@ -496,6 +495,7 @@ def extract_genes(gene_list, expression_tsv_path) -> list[str]:
     Takes a list of all genes and subsets to only those
     present in the expression file of interest
     """
+    import pandas as pd
     expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep='\t')
     expression_df = filter_lowly_expressed_genes(expression_df)
     gene_ids = set(list(expression_df.columns.values)[1:])
@@ -515,6 +515,7 @@ def filter_lowly_expressed_genes(expression_df, min_pct=10):
     A filtered version of the input data frame, after removing columns (genes)
     with 0 values in more than 10% of the rows (samples).
     """
+    import pandas as pd
     # Remove genes with 0 expression in all samples
     expression_df = expression_df.loc[:, (expression_df != 0).any(axis=0)]
     genes_not_equal_zero = expression_df.iloc[:, 1:].values != 0
