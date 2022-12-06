@@ -404,7 +404,7 @@ def run_gene_association(
 
     # print(p_df.shape)
     # print(p_df.head())
-    
+
     # print(g_df.shape)
     # print(g_df.head())
 
@@ -442,7 +442,7 @@ def run_gene_association(
     print(f'cols shape: {cols.shape}')
     print(cols.reshape(cols.shape[0], 1))
     print(f'index shape: {np.array([gene_name]).shape}')
-    print(np.array([gene_name]).reshape(1,1))
+    print(np.array([gene_name]).reshape(1, 1))
 
     # create p-values data frame
     pv_df = pd.DataFrame(
@@ -466,6 +466,7 @@ def run_gene_association(
 
 def summarise_association_results(
     *pv_dfs: list[str],
+    pv_filename: str,
 ):
     """Summarise results
 
@@ -489,7 +490,9 @@ def summarise_association_results(
     pv_all_df['Q_CRM_omnibus_sum'] = qvalue(pv_all_df['P_CRM_omnibus_sum'])
     pv_all_df['Q_CRM_omnibus_comphet'] = qvalue(pv_all_df['P_CRM_omnibus_comphet'])
 
-    return pv_all_df
+    with pv_filename.open('w') as pf:
+        pv_all_df.to_csv(pf, index=False)
+    # return pv_all_df
 
 
 # endregion AGGREGATE_RESULTS
@@ -568,6 +571,7 @@ def remove_sc_outliers(df, outliers=None):
 
     return df
 
+
 def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
     """
     Estimates q-values from p-values
@@ -644,9 +648,7 @@ def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
             # logging.info(
             #     'qvalues pi0=%.3f, estimated proportion of null features ' % pi0
             # )
-            logging.info(
-                f'qvalues pi0={pi0}, estimated proportion of null features'
-            )
+            logging.info(f'qvalues pi0={pi0}, estimated proportion of null features')
 
         if pi0 > 1:
             if verbose:
@@ -694,6 +696,7 @@ def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
     qv = qv.reshape(original_shape)
 
     return qv
+
 
 # endregion MISCELLANEOUS
 
@@ -901,13 +904,14 @@ def crm_pipeline(
         copy_common_env(summarise_job)
         summarise_job.depends_on(*gene_run_jobs)
         summarise_job.image(CELLREGMAP_IMAGE)
-        pv_all = summarise_job.call(
+        pv_filename_csv = str(AnyPath(output_path(f'{celltype}_all_pvalues.csv')))
+        summarise_job.call(
             summarise_association_results,
             *[gene_dict[gene]['pv_file'] for gene in genes_list],
+            pv_filename_csv,
         )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
-        pv_filename = str(AnyPath(output_path(f'{celltype}_all_pvalues.txt')))
-        batch.write_output(pv_all.as_str(), pv_filename)
+        # batch.write_output(pv_all.as_str(), pv_filename)
 
     # set jobs running
     batch.run(wait=False)
