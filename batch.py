@@ -908,7 +908,7 @@ def crm_pipeline(
         summarise_job.call(
             summarise_association_results,
             *[gene_dict[gene]['pv_file'] for gene in genes_list],
-            pv_filename_csv,
+            str(pv_filename_csv),
         )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
         # batch.write_output(pv_all.as_str(), pv_filename)
