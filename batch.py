@@ -16,7 +16,6 @@ import re
 import click
 import logging
 
-import hailtop.batch.job
 from cloudpathlib import AnyPath
 from cpg_utils import to_path
 from cpg_utils.hail_batch import (
@@ -653,10 +652,10 @@ def crm_pipeline(
         )  # consider intersecting with genes in at least one expression file
 
     # Setup MAX concurrency by genes
-    _dependent_jobs: list[hb.batch.job.Job] = []
+    _dependent_jobs: list[hb.job.Job] = []
 
     # move out of main?
-    def manage_concurrency_for_job(job: hb.batch.job.Job):
+    def manage_concurrency_for_job(job: hb.job.Job):
         """
         To avoid having too many jobs running at once, we have to limit concurrency.
         """
