@@ -428,6 +428,10 @@ def run_gene_association(
         'P_CRM_omnibus_comphet',
     ])
 
+    print(f'Data shape: {get_crm_pvs(pheno, covs, genotypes, contexts).shape}')
+    print(f'cols shape: {cols.shape}')
+    print(f'index shape: {np.array([gene_name]).shape}')
+
     # create p-values data frame
     pv_df = pd.DataFrame(
         data=get_crm_pvs(pheno, covs, genotypes, contexts),
