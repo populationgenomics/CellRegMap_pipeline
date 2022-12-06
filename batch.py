@@ -32,8 +32,6 @@ import pandas as pd
 import xarray as xr
 
 from limix.qc import quantile_gaussianize
-from numpy import eye, ones
-from pandas_plink import read_plink1_bin
 from scipy.stats import shapiro
 
 import hail as hl
@@ -255,7 +253,7 @@ def prepare_input_files(
         kinship = kinship.sortby('sample_0').sortby('sample_1')
 
     # this file will map different IDs (and OneK1K ID to CPG ID)
-    sample_mapping = pd.read_csv(sample_mapping_file, sep='\t')
+    sample_mapping = pd.read_csv(dataset_path(sample_mapping_file), sep='\t')
 
     # ensure samples are the same and in the same order across input files
     # samples with expression data
