@@ -708,6 +708,7 @@ def crm_pipeline(
             # prepare input files
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             manage_concurrency_for_job(prepare_input_job)
+            copy_common_env(prepare_input_job)
             plink_dep = gene_dict[gene].get('plink_job')
             if plink_dep:
                 prepare_input_job.depends_on(plink_dep)
@@ -730,6 +731,7 @@ def crm_pipeline(
             # run association
             run_job = batch.new_python_job(f'Run association for: {gene}')
             manage_concurrency_for_job(run_job)
+            copy_common_env(run_job)
             run_job.depends_on(prepare_input_job)
             run_job.image(CELLREGMAP_IMAGE)
             gene_run_jobs.append(run_job)
@@ -746,6 +748,7 @@ def crm_pipeline(
 
         # combine all p-values across all chromosomes, genes (per cell type)
         summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
+        copy_common_env(summarise_job)
         summarise_job.depends_on(*gene_run_jobs)
         pv_all = summarise_job.call(
             summarise_association_results,
