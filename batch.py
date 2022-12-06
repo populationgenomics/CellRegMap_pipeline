@@ -465,7 +465,7 @@ def run_gene_association(
 
 
 def summarise_association_results(
-    *pv_dfs: list[str],
+    *pv_dfs: list[str],  # how to read as dfs?
     pv_filename: str,
 ):
     """Summarise results
@@ -477,8 +477,6 @@ def summarise_association_results(
     one csv table per cell type,
     combining results across all genes in a single file
     """
-    # from _utils import qv_estimate as qvalue
-
     pv_all_df = pd.concat(pv_dfs)
 
     # run qvalues for all tests
@@ -857,6 +855,9 @@ def crm_pipeline(
         # gene_prepare_jobs = []
         gene_run_jobs = []
         for gene in genes_list:
+
+            # TODO: add checks to not re-run genes if files already exist
+
             plink_output_prefix = gene_dict[gene]['plink']
             # prepare input files
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
