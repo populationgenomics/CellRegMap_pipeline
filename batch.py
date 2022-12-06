@@ -446,7 +446,7 @@ def run_gene_association(
 
     # create p-values data frame
     pv_df = pd.DataFrame(
-        data=pvalues.T,
+        data=pvalues.reshape(pvalues.shape[0], 1).T,
         columns=cols,
         index=[gene_name],
     )
