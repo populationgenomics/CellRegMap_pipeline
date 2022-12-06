@@ -417,25 +417,28 @@ def run_gene_association(
 
     # TODO: kinship
 
-    cols = np.array([
-        'P_shapiro',
-        'P_CRM_VC',
-        'P_CRM_burden_max',
-        'P_CRM_burden_sum',
-        'P_CRM_burden_comphet',
-        'P_CRM_omnibus_max',
-        'P_CRM_omnibus_sum',
-        'P_CRM_omnibus_comphet',
-    ])
+    cols = np.array(
+        [
+            'P_shapiro',
+            'P_CRM_VC',
+            'P_CRM_burden_max',
+            'P_CRM_burden_sum',
+            'P_CRM_burden_comphet',
+            'P_CRM_omnibus_max',
+            'P_CRM_omnibus_sum',
+            'P_CRM_omnibus_comphet',
+        ]
+    )
 
-    print(f'Data shape: {get_crm_pvs(pheno, covs, genotypes, contexts).shape}')
+    pvalues = get_crm_pvs(pheno, covs, genotypes, contexts)
+    print(f'Data shape: {pvalues.shape}')
     print(f'cols shape: {cols.shape}')
     print(f'index shape: {np.array([gene_name]).shape}')
 
     # create p-values data frame
     pv_df = pd.DataFrame(
-        data=get_crm_pvs(pheno, covs, genotypes, contexts),
-        columns=cols,
+        data=pvalues.reshape(pvalues.shape[0], 1),
+        columns=cols.reshape(cols.shape[0], 1),
         index=[gene_name],
     )
 
