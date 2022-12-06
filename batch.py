@@ -43,7 +43,7 @@ from cellregmap import (  # figure out how to import this from github
     omnibus_set_association,
 )
 
-from _utils import qv_estimate as qvalue  # syntax?
+from ._utils import qv_estimate as qvalue  # syntax?
 
 # use logging to print statements, display at info level
 logging.basicConfig(
