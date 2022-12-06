@@ -437,12 +437,12 @@ def run_gene_association(
     )
 
     pvalues = get_crm_pvs(pheno, covs, genotypes, contexts)
-    print(f'Data shape: {pvalues.shape}')
-    print(pvalues.reshape(pvalues.shape[0], 1))
-    print(f'cols shape: {cols.shape}')
-    print(cols.reshape(cols.shape[0], 1))
-    print(f'index shape: {np.array([gene_name]).shape}')
-    print(np.array([gene_name]).reshape(1, 1))
+    # print(f'Data shape: {pvalues.shape}')
+    # print(pvalues.reshape(pvalues.shape[0], 1))
+    # print(f'cols shape: {cols.shape}')
+    # print(cols.reshape(cols.shape[0], 1))
+    # print(f'index shape: {np.array([gene_name]).shape}')
+    # print(np.array([gene_name]).reshape(1, 1))
 
     # create p-values data frame
     pv_df = pd.DataFrame(
@@ -451,7 +451,7 @@ def run_gene_association(
         index=[gene_name],
     )
 
-    pv_filename = output_path(f'{output_prefix}/{gene_name}_pvals.csv')
+    pv_filename = AnyPath(output_path(f'{output_prefix}/{gene_name}_pvals.csv'))
     print(pv_filename)
     with pv_filename.open('w') as pf:
         pv_df.to_csv(pf, index=False)
