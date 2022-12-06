@@ -422,6 +422,10 @@ def run_gene_association(
         'P_CRM_omnibus_sum',
         'P_CRM_omnibus_comphet',
     ]
+    print(f'Pheno dim: {pheno.shape}')
+    print(f'Geno dim: {genotypes.shape}')
+    print(f'Covs dim: {covs.shape}')
+    print(f'Contexts dim: {contexts.shape}')
 
     # create p-values data frame
     pv_df = pd.DataFrame(
