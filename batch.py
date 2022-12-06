@@ -460,7 +460,7 @@ def run_gene_association(
 
 def summarise_association_results(
     *pv_dfs: list[str],  # how to read as dfs?
-    pv_filename: str,
+    pv_all_filename: str,
 ):
     """Summarise results
 
@@ -488,7 +488,7 @@ def summarise_association_results(
 
     print(pv_all_df.head)
 
-    pv_all_filename = AnyPath(dataset_path(pv_filename))
+    pv_all_filename = AnyPath(dataset_path(pv_all_filename))
     print(pv_all_filename)
     with pv_all_filename.open('w') as pf:
         pv_all_df.to_csv(pf, index=False)
@@ -911,12 +911,12 @@ def crm_pipeline(
         # pv_filename_csv = str(
         #     dataset_path(AnyPath(output_path(f'{celltype}_all_pvalues.csv')))
         # )
-        pv_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
+        pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
         print(pv_filename_csv)
         summarise_job.call(
             summarise_association_results,
             *[gene_dict[gene]['pv_file'] for gene in genes_list],
-            pv_filename=str(pv_filename_csv),
+            pv_all_filename=str(pv_all_filename_csv),
         )  # no idea how do to this (get previous job's dataframes and add them in a list)
 
         # batch.write_output(pv_all.as_str(), pv_filename)
