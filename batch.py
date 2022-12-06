@@ -479,7 +479,7 @@ def summarise_association_results(
     """
     # pv_all_df = pd.concat(pv_dfs)
     pv_all_df = pd.concat(
-        [pd.read_csv(pv_df, sep='\t') for pv_df in pv_dfs], ignore_index=True
+        [pd.read_csv(pv_df) for pv_df in pv_dfs], ignore_index=True
     )
     print(pv_all_df.head)
 
