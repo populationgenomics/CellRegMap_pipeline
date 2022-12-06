@@ -899,7 +899,7 @@ def crm_pipeline(
                 run_gene_association,
                 gene_name=gene,
                 prepared_inputs=input_results,
-                output_prefix=output_path(celltype)
+                output_prefix=celltype
                 # genotype_mat_path=geno_path,
                 # phenotype_vec_path=pheno_path,
             )
