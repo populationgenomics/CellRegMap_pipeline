@@ -453,6 +453,8 @@ def summarise_association_results(
     one csv table per cell type,
     combining results across all genes in a single file
     """
+    import pandas as pd
+
     pv_all_df = pd.concat(pv_dfs)  # test syntax
 
     # run qvalues for all tests
@@ -751,9 +753,6 @@ def crm_pipeline(
 
         pv_filename = AnyPath(output_path(f'{celltype}_all_pvalues.txt'))
         batch.write_output(pv_all.as_str(), pv_filename)
-        # pv_filename = AnyPath(output_path(f'{celltype}_all_pvalues.csv'))
-        # with pv_filename.open('w') as pf:
-        #     pv_all.to_csv(pf, index=False)
 
     # set jobs running
     batch.run(wait=False)
