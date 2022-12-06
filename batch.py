@@ -450,7 +450,9 @@ def summarise_association_results(
     one csv table per cell type,
     combining results across all genes in a single file
     """
-    pv_all_df = pd.concat(pv_dfs)  # test syntax
+    from _utils import qv_estimate as qvalue
+
+    pv_all_df = pd.concat(pv_dfs)  
 
     # run qvalues for all tests
     pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
