@@ -432,8 +432,11 @@ def run_gene_association(
 
     pvalues = get_crm_pvs(pheno, covs, genotypes, contexts)
     print(f'Data shape: {pvalues.shape}')
+    print(pvalues.reshape(pvalues.shape[0], 1))
     print(f'cols shape: {cols.shape}')
+    print(cols.reshape(cols.shape[0], 1))
     print(f'index shape: {np.array([gene_name]).shape}')
+    print(np.array([gene_name]).reshape(1,1))
 
     # create p-values data frame
     pv_df = pd.DataFrame(
