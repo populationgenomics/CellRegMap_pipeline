@@ -439,7 +439,7 @@ def run_gene_association(
     pv_df = pd.DataFrame(
         data=pvalues.reshape(pvalues.shape[0], 1),
         columns=cols.reshape(cols.shape[0], 1),
-        index=[gene_name],
+        index=[gene_name].reshape(1,1),
     )
 
     pv_filename = AnyPath(output_path(f'{output_prefix}/{gene_name}_pvals.csv'))
