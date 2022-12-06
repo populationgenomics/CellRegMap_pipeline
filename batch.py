@@ -852,6 +852,7 @@ def crm_pipeline(
         )
 
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
+        print(genes_list)
         # maybe this makes no sense (to loop over genes twice)
         # but I also didn't want to re-select variants for the same gene repeatedly
         # for every new cell type?
