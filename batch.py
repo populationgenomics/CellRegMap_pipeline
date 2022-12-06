@@ -476,7 +476,7 @@ def summarise_association_results(
     one csv table per cell type,
     combining results across all genes in a single file
     """
-    from _utils import qv_estimate as qvalue
+    # from _utils import qv_estimate as qvalue
 
     pv_all_df = pd.concat(pv_dfs)
 
