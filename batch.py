@@ -478,7 +478,9 @@ def summarise_association_results(
     combining results across all genes in a single file
     """
     # pv_all_df = pd.concat(pv_dfs)
-    pv_all_df = pd.concat([pd.read_csv(pv_df, sep='\t') for pv_df in pv_dfs])
+    pv_all_df = pd.concat(
+        [pd.read_csv(pv_df, sep='\t') for pv_df in pv_dfs], ignore_index=True
+    )
 
     # run qvalues for all tests
     pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
@@ -906,7 +908,9 @@ def crm_pipeline(
         copy_common_env(summarise_job)
         summarise_job.depends_on(*gene_run_jobs)
         summarise_job.image(CELLREGMAP_IMAGE)
-        pv_filename_csv = str(dataset_path(AnyPath(output_path(f'{celltype}_all_pvalues.csv'))))
+        pv_filename_csv = str(
+            dataset_path(AnyPath(output_path(f'{celltype}_all_pvalues.csv')))
+        )
         summarise_job.call(
             summarise_association_results,
             *[gene_dict[gene]['pv_file'] for gene in genes_list],
