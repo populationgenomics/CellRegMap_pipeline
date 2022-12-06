@@ -481,6 +481,7 @@ def summarise_association_results(
     pv_all_df = pd.concat(
         [pd.read_csv(pv_df, sep='\t') for pv_df in pv_dfs], ignore_index=True
     )
+    print(pv_all_df.head)
 
     # run qvalues for all tests
     pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
