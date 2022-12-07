@@ -482,7 +482,7 @@ def summarise_association_results(
     pv_all_filename = AnyPath(pv_all_filename)
     print(pv_all_filename)
     with pv_all_filename.open('w') as pf:
-        pv_all_df.to_csv(pf, index=False)
+        pv_all_df.to_csv(pf)
 
 
 # endregion AGGREGATE_RESULTS
