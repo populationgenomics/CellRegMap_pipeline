@@ -908,7 +908,7 @@ def crm_pipeline(
         summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
         copy_common_env(summarise_job)
         # summarise_job.depends_on(*gene_run_jobs)
-        # summarise_job.image(CELLREGMAP_IMAGE)
+        summarise_job.image(CELLREGMAP_IMAGE)
         # pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
         # print(pv_all_filename_csv)
         # print([gene_dict[gene]['pv_file'] for gene in genes_list])
