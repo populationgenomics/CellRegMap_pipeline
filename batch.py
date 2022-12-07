@@ -777,6 +777,7 @@ def crm_pipeline(
     else:
         chromosomes_list = chromosomes.split(' ')
     for chromosome in chromosomes_list:
+        print(chromosome)
         geneloc_tsv_path = dataset_path(
             os.path.join(
                 expression_files_prefix,
@@ -788,6 +789,8 @@ def crm_pipeline(
         # concatenating across chromosomes to have a single dict
         gene_dict.update(make_gene_loc_dict(geneloc_tsv_path))
 
+    print(gene_dict)
+    
     # isolate to the genes we are interested in
     if genes is not None:
         genes_of_interest = genes.split(',')
