@@ -909,14 +909,15 @@ def crm_pipeline(
         copy_common_env(summarise_job)
         summarise_job.depends_on(*gene_run_jobs)
         summarise_job.image(CELLREGMAP_IMAGE)
-        # pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
+        pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
         # print(pv_all_filename_csv)
         # print([gene_dict[gene]['pv_file'] for gene in genes_list])
-        # summarise_job.call(
-        #     summarise_association_results,
-        #     *[gene_dict[gene]['pv_file'] for gene in genes_list],
-        #     pv_all_filename=str(pv_all_filename_csv),
-        # )
+        summarise_job.call(
+            summarise_association_results,
+            # *[gene_dict[gene]['pv_file'] for gene in genes_list],
+            pv_dfs=pv_files,
+            pv_all_filename=str(pv_all_filename_csv),
+        )
 
     # set jobs running
     batch.run(wait=False)
