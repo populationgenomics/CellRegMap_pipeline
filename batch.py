@@ -832,7 +832,7 @@ def crm_pipeline(
             window_size=window_size,
             plink_file=plink_file,
         )
-        genotype_jobs.append(plink_job)
+        # genotype_jobs.append(plink_job)
 
     # the next phase will be done for each cell type
     celltype_list = celltypes.split(' ')
