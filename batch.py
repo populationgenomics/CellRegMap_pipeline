@@ -782,7 +782,7 @@ def crm_pipeline(
 
     # isolate to the genes we are interested in
     if genes is not None:
-        genes_of_interest = genes.split(',')
+        genes_of_interest = genes.split(' ')
     else:
         genes_of_interest = list(
             gene_dict.keys()
