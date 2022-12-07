@@ -902,6 +902,7 @@ def crm_pipeline(
         summarise_job.image(CELLREGMAP_IMAGE)
         pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
         print(pv_all_filename_csv)
+        print([gene_dict[gene]['pv_file'] for gene in genes_list])
         summarise_job.call(
             summarise_association_results,
             *[gene_dict[gene]['pv_file'] for gene in genes_list],
