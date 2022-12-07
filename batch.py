@@ -453,7 +453,7 @@ def run_gene_association(
 
 
 def summarise_association_results(
-    *pv_dfs: list[str],  
+    *pv_dfs: list[str],
     pv_all_filename: str,
 ):
     """Summarise results
@@ -465,7 +465,9 @@ def summarise_association_results(
     one csv table per cell type,
     combining results across all genes in a single file
     """
-    pv_all_df = pd.concat([pd.read_csv(AnyPath(output_path(pv_df)), index_col=0) for pv_df in pv_dfs])
+    pv_all_df = pd.concat(
+        [pd.read_csv(AnyPath(output_path(pv_df)), index_col=0) for pv_df in pv_dfs]
+    )
 
     # run qvalues for all tests
     pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
@@ -724,7 +726,7 @@ def crm_pipeline(
     chromosomes: str = 'all',
     genes: str | None = None,
     window_size: int = 50000,
-    max_gene_concurrency=50,  # redundant default?
+    max_gene_concurrency=50,
 ):
 
     sb = hb.ServiceBackend(
@@ -783,9 +785,7 @@ def crm_pipeline(
     if genes is not None:
         genes_of_interest = genes.split(' ')
     else:
-        genes_of_interest = list(
-            gene_dict.keys()
-        )
+        genes_of_interest = list(gene_dict.keys())
 
     print(genes_of_interest)
 
@@ -861,7 +861,6 @@ def crm_pipeline(
                 continue
 
             print(f"Preparing inputs for: {gene}")
-            # TODO: add checks to not re-run genes if files already exist
             print(gene_dict[gene]['plink'])
             if gene_dict[gene]['plink'] is None:
                 print("No plink files for this gene, exit!")
@@ -872,9 +871,6 @@ def crm_pipeline(
             manage_concurrency_for_job(prepare_input_job)
             copy_common_env(prepare_input_job)
             prepare_input_job.depends_on(*genotype_jobs)
-            # plink_dep = gene_dict[gene].get('plink_job')
-            # if plink_dep:
-            #     prepare_input_job.depends_on(plink_dep)
             prepare_input_job.image(CELLREGMAP_IMAGE)
             # the python_job.call only returns one object
             # the object is a file containing y_df, geno_df, kinship_df
@@ -907,7 +903,7 @@ def crm_pipeline(
                 # phenotype_vec_path=pheno_path,
             )
             # save pv filename as gene attribute
-        #     gene_dict[gene]['pv_file'] = pv_file
+            #     gene_dict[gene]['pv_file'] = pv_file
             pv_files.append(pv_file)
 
         print(pv_files)
@@ -917,11 +913,8 @@ def crm_pipeline(
         summarise_job.depends_on(*gene_run_jobs)
         summarise_job.image(CELLREGMAP_IMAGE)
         pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
-        # print(pv_all_filename_csv)
-        # print([gene_dict[gene]['pv_file'] for gene in genes_list])
         summarise_job.call(
             summarise_association_results,
-            # *[gene_dict[gene]['pv_file'] for gene in genes_list],
             *pv_files,
             pv_all_filename=str(pv_all_filename_csv),
         )
