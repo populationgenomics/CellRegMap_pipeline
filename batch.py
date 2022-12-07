@@ -488,7 +488,7 @@ def summarise_association_results(
 
     print(pv_all_df.head)
 
-    pv_all_filename = AnyPath(dataset_path(pv_all_filename))
+    pv_all_filename = AnyPath(pv_all_filename)
     print(pv_all_filename)
     with pv_all_filename.open('w') as pf:
         pv_all_df.to_csv(pf, index=False)
