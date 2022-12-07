@@ -466,7 +466,7 @@ def summarise_association_results(
     combining results across all genes in a single file
     """
     # pv_all_df = pd.concat(pv_dfs)
-    pv_all_df = pd.concat([pd.read_csv(pv_df) for pv_df in pv_dfs], ignore_index=True)
+    pv_all_df = pd.concat([pd.read_csv(pv_df, index_col=0) for pv_df in pv_dfs], ignore_index=True)
 
     # run qvalues for all tests
     pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
