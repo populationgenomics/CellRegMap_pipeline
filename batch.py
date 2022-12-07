@@ -465,7 +465,7 @@ def summarise_association_results(
     one csv table per cell type,
     combining results across all genes in a single file
     """
-    pv_all_df = pd.concat([pd.read_csv(dataset_path(pv_df), index_col=0) for pv_df in pv_dfs])
+    pv_all_df = pd.concat([pd.read_csv(AnyPath(pv_df), index_col=0) for pv_df in pv_dfs])
 
     # run qvalues for all tests
     pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
@@ -854,7 +854,7 @@ def crm_pipeline(
         pv_files = []
         for gene in genes_list:
 
-            pv_file = output_path(f'{celltype}/{gene}_pvals.csv')
+            pv_file = dataset_path(f'{celltype}/{gene}_pvals.csv')
             print(pv_file)
             if to_path(pv_file).exists():
                 print("We already ran associations for this gene!")
