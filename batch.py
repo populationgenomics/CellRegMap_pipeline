@@ -836,14 +836,15 @@ def crm_pipeline(
 
     # the next phase will be done for each cell type
     celltype_list = celltypes.split(' ')
-    for celltype in celltype_list:
-        expression_tsv_path = dataset_path(
-            os.path.join(
-                expression_files_prefix,
-                'expression_files',
-                f'{celltype}_expression.tsv',
-            )
-        )
+    print(celltype_list)
+    # for celltype in celltype_list:
+    #     expression_tsv_path = dataset_path(
+    #         os.path.join(
+    #             expression_files_prefix,
+    #             'expression_files',
+    #             f'{celltype}_expression.tsv',
+    #         )
+    #     )
 
         # genes_list = extract_genes(genes_of_interest, expression_tsv_path)
         # print(f"Genes to run: {genes_list}")
