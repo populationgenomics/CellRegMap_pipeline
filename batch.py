@@ -907,7 +907,7 @@ def crm_pipeline(
         # combine all p-values across all chromosomes, genes (per cell type)
         summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
         copy_common_env(summarise_job)
-        # summarise_job.depends_on(*gene_run_jobs)
+        summarise_job.depends_on(*gene_run_jobs)
         summarise_job.image(CELLREGMAP_IMAGE)
         # pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
         # print(pv_all_filename_csv)
