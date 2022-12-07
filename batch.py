@@ -754,7 +754,7 @@ def crm_pipeline(
         )
 
     else:
-        logging.info('File already exist no need to filter')
+        logging.info('File already exists no need to filter')
         filter_job = None
 
     # grab all relevant genes across all chromosomes
@@ -786,7 +786,7 @@ def crm_pipeline(
     else:
         genes_of_interest = list(
             gene_dict.keys()
-        )  # consider intersecting with genes in at least one expression file
+        )
 
     print(genes_of_interest)
 
@@ -806,7 +806,7 @@ def crm_pipeline(
     # submit a job for each gene (export genotypes to plink)
     genotype_jobs = []
     for gene in genes_of_interest:
-
+        print(gene)
         # final path for this gene - generate first (check syntax)
         plink_file = output_path(f'plink_files/{gene}')
         print(plink_file)
@@ -846,6 +846,7 @@ def crm_pipeline(
         )
 
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
+        print("Genes to run:")
         print(genes_list)
         gene_run_jobs = []
         for gene in genes_list:
