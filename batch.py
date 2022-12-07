@@ -864,24 +864,24 @@ def crm_pipeline(
             manage_concurrency_for_job(prepare_input_job)
             copy_common_env(prepare_input_job)
             prepare_input_job.depends_on(*genotype_jobs)
-            # plink_dep = gene_dict[gene].get('plink_job')
-            # if plink_dep:
-            #     prepare_input_job.depends_on(plink_dep)
-            prepare_input_job.image(CELLREGMAP_IMAGE)
-            # the python_job.call only returns one object
-            # the object is a file containing y_df, geno_df, kinship_df
-            # all pickled into a file
-            input_results = prepare_input_job.call(
-                prepare_input_files,
-                gene_name=gene,
-                cell_type=celltype,
-                genotype_file_bed=plink_output_prefix + '.bed',
-                genotype_file_bim=plink_output_prefix + '.bim',
-                genotype_file_fam=plink_output_prefix + '.fam',
-                phenotype_file=expression_tsv_path,
-                kinship_file=None,
-                sample_mapping_file=sample_mapping_file_tsv,
-            )
+            # # plink_dep = gene_dict[gene].get('plink_job')
+            # # if plink_dep:
+            # #     prepare_input_job.depends_on(plink_dep)
+            # prepare_input_job.image(CELLREGMAP_IMAGE)
+            # # the python_job.call only returns one object
+            # # the object is a file containing y_df, geno_df, kinship_df
+            # # all pickled into a file
+            # input_results = prepare_input_job.call(
+            #     prepare_input_files,
+            #     gene_name=gene,
+            #     cell_type=celltype,
+            #     genotype_file_bed=plink_output_prefix + '.bed',
+            #     genotype_file_bim=plink_output_prefix + '.bim',
+            #     genotype_file_fam=plink_output_prefix + '.fam',
+            #     phenotype_file=expression_tsv_path,
+            #     kinship_file=None,
+            #     sample_mapping_file=sample_mapping_file_tsv,
+            # )
             # print(f"Running association for: {gene}")
             # # run association
             # run_job = batch.new_python_job(f'Run association for: {gene}')
