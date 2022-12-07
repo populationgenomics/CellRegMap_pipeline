@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=import-error,missing-function-docstring,no-value-for-parameter,too-many-arguments,too-many-locals,wrong-import-position
+# pylint: disable=import-error,import-outside-toplevel,missing-function-docstring,no-value-for-parameter,too-many-arguments,too-many-locals,wrong-import-position
 
 """
 Hail Batch workflow for the rare-variant association analysis, including:
@@ -453,7 +453,7 @@ def run_gene_association(
 
 
 def summarise_association_results(
-    *pv_dfs: list[str],  # how to read as dfs?
+    *pv_dfs: list[str],  
     pv_all_filename: str,
 ):
     """Summarise results
@@ -465,7 +465,6 @@ def summarise_association_results(
     one csv table per cell type,
     combining results across all genes in a single file
     """
-    # pv_all_df = pd.concat(pv_dfs)
     pv_all_df = pd.concat([pd.read_csv(pv_df, index_col=0) for pv_df in pv_dfs])
 
     # run qvalues for all tests
@@ -854,6 +853,13 @@ def crm_pipeline(
         gene_run_jobs = []
         pv_files = []
         for gene in genes_list:
+
+            pv_file = output_path(f'{celltype}/{gene}_pvals.csv')
+            print(pv_file)
+            if to_path(pv_file).exists():
+                print("We already ran associations for this gene!")
+                continue
+
             print(f"Preparing inputs for: {gene}")
             # TODO: add checks to not re-run genes if files already exist
             print(gene_dict[gene]['plink'])
@@ -892,7 +898,6 @@ def crm_pipeline(
             run_job.depends_on(prepare_input_job)
             run_job.image(CELLREGMAP_IMAGE)
             gene_run_jobs.append(run_job)
-            pv_file = output_path(f'{celltype}/{gene}_pvals.csv')
             run_job.call(
                 run_gene_association,
                 gene_name=gene,
@@ -905,6 +910,7 @@ def crm_pipeline(
         #     gene_dict[gene]['pv_file'] = pv_file
             pv_files.append(pv_file)
 
+        print(pv_files)
         # combine all p-values across all chromosomes, genes (per cell type)
         summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
         copy_common_env(summarise_job)
