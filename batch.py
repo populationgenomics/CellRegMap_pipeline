@@ -863,7 +863,7 @@ def crm_pipeline(
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             manage_concurrency_for_job(prepare_input_job)
             copy_common_env(prepare_input_job)
-            prepare_input_job.depends_on(*genotype_jobs)
+            # prepare_input_job.depends_on(*genotype_jobs)
             # # plink_dep = gene_dict[gene].get('plink_job')
             # # if plink_dep:
             # #     prepare_input_job.depends_on(plink_dep)
