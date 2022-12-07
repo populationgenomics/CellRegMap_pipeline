@@ -817,7 +817,7 @@ def crm_pipeline(
             continue
 
         plink_job = batch.new_python_job(f'Create plink files for: {gene}')
-        gene_dict[gene]['plink_job'] = plink_job
+        # gene_dict[gene]['plink_job'] = plink_job
         manage_concurrency_for_job(plink_job)
         copy_common_env(plink_job)
         if filter_job:
