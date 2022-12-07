@@ -52,6 +52,13 @@ analysis-runner \
       --celltypes B_intermediate
 ```
 
+## Next steps
+
+* include indels
+* include multi-allelic SNPs
+* expand to less expressed genes (min of 10% samples now)
+
+
 ## CellRegMap pipeline v1
 
 A WDL workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
