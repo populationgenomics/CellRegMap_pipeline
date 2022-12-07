@@ -854,11 +854,11 @@ def crm_pipeline(
         for gene in genes_list:
             print(f"Preparing inputs for: {gene}")
             # TODO: add checks to not re-run genes if files already exist
-
+            print(gene_dict[gene]['plink'])
             if gene_dict[gene]['plink'] is None:
                 print("No plink files for this gene, exit!")
                 continue
-            plink_output_prefix = gene_dict[gene]['plink']
+            # plink_output_prefix = gene_dict[gene]['plink']
             # prepare input files
             # prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             # manage_concurrency_for_job(prepare_input_job)
