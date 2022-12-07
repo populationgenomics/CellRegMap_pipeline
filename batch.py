@@ -892,7 +892,7 @@ def crm_pipeline(
             run_job.depends_on(prepare_input_job)
             run_job.image(CELLREGMAP_IMAGE)
             gene_run_jobs.append(run_job)
-            pv_file = f'{celltype}/{gene}_pvals.csv'
+            pv_file = output_path(f'{celltype}/{gene}_pvals.csv')
             run_job.call(
                 run_gene_association,
                 gene_name=gene,
