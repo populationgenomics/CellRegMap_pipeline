@@ -890,15 +890,15 @@ def crm_pipeline(
             copy_common_env(run_job)
             run_job.depends_on(prepare_input_job)
             run_job.image(CELLREGMAP_IMAGE)
-        #     gene_run_jobs.append(run_job)
-        #     pv_file = run_job.call(
-        #         run_gene_association,
-        #         gene_name=gene,
-        #         prepared_inputs=input_results,
-        #         output_prefix=celltype
-        #         # genotype_mat_path=geno_path,
-        #         # phenotype_vec_path=pheno_path,
-        #     )
+            gene_run_jobs.append(run_job)
+            pv_file = run_job.call(
+                run_gene_association,
+                gene_name=gene,
+                prepared_inputs=input_results,
+                output_prefix=celltype
+                # genotype_mat_path=geno_path,
+                # phenotype_vec_path=pheno_path,
+            )
         #     # save pv filename as gene attribute
         #     gene_dict[gene]['pv_file'] = pv_file
 
