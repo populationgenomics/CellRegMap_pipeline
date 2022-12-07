@@ -809,6 +809,7 @@ def crm_pipeline(
 
         # final path for this gene - generate first (check syntax)
         plink_file = output_path(f'plink_files/{gene}')
+        print(plink_file)
         gene_dict[gene]['plink'] = plink_file
 
         # if the plink output exists, do not re-generate it
