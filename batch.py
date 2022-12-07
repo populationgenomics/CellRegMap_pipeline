@@ -796,6 +796,8 @@ def crm_pipeline(
             gene_dict.keys()
         )  # consider intersecting with genes in at least one expression file
 
+    print(genes_of_interest)
+
     # Setup MAX concurrency by genes
     _dependent_jobs: list[hb.job.Job] = []
 
