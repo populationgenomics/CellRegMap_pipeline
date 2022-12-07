@@ -438,7 +438,7 @@ def run_gene_association(
         index=[gene_name],
     )
 
-    pv_filename = AnyPath(output_path(pv_filename))
+    pv_filename = AnyPath(output_path(output_path))
     # print(pv_filename)
     with pv_filename.open('w') as pf:
         pv_df.to_csv(pf)
@@ -479,7 +479,7 @@ def summarise_association_results(
 
     print(pv_all_df.head)
 
-    pv_all_filename = AnyPath(output_path)
+    pv_all_filename = AnyPath(pv_all_filename)
     print(pv_all_filename)
     with pv_all_filename.open('w') as pf:
         pv_all_df.to_csv(pf)
