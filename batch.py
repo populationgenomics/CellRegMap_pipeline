@@ -385,7 +385,7 @@ def run_gene_association(
     prepared_inputs: hb.resource.PythonResult,
     # genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
     # phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
-    output_path: str,  # 'Bnaive/VPREB3_pvals.csv'
+    pv_path: str,  # 'Bnaive/VPREB3_pvals.csv'
 ):
     """Run gene-set association test
 
@@ -438,7 +438,7 @@ def run_gene_association(
         index=[gene_name],
     )
 
-    pv_filename = AnyPath(output_path(output_path))
+    pv_filename = AnyPath(output_path(pv_path))
     # print(pv_filename)
     with pv_filename.open('w') as pf:
         pv_df.to_csv(pf)
@@ -897,7 +897,7 @@ def crm_pipeline(
                 run_gene_association,
                 gene_name=gene,
                 prepared_inputs=input_results,
-                output_path=pv_file
+                pv_path=pv_file
                 # genotype_mat_path=geno_path,
                 # phenotype_vec_path=pheno_path,
             )
