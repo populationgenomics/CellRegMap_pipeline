@@ -883,13 +883,13 @@ def crm_pipeline(
                 kinship_file=None,
                 sample_mapping_file=sample_mapping_file_tsv,
             )
-        #     print(f"Running association for: {gene}")
-        #     # run association
-        #     run_job = batch.new_python_job(f'Run association for: {gene}')
-        #     manage_concurrency_for_job(run_job)
-        #     copy_common_env(run_job)
-        #     run_job.depends_on(prepare_input_job)
-        #     run_job.image(CELLREGMAP_IMAGE)
+            print(f"Running association for: {gene}")
+            # run association
+            run_job = batch.new_python_job(f'Run association for: {gene}')
+            manage_concurrency_for_job(run_job)
+            copy_common_env(run_job)
+            run_job.depends_on(prepare_input_job)
+            run_job.image(CELLREGMAP_IMAGE)
         #     gene_run_jobs.append(run_job)
         #     pv_file = run_job.call(
         #         run_gene_association,
