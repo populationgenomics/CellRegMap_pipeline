@@ -850,11 +850,11 @@ def crm_pipeline(
         if len(genes_list) == 0:
             print("No genes to run!")
             continue
-        gene_run_jobs = []
-        for gene in genes_list:
-            print(f"Preparing inputs for: {gene}")
-            # TODO: add checks to not re-run genes if files already exist
-            print(gene_dict[gene]['plink'])
+        # gene_run_jobs = []
+        # for gene in genes_list:
+        #     print(f"Preparing inputs for: {gene}")
+        #     # TODO: add checks to not re-run genes if files already exist
+        #     print(gene_dict[gene]['plink'])
             # if gene_dict[gene]['plink'] is None:
             #     print("No plink files for this gene, exit!")
             #     continue
