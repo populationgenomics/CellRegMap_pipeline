@@ -883,38 +883,38 @@ def crm_pipeline(
                 kinship_file=None,
                 sample_mapping_file=sample_mapping_file_tsv,
             )
-            print(f"Running association for: {gene}")
-            # run association
-            run_job = batch.new_python_job(f'Run association for: {gene}')
-            manage_concurrency_for_job(run_job)
-            copy_common_env(run_job)
-            run_job.depends_on(prepare_input_job)
-            run_job.image(CELLREGMAP_IMAGE)
-            gene_run_jobs.append(run_job)
-            pv_file = run_job.call(
-                run_gene_association,
-                gene_name=gene,
-                prepared_inputs=input_results,
-                output_prefix=celltype
-                # genotype_mat_path=geno_path,
-                # phenotype_vec_path=pheno_path,
-            )
-            # save pv filename as gene attribute
-            gene_dict[gene]['pv_file'] = pv_file
+        #     print(f"Running association for: {gene}")
+        #     # run association
+        #     run_job = batch.new_python_job(f'Run association for: {gene}')
+        #     manage_concurrency_for_job(run_job)
+        #     copy_common_env(run_job)
+        #     run_job.depends_on(prepare_input_job)
+        #     run_job.image(CELLREGMAP_IMAGE)
+        #     gene_run_jobs.append(run_job)
+        #     pv_file = run_job.call(
+        #         run_gene_association,
+        #         gene_name=gene,
+        #         prepared_inputs=input_results,
+        #         output_prefix=celltype
+        #         # genotype_mat_path=geno_path,
+        #         # phenotype_vec_path=pheno_path,
+        #     )
+        #     # save pv filename as gene attribute
+        #     gene_dict[gene]['pv_file'] = pv_file
 
-        # combine all p-values across all chromosomes, genes (per cell type)
-        summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
-        copy_common_env(summarise_job)
-        summarise_job.depends_on(*gene_run_jobs)
-        summarise_job.image(CELLREGMAP_IMAGE)
-        pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
-        print(pv_all_filename_csv)
-        print([gene_dict[gene]['pv_file'] for gene in genes_list])
-        summarise_job.call(
-            summarise_association_results,
-            *[gene_dict[gene]['pv_file'] for gene in genes_list],
-            pv_all_filename=str(pv_all_filename_csv),
-        )
+        # # combine all p-values across all chromosomes, genes (per cell type)
+        # summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
+        # copy_common_env(summarise_job)
+        # summarise_job.depends_on(*gene_run_jobs)
+        # summarise_job.image(CELLREGMAP_IMAGE)
+        # pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
+        # print(pv_all_filename_csv)
+        # print([gene_dict[gene]['pv_file'] for gene in genes_list])
+        # summarise_job.call(
+        #     summarise_association_results,
+        #     *[gene_dict[gene]['pv_file'] for gene in genes_list],
+        #     pv_all_filename=str(pv_all_filename_csv),
+        # )
 
     # set jobs running
     batch.run(wait=False)
