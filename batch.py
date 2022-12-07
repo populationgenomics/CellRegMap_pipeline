@@ -850,7 +850,7 @@ def crm_pipeline(
         print(genes_list)
         gene_run_jobs = []
         for gene in genes_list:
-
+            print(f"Preparing inputs for: {gene}")
             # TODO: add checks to not re-run genes if files already exist
 
             plink_output_prefix = gene_dict[gene]['plink']
@@ -876,6 +876,7 @@ def crm_pipeline(
                 kinship_file=None,
                 sample_mapping_file=sample_mapping_file_tsv,
             )
+            print(f"Running association for: {gene}")
             # run association
             run_job = batch.new_python_job(f'Run association for: {gene}')
             manage_concurrency_for_job(run_job)
