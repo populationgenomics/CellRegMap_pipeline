@@ -846,8 +846,10 @@ def crm_pipeline(
         )
 
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
-        print("Genes to run:")
-        print(genes_list)
+        print(f"Genes to run: {genes_list}")
+        if len(genes_list) == 0:
+            print("No genes to run!")
+            continue
         gene_run_jobs = []
         for gene in genes_list:
             print(f"Preparing inputs for: {gene}")
