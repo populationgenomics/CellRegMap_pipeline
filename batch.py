@@ -385,7 +385,7 @@ def run_gene_association(
     prepared_inputs: hb.resource.PythonResult,
     # genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
     # phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
-    output_prefix: str,  # 'Bnaive/'
+    output_path: str,  # 'Bnaive/VPREB3_pvals.csv'
 ):
     """Run gene-set association test
 
@@ -438,7 +438,7 @@ def run_gene_association(
         index=[gene_name],
     )
 
-    pv_filename = AnyPath(output_path(f'{output_prefix}/{gene_name}_pvals.csv'))
+    pv_filename = AnyPath(output_path(pv_filename))
     # print(pv_filename)
     with pv_filename.open('w') as pf:
         pv_df.to_csv(pf)
@@ -479,7 +479,7 @@ def summarise_association_results(
 
     print(pv_all_df.head)
 
-    pv_all_filename = AnyPath(pv_all_filename)
+    pv_all_filename = AnyPath(output_path)
     print(pv_all_filename)
     with pv_all_filename.open('w') as pf:
         pv_all_df.to_csv(pf)
@@ -892,11 +892,12 @@ def crm_pipeline(
             run_job.depends_on(prepare_input_job)
             run_job.image(CELLREGMAP_IMAGE)
             gene_run_jobs.append(run_job)
-            pv_file = run_job.call(
+            pv_file = f'{celltype}/{gene}_pvals.csv'
+            run_job.call(
                 run_gene_association,
                 gene_name=gene,
                 prepared_inputs=input_results,
-                output_prefix=celltype
+                output_path=pv_file
                 # genotype_mat_path=geno_path,
                 # phenotype_vec_path=pheno_path,
             )
