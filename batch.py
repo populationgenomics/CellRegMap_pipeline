@@ -528,6 +528,12 @@ def extract_genes(gene_list, expression_tsv_path) -> list[str]:
     expression_df = filter_lowly_expressed_genes(expression_df)
     gene_ids = set(list(expression_df.columns.values)[1:])
     genes = set(gene_list).intersection(gene_ids)
+
+    print("Extracting genes")
+    print(gene_list)
+    print(gene_ids)
+    print(list(sorted(genes)))
+
     return list(sorted(genes))
 
 
@@ -790,7 +796,7 @@ def crm_pipeline(
         gene_dict.update(make_gene_loc_dict(geneloc_tsv_path))
 
     print(gene_dict)
-    
+
     # isolate to the genes we are interested in
     if genes is not None:
         genes_of_interest = genes.split(',')
