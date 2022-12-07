@@ -441,7 +441,7 @@ def run_gene_association(
     pv_filename = AnyPath(output_path(f'{output_prefix}/{gene_name}_pvals.csv'))
     # print(pv_filename)
     with pv_filename.open('w') as pf:
-        pv_df.to_csv(pf, index=False)
+        pv_df.to_csv(pf)
 
     return str(pv_filename)
 
