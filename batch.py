@@ -916,7 +916,7 @@ def crm_pipeline(
         summarise_job.call(
             summarise_association_results,
             # *[gene_dict[gene]['pv_file'] for gene in genes_list],
-            pv_dfs=pv_files,
+            *pv_files,
             pv_all_filename=str(pv_all_filename_csv),
         )
 
