@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=import-error,import-outside-toplevel,missing-function-docstring,no-value-for-parameter,too-many-arguments,too-many-locals,wrong-import-order,wrong-import-position
+# pylint: disable=import-error,import-outside-toplevel,missing-function-docstring,no-value-for-parameter,too-many-arguments,too-many-locals,wrong-import-order,wrong-import-position,consider-using-enumerate,chained-comparison
 
 """
 Hail Batch workflow for the rare-variant association analysis, including:
