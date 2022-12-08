@@ -43,12 +43,8 @@ from cellregmap import (  # figure out how to import this from github
     omnibus_set_association,
 )
 
-# from ._utils import qv_estimate as qvalue
-
 # use logging to print statements, display at info level
-logging.basicConfig(
-    format='%(levelname)s:%(message)s', level=logging.INFO
-)  # consider removing some print statements?
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 DEFAULT_JOINT_CALL_MT = dataset_path('mt/v7.mt')
 DEFAULT_ANNOTATION_HT = dataset_path(
@@ -221,8 +217,12 @@ def prepare_input_files(
     """
     from pandas_plink import read_plink1_bin
 
-    expression_filename = AnyPath(output_path(f'{gene_name}_{cell_type}.csv'))
-    genotype_filename = AnyPath(output_path(f'{gene_name}_rare_regulatory.csv'))
+    expression_filename = AnyPath(
+        output_path(f'expression_files/{gene_name}_{cell_type}.csv')
+    )
+    genotype_filename = AnyPath(
+        output_path(f'genotype_files/{gene_name}_rare_regulatory.csv')
+    )
     kinship_filename = AnyPath(output_path(f'{gene_name}_kinship_common_samples.csv'))
 
     # read in phenotype file (tsv)
@@ -383,7 +383,7 @@ def get_crm_pvs(pheno, covs, genotypes, contexts=None):
 def run_gene_association(
     gene_name: str,  # 'VPREB3'
     prepared_inputs: hb.resource.PythonResult,
-    # genotype_mat_path: str,  # 'VPREB3_50K_window/SNVs.csv'
+    # genotype_mat_path: str,   # 'VPREB3_50K_window/SNVs.csv'
     # phenotype_vec_path: str,  # 'Bnaive/VPREB3_pseudocounts.csv'
     pv_path: str,  # 'Bnaive/VPREB3_pvals.csv'
 ):
@@ -409,13 +409,13 @@ def run_gene_association(
     # get phenptypes
     pheno = p_df.values
 
-    # covs
+    # covariates (intercept at present)
     covs = ones((genotypes.shape[0], 1))  # intercept of ones as covariates
 
-    # contexts
+    # contexts (no context-specific analysis now, just identity)
     contexts = eye(genotypes.shape[0])
 
-    # TODO: kinship
+    # TODO: kinship (not at this stage)
 
     cols = np.array(
         [
@@ -439,7 +439,6 @@ def run_gene_association(
     )
 
     pv_filename = AnyPath(output_path(pv_path))
-    # print(pv_filename)
     with pv_filename.open('w') as pf:
         pv_df.to_csv(pf)
 
@@ -454,7 +453,7 @@ def run_gene_association(
 
 def summarise_association_results(
     *pv_dfs: list[str],
-    pv_all_filename: str,
+    pv_all_filename_str: str,
 ):
     """Summarise results
 
@@ -469,7 +468,7 @@ def summarise_association_results(
         [pd.read_csv(AnyPath(output_path(pv_df)), index_col=0) for pv_df in pv_dfs]
     )
 
-    # run qvalues for all tests
+    # run qvalues for all tests (multiple testing correction)
     pv_all_df['Q_CRM_VC'] = qvalue(pv_all_df['P_CRM_VC'])
     pv_all_df['Q_CRM_burden_max'] = qvalue(pv_all_df['P_CRM_burden_max'])
     pv_all_df['Q_CRM_burden_sum'] = qvalue(pv_all_df['P_CRM_burden_sum'])
@@ -480,8 +479,8 @@ def summarise_association_results(
 
     print(pv_all_df.head)
 
-    pv_all_filename = AnyPath(pv_all_filename)
-    print(pv_all_filename)
+    pv_all_filename = AnyPath(pv_all_filename_str)
+    logging.info(f'Write summary results to {pv_all_filename}')
     with pv_all_filename.open('w') as pf:
         pv_all_df.to_csv(pf)
 
@@ -520,10 +519,7 @@ def extract_genes(gene_list, expression_tsv_path) -> list[str]:
     gene_ids = set(list(expression_df.columns.values)[1:])
     genes = set(gene_list).intersection(gene_ids)
 
-    print("Extracting genes")
-    print(gene_list)
-    print(gene_ids)
-    print(list(sorted(genes)))
+    logging.info(f'Total genes to run: {len(list(sorted(genes)))}')
 
     return list(sorted(genes))
 
@@ -538,7 +534,7 @@ def filter_lowly_expressed_genes(expression_df, min_pct=10):
     for each gene detected in each person).
     Returns:
     A filtered version of the input data frame, after removing columns (genes)
-    with 0 values in more than 10% of the rows (samples).
+    with 0 values in more than {min_pct}% of the rows (samples) - 10 by default.
     """
     # Remove genes with 0 expression in all samples
     expression_df = expression_df.loc[:, (expression_df != 0).any(axis=0)]
@@ -779,15 +775,15 @@ def crm_pipeline(
         # concatenating across chromosomes to have a single dict
         gene_dict.update(make_gene_loc_dict(geneloc_tsv_path))
 
-    print(gene_dict.keys)
-
     # isolate to the genes we are interested in
     if genes is not None:
         genes_of_interest = genes.split(' ')
     else:
         genes_of_interest = list(gene_dict.keys())
 
-    print(genes_of_interest)
+    # processing cell types (needs to be passed as a single script for click to like it)
+    celltype_list = celltypes.split(' ')
+    logging.info(f'Cell types to run: {celltype_list}')
 
     # Setup MAX concurrency by genes
     _dependent_jobs: list[hb.job.Job] = []
@@ -805,10 +801,9 @@ def crm_pipeline(
     # submit a job for each gene (export genotypes to plink)
     genotype_jobs = []
     for gene in genes_of_interest:
-        print(gene)
+        logging.info(f'Creating plink files for {gene}')
         # final path for this gene - generate first (check syntax)
         plink_file = output_path(f'plink_files/{gene}')
-        print(plink_file)
         gene_dict[gene]['plink'] = plink_file
 
         # if the plink output exists, do not re-generate it
@@ -816,7 +811,6 @@ def crm_pipeline(
             continue
 
         plink_job = batch.new_python_job(f'Create plink files for: {gene}')
-        # gene_dict[gene]['plink_job'] = plink_job
         manage_concurrency_for_job(plink_job)
         copy_common_env(plink_job)
         if filter_job:
@@ -834,8 +828,6 @@ def crm_pipeline(
         genotype_jobs.append(plink_job)
 
     # the next phase will be done for each cell type
-    celltype_list = celltypes.split(' ')
-    print(celltype_list)
     for celltype in celltype_list:
         expression_tsv_path = dataset_path(
             os.path.join(
@@ -846,24 +838,23 @@ def crm_pipeline(
         )
 
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
-        print(f"Genes to run: {genes_list}")
+        logging.info(f'Genes to run: {genes_list}')
         if len(genes_list) == 0:
-            print("No genes to run!")
+            logging.info('No genes to run, exit!')
             continue
         gene_run_jobs = []
         pv_files = []
         for gene in genes_list:
 
             pv_file = f'{celltype}/{gene}_pvals.csv'
-            print(pv_file)
             if to_path(pv_file).exists():
-                print("We already ran associations for this gene!")
+                print(f'We already ran associations for {gene}!')
                 continue
 
-            print(f"Preparing inputs for: {gene}")
+            print(f'Preparing inputs for: {gene}')
             print(gene_dict[gene]['plink'])
             if gene_dict[gene]['plink'] is None:
-                print("No plink files for this gene, exit!")
+                print('No plink files for this gene, exit!')
                 continue
             plink_output_prefix = gene_dict[gene]['plink']
             # prepare input files
@@ -886,7 +877,7 @@ def crm_pipeline(
                 kinship_file=None,
                 sample_mapping_file=sample_mapping_file_tsv,
             )
-            print(f"Running association for: {gene}")
+            print(f'Running association for: {gene}')
             # run association
             run_job = batch.new_python_job(f'Run association for: {gene}')
             manage_concurrency_for_job(run_job)
@@ -898,12 +889,9 @@ def crm_pipeline(
                 run_gene_association,
                 gene_name=gene,
                 prepared_inputs=input_results,
-                pv_path=pv_file
-                # genotype_mat_path=geno_path,
-                # phenotype_vec_path=pheno_path,
+                pv_path=pv_file,
             )
-            # save pv filename as gene attribute
-            #     gene_dict[gene]['pv_file'] = pv_file
+            # append pv filename to a list of str's
             pv_files.append(pv_file)
 
         print(pv_files)
@@ -916,7 +904,7 @@ def crm_pipeline(
         summarise_job.call(
             summarise_association_results,
             *pv_files,
-            pv_all_filename=str(pv_all_filename_csv),
+            pv_all_filename_str=str(pv_all_filename_csv),
         )
 
     # set jobs running
