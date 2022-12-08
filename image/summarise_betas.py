@@ -1,4 +1,4 @@
-# pylint: disable=missing-function-docstring,consider-using-enumerate,chained-comparison
+# pylint: disable=missing-function-docstring,consider-using-enumerate,chained-comparison,consider-using-dict-items
 
 import os
 from collections import defaultdict
