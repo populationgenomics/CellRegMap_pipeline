@@ -41,7 +41,7 @@ def main(file_with_filenames_1: str, file_with_filenames_2: str, output_folder: 
             temp['snp_id'] = df['variant'].values[i]
             temp['betaG'] = df['betaG'].values[i]
 
-        for key in temp.keys():  # i don't understand the lint suggestion here
+        for key in temp:  # i don't understand the lint suggestion here
             table[key].append(temp[key])
 
     for key in table.keys():

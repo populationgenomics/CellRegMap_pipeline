@@ -78,8 +78,8 @@ def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
         pi0 = []
         lam = sp.arange(0, 0.90, 0.01)
         counts = sp.array([(pv > i).sum() for i in sp.arange(0, 0.9, 0.01)])
-        for l in range(len(lam)):
-            pi0.append(counts[l] / (m * (1 - lam[l])))
+        for ll in range(len(lam)):
+            pi0.append(counts[ll] / (m * (1 - lam[ll])))
 
         pi0 = sp.array(pi0)
 
