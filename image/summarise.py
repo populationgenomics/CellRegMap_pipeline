@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring,import-outside-toplevel
 
 import os
 import logging
@@ -178,7 +178,7 @@ def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
     df.to_csv(myp)
 
     # apply multiple testing correction (q-value)
-    df['qv'] = qv_estimate(df['pv_Bonf'])
+    df['qv'] = qvalue(df['pv_Bonf'])
     # select only significant results (at given FDR threshold)
     df_sign = df[df['qv'] <= fdr_threshold]
     outfile = 'significant_results.csv'
