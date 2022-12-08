@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=missing-function-docstring,import-outside-toplevel,consider-using-enumerate,chained-comparison
+# pylint: disable=missing-function-docstring,import-outside-toplevel,consider-using-enumerate,chained-comparison,consider-using-dict-items
 
 import os
 import logging
