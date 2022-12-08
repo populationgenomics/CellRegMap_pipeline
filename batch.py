@@ -477,8 +477,6 @@ def summarise_association_results(
     pv_all_df['Q_CRM_omnibus_sum'] = qvalue(pv_all_df['P_CRM_omnibus_sum'])
     pv_all_df['Q_CRM_omnibus_comphet'] = qvalue(pv_all_df['P_CRM_omnibus_comphet'])
 
-    print(pv_all_df.head)
-
     pv_all_filename = AnyPath(pv_all_filename_str)
     logging.info(f'Write summary results to {pv_all_filename}')
     with pv_all_filename.open('w') as pf:
@@ -763,7 +761,6 @@ def crm_pipeline(
     else:
         chromosomes_list = chromosomes.split(' ')
     for chromosome in chromosomes_list:
-        print(chromosome)
         geneloc_tsv_path = dataset_path(
             os.path.join(
                 expression_files_prefix,
@@ -848,13 +845,12 @@ def crm_pipeline(
 
             pv_file = f'{celltype}/{gene}_pvals.csv'
             if to_path(pv_file).exists():
-                print(f'We already ran associations for {gene}!')
+                logging.info(f'We already ran associations for {gene}!')
                 continue
 
-            print(f'Preparing inputs for: {gene}')
-            print(gene_dict[gene]['plink'])
+            logging.info(f'Preparing inputs for: {gene}')
             if gene_dict[gene]['plink'] is None:
-                print('No plink files for this gene, exit!')
+                logging.info(f'No plink files for {gene}, exit!')
                 continue
             plink_output_prefix = gene_dict[gene]['plink']
             # prepare input files
@@ -877,7 +873,7 @@ def crm_pipeline(
                 kinship_file=None,
                 sample_mapping_file=sample_mapping_file_tsv,
             )
-            print(f'Running association for: {gene}')
+            logging.info(f'Running association for: {gene}')
             # run association
             run_job = batch.new_python_job(f'Run association for: {gene}')
             manage_concurrency_for_job(run_job)
@@ -894,7 +890,6 @@ def crm_pipeline(
             # append pv filename to a list of str's
             pv_files.append(pv_file)
 
-        print(pv_files)
         # combine all p-values across all chromosomes, genes (per cell type)
         summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
         copy_common_env(summarise_job)
