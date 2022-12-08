@@ -621,7 +621,7 @@ def qvalue(pv, m=None, verbose=False, lowmem=False, pi0=None):
     if len(pv) < 100 and pi0 is None:
         pi0 = 1.0
     elif pi0 is not None:
-        pi0 = pi0
+        pi0 = pi0  # pylint: disable=self-assigning-variable
     else:
         # evaluate pi0 for different lambdas
         pi0 = []
