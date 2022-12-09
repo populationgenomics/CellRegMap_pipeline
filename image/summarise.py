@@ -62,7 +62,7 @@ def main(file_with_filenames: str, fdr_threshold: float, output_folder: str):
 
     # apply multiple testing correction (q-value)
     _, qvals = qvalue(df['pv_Bonf'])
-    df['qv'] = str(qvals)
+    df['qv'] = list(qvals)
     # select only significant results (at given FDR threshold)
     df_sign = df[df['qv'] <= fdr_threshold]
     outfile = 'significant_results.csv'
