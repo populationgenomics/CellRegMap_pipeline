@@ -241,6 +241,7 @@ def prepare_input_files(
     to_path(genotype_file_bim).copy('temp.bim')  # bim
     to_path(genotype_file_fam).copy('temp.fam')  # fam
 
+    # the bim file records info on variants, check that it is not empty
     with open('temp.bim') as f:
         for line in f.readlines():
             if not line.strip():
