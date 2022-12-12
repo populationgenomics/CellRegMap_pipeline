@@ -217,6 +217,12 @@ def prepare_input_files(
     genotype matrix
     phenotype vector
     """
+
+    # check that variants exist for this gene, before importing
+    bim_file = to_path(genotype_file_bim)
+    if bim_file.stat().st_size == 0 or (not bim_file.exists()):
+        return None
+
     from pandas_plink import read_plink1_bin
 
     expression_filename = AnyPath(
@@ -238,8 +244,9 @@ def prepare_input_files(
 
     # read in genotype file (plink format)
     to_path(genotype_file_bed).copy('temp.bed')  # bed
-    to_path(genotype_file_bim).copy('temp.bim')  # bim
+    bim_file.copy('temp.bim')  # bim
     to_path(genotype_file_fam).copy('temp.fam')  # fam
+
     geno = read_plink1_bin('temp.bed')
 
     if kinship_file is not None:
@@ -398,8 +405,10 @@ def run_gene_association(
     table with p-values
     """
 
+    # if the previous method depdency returned None, we will fail to
+    # unpack dataframes from it
     if prepared_inputs is None:
-        return None
+        return prepared_inputs
 
     from numpy import eye, ones
 
@@ -471,7 +480,7 @@ def summarise_association_results(
     from multipy.fdr import qvalue
 
     pv_all_df = pd.concat(
-        [pd.read_csv(AnyPath(output_path(pv_df)), index_col=0) for pv_df in pv_dfs]
+        [pd.read_csv(to_path(pv_df), index_col=0) for pv_df in pv_dfs if to_path(pv_df).exists()]
     )
 
     # run qvalues for all tests (multiple testing correction)
@@ -736,9 +745,13 @@ def crm_pipeline(
         pv_files = []
         for gene in genes_list:
 
-            pv_file = f'{celltype}/{gene}_pvals.csv'
+            # wrapped this with output_path
+            pv_file = output_path(f'{celltype}/{gene}_pvals.csv')
             if to_path(pv_file).exists():
                 logging.info(f'We already ran associations for {gene}!')
+                # if we already ran this we still want the CSV appended to the list?
+                # append pv filename to a list of str's
+                pv_files.append(pv_file)
                 continue
 
             logging.info(f'Preparing inputs for: {gene}')
@@ -780,8 +793,6 @@ def crm_pipeline(
                 prepared_inputs=input_results,
                 pv_path=pv_file,
             )
-            # append pv filename to a list of str's
-            pv_files.append(pv_file)
 
         # combine all p-values across all chromosomes, genes (per cell type)
         summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
