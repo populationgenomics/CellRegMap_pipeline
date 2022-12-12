@@ -243,7 +243,7 @@ def prepare_input_files(
 
     with open("temp.bim") as f:
         for line in f.readlines():
-            if line.strip() == False:
+            if not line.strip():
                 logging.info(f'No variants found for {gene_name}')
                 return None
 
