@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pylint: disable=wrong-import-position,import-error
+# pylint: disable=import-error,import-outside-toplevel,missing-function-docstring,no-value-for-parameter,too-many-arguments,too-many-locals,wrong-import-order,wrong-import-position,consider-using-enumerate,chained-comparison
 
 """
 Hail Batch workflow for the rare-variant association analysis, including:
@@ -32,24 +32,19 @@ import pandas as pd
 import xarray as xr
 
 from limix.qc import quantile_gaussianize
-from numpy import eye, ones
-from pandas_plink import read_plink1_bin
 from scipy.stats import shapiro
-
-# qvalue imports
-import scipy as sp
-from scipy import interpolate
-
-# make_gene_loc_dict import
-from csv import DictReader
 
 import hail as hl
 import hailtop.batch as hb
 
+from cellregmap import (  # figure out how to import this from github
+    run_gene_set_association,
+    run_burden_association,
+    omnibus_set_association,
+)
+
 # use logging to print statements, display at info level
-logging.basicConfig(
-    format='%(levelname)s:%(message)s', level=logging.INFO
-)  # consider removing some print statements?
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 DEFAULT_JOINT_CALL_MT = dataset_path('mt/v7.mt')
 DEFAULT_ANNOTATION_HT = dataset_path(
@@ -59,7 +54,9 @@ DEFAULT_ANNOTATION_HT = dataset_path(
 
 CELLREGMAP_IMAGE = get_config()['workflow'][
     'driver_image'
-]  # australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:0.0.3
+]  # australia-southeast1-docker.pkg.dev/cpg-common/images/cellregmap:dev
+
+MULTIPY_IMAGE = 'australia-southeast1-docker.pkg.dev/cpg-common/images/multipy:0.16'
 
 # region SUBSET_VARIANTS
 
@@ -86,15 +83,15 @@ def filter_variants(
     # subset to relevant samples (samples we have scRNA-seq data for)
     mt = mt.filter_cols(hl.set(samples).contains(mt.s))
 
-    # densify (can this be done at the end?)
+    # densify
     mt = hl.experimental.densify(mt)
 
-    # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
+    # filter out low quality variants and consider biallelic SNPss only (no multi-allelic, no ref-only, no indels)
     mt = mt.filter_rows(  # check these filters!
         (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
         & (hl.len(mt.alleles) == 2)  # remove hom-ref
         & (mt.n_unsplit_alleles == 2)  # biallelic
-        & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNVs
+        & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNPs
     )
 
     # filter rare variants only (MAF < 5%)
@@ -104,9 +101,7 @@ def filter_variants(
         | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
     )
     mt.write(output_mt_path, overwrite=True)
-    logging.info(
-        f"Number of rare (freq<5%) and QC'd biallelic variants: {mt.count()[0]}"
-    )
+    logging.info(f'Number of rare (freq<5%) and QCed biallelic SNPs: {mt.count()[0]}')
 
 
 # endregion SUBSET_VARIANTS
@@ -118,7 +113,7 @@ def filter_variants(
 def get_promoter_variants(
     mt_path: str,  # ouput path from function above
     ht_path: str,
-    gene_details: dict[str, str],  # ouput of make_gene_loc_dict
+    gene_details: dict[str, str],  # output of make_gene_loc_dict
     window_size: int,
     plink_file: str,  # 'tob_wgs_rv/pseudobulk_rv_association/plink_files/GENE'
 ):
@@ -184,7 +179,7 @@ def get_promoter_variants(
     )
 
     # export this as a Hail table for downstream analysis
-    ht_path = output_path(f'{gene_name}_rare_promoter_summary.ht')
+    ht_path = output_path(f'summary_hts/{gene_name}_rare_promoter_summary.ht')
     ht = mt.rows()
     ht.write(ht_path, overwrite=True)
 
@@ -197,6 +192,306 @@ def get_promoter_variants(
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
 
+# region PREPARE_INPUT_FILES
+
+
+def prepare_input_files(
+    gene_name: str,
+    cell_type: str,
+    genotype_file_bed: str,
+    genotype_file_bim: str,
+    genotype_file_fam: str,
+    phenotype_file: str,
+    kinship_file: str,
+    sample_mapping_file: str,
+):
+    """Prepare association test input files
+
+    Input:
+    genotype: plink files
+    phenotype: gene expression
+
+    Output:
+    genotype matrix
+    phenotype vector
+    """
+    from pandas_plink import read_plink1_bin
+
+    expression_filename = AnyPath(
+        output_path(f'expression_files/{gene_name}_{cell_type}.csv')
+    )
+    genotype_filename = AnyPath(
+        output_path(f'genotype_files/{gene_name}_rare_regulatory.csv')
+    )
+    kinship_filename = AnyPath(output_path(f'{gene_name}_kinship_common_samples.csv'))
+
+    # read in phenotype file (tsv)
+    phenotype = pd.read_csv(phenotype_file, sep='\t', index_col=0)
+
+    phenotype = xr.DataArray(
+        phenotype.values,
+        dims=['sample', 'gene'],
+        coords={'sample': phenotype.index.values, 'gene': phenotype.columns.values},
+    )
+
+    # read in genotype file (plink format)
+    to_path(genotype_file_bed).copy('temp.bed')  # bed
+    to_path(genotype_file_bim).copy('temp.bim')  # bim
+    to_path(genotype_file_fam).copy('temp.fam')  # fam
+    geno = read_plink1_bin('temp.bed')
+
+    if kinship_file is not None:
+        # read in GRM (genotype relationship matrix; kinship matrix)
+        kinship = pd.read_csv(kinship_file, index_col=0)
+        kinship.index = kinship.index.astype('str')
+        assert all(
+            kinship.columns == kinship.index
+        )  # symmetric matrix, donors x donors
+        kinship = xr.DataArray(
+            kinship.values,
+            dims=['sample_0', 'sample_1'],
+            coords={'sample_0': kinship.columns, 'sample_1': kinship.index},
+        )
+        kinship = kinship.sortby('sample_0').sortby('sample_1')
+
+    # this file will map different IDs (and OneK1K ID to CPG ID)
+    sample_mapping = pd.read_csv(dataset_path(sample_mapping_file), sep='\t')
+
+    # ensure samples are the same and in the same order across input files
+    # samples with expression data
+    donors_exprs = set(phenotype.sample.values).intersection(
+        set(sample_mapping['OneK1K_ID'].unique())
+    )
+
+    logging.info(f'Number of unique donors with expression data: {len(donors_exprs)}')
+
+    # samples with genotype data
+    donors_geno = set(geno.sample.values).intersection(
+        set(sample_mapping['InternalID'].unique())
+    )
+    logging.info(f'Number of unique donors with genotype data: {len(donors_geno)}')
+
+    # samples with both (can this be done in one step?)
+    sample_mapping1 = sample_mapping.loc[sample_mapping['OneK1K_ID'].isin(donors_exprs)]
+    sample_mapping_both = sample_mapping1.loc[
+        sample_mapping1['InternalID'].isin(donors_geno)
+    ]
+    donors_e = sample_mapping_both['OneK1K_ID'].unique()
+    donors_g = sample_mapping_both['InternalID'].unique()
+    assert len(donors_e) == len(donors_g)
+
+    if kinship_file is not None:
+        # samples in kinship
+        donors_e_short = [re.sub('.*_', '', donor) for donor in donors_e]
+        donors_k = sorted(
+            set(list(kinship.sample_0.values)).intersection(donors_e_short)
+        )
+
+    logging.info(f'Number of unique common donors: {len(donors_g)}')
+
+    # subset files
+
+    # phenotype
+    phenotype = phenotype.sel(sample=donors_e)
+    # select gene
+    y = phenotype.sel(gene=gene_name)
+    y = quantile_gaussianize(y)
+    del phenotype  # delete to free up memory
+    # make data frame to save as csv
+    y_df = pd.DataFrame(
+        data=y.values.reshape(y.shape[0], 1), index=y.sample.values, columns=[gene_name]
+    )
+
+    # genotype
+    geno = geno.sel(sample=donors_g)
+    # make data frame to save as csv
+    data = geno.values
+    geno_df = pd.DataFrame(data, columns=geno.snp.values, index=geno.sample.values)
+    geno_df = geno_df.dropna(axis=1)
+    # delete large files to free up memory
+    del geno
+
+    if kinship_file is not None:
+        # kinship
+        kinship = kinship.sel(sample_0=donors_k, sample_1=donors_k)
+        assert all(kinship.sample_0 == donors_k)
+        assert all(kinship.sample_1 == donors_k)
+        # make data frame to save as csv
+        kinship_df = pd.DataFrame(
+            kinship.values, columns=kinship.sample_0, index=kinship.sample_1
+        )
+        del kinship  # delete kinship to free up memory
+
+    # save files
+    with expression_filename.open('w') as ef:
+        y_df.to_csv(ef, index=False)
+
+    with genotype_filename.open('w') as gf:
+        geno_df.to_csv(gf, index=False)
+
+    if kinship_file is not None:
+        with kinship_filename.open('w') as kf:
+            kinship_df.to_csv(kf, index=False)
+    else:
+        kinship_df = None
+
+    return y_df, geno_df, kinship_df
+
+
+# endregion PREPARE_INPUT_FILES
+
+
+# region GET_CRM_PVALUES
+
+
+def get_crm_pvs(pheno, covs, genotypes, contexts=None):
+    """
+    CellRegMap-RV tests
+    * score test (variance)
+    * burden test (max, sum, comphet)
+    * omnibus (Cauchy) test
+
+    Input:
+    input files
+
+    Output:
+    list of p-values from the three tests
+    """
+    pv_norm = shapiro(pheno).pvalue
+    pv0 = run_gene_set_association(y=pheno, G=genotypes, W=covs, E=contexts)[0]
+    pv1 = run_burden_association(
+        y=pheno, G=genotypes, W=covs, E=contexts, mask='mask.max'
+    )[0]
+    pv2 = run_burden_association(
+        y=pheno, G=genotypes, W=covs, E=contexts, mask='mask.sum'
+    )[0]
+    pv3 = run_burden_association(
+        y=pheno, G=genotypes, W=covs, E=contexts, mask='mask.comphet'
+    )[0]
+    pv4 = omnibus_set_association(np.array([pv0, pv1]))
+    pv5 = omnibus_set_association(np.array([pv0, pv2]))
+    pv6 = omnibus_set_association(np.array([pv0, pv3]))
+
+    return np.array([pv_norm, pv0, pv1, pv2, pv3, pv4, pv5, pv6])
+
+
+# endregion GET_CRM_PVALUES
+
+# region RUN_ASSOCIATION
+
+
+def run_gene_association(
+    gene_name: str,  # 'VPREB3'
+    prepared_inputs: hb.resource.PythonResult,
+    pv_path: str,  # 'Bnaive/VPREB3_pvals.csv'
+):
+    """Run gene-set association test
+
+    Input:
+    input files  (genotype, phenotype)
+    * already in matrix / vector form
+    * only matching samples, correct irder
+
+    Output:
+    table with p-values
+    """
+    from numpy import eye, ones
+
+    # read the 3 dataframes generated by the previous job
+    p_df, g_df, _ = prepared_inputs
+
+    # because the current matrix is counting the copies of the reference allele
+    # while we are interested in the alternative allele, flip the genotypes
+    genotypes = 2 - g_df
+
+    # get phenptypes
+    pheno = p_df.values
+
+    # covariates (intercept at present)
+    covs = ones((genotypes.shape[0], 1))  # intercept of ones as covariates
+
+    # contexts (no context-specific analysis now, just identity)
+    contexts = eye(genotypes.shape[0])
+
+    # TODO: kinship (not at this stage)
+
+    cols = np.array(
+        [
+            'P_shapiro',
+            'P_CRM_VC',
+            'P_CRM_burden_max',
+            'P_CRM_burden_sum',
+            'P_CRM_burden_comphet',
+            'P_CRM_omnibus_max',
+            'P_CRM_omnibus_sum',
+            'P_CRM_omnibus_comphet',
+        ]
+    )
+
+    # create p-values data frame
+    pvalues = get_crm_pvs(pheno, covs, genotypes, contexts)
+    pv_df = pd.DataFrame(
+        data=pvalues.reshape(pvalues.shape[0], 1).T,
+        columns=cols,
+        index=[gene_name],
+    )
+
+    pv_filename = AnyPath(output_path(pv_path))
+    with pv_filename.open('w') as pf:
+        pv_df.to_csv(pf)
+
+    return str(pv_filename)
+
+
+# endregion RUN_ASSOCIATION
+
+
+# region AGGREGATE_RESULTS
+
+
+def summarise_association_results(
+    *pv_dfs: list[str],
+    pv_all_filename_str: str,
+):
+    """Summarise results
+
+    Input:
+    p-values from all association tests
+
+    Ouput:
+    one csv table per cell type,
+    combining results across all genes in a single file
+    """
+    from multipy.fdr import qvalue
+
+    pv_all_df = pd.concat(
+        [pd.read_csv(AnyPath(output_path(pv_df)), index_col=0) for pv_df in pv_dfs]
+    )
+
+    # run qvalues for all tests (multiple testing correction)
+    _, qvals = qvalue(pv_all_df['P_CRM_VC'])
+    pv_all_df['Q_CRM_VC'] = list(qvals)
+    _, qvals = qvalue(pv_all_df['P_CRM_burden_max'])
+    pv_all_df['Q_CRM_burden_max'] = list(qvals)
+    _, qvals = qvalue(pv_all_df['P_CRM_burden_sum'])
+    pv_all_df['Q_CRM_burden_sum'] = list(qvals)
+    _, qvals = qvalue(pv_all_df['P_CRM_burden_comphet'])
+    pv_all_df['Q_CRM_burden_comphet'] = list(qvals)
+    _, qvals = qvalue(pv_all_df['P_CRM_omnibus_max'])
+    pv_all_df['Q_CRM_omnibus_max'] = list(qvals)
+    _, qvals = qvalue(pv_all_df['P_CRM_omnibus_sum'])
+    pv_all_df['Q_CRM_omnibus_sum'] = list(qvals)
+    _, qvals = qvalue(pv_all_df['P_CRM_omnibus_comphet'])
+    pv_all_df['Q_CRM_omnibus_comphet'] = list(qvals)
+
+    pv_all_filename = AnyPath(pv_all_filename_str)
+    logging.info(f'Write summary results to {pv_all_filename}')
+    with pv_all_filename.open('w') as pf:
+        pv_all_df.to_csv(pf)
+
+
+# endregion AGGREGATE_RESULTS
+
 # region MISCELLANEOUS
 
 
@@ -205,6 +500,8 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     Turn gene information into a dictionary
     to avoid opening this file for every gene
     """
+    from csv import DictReader
+
     gene_dict = {}
 
     with open(to_path(file)) as handle:
@@ -216,16 +513,66 @@ def make_gene_loc_dict(file) -> dict[str, dict]:
     return gene_dict
 
 
-def remove_sc_outliers(df, outliers=['966_967', '88_88']):
+# can probably be merged with below
+def extract_genes(gene_list, expression_tsv_path) -> list[str]:
+    """
+    Takes a list of all genes and subsets to only those
+    present in the expression file of interest
+    """
+    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep='\t')
+    expression_df = filter_lowly_expressed_genes(expression_df)
+    gene_ids = set(list(expression_df.columns.values)[1:])
+    genes = set(gene_list).intersection(gene_ids)
+
+    logging.info(f'Total genes to run: {len(list(sorted(genes)))}')
+
+    return list(sorted(genes))
+
+
+# copied from https://github.com/populationgenomics/tob-wgs/blob/main/scripts/eqtl_hail_batch/launch_eqtl_spearman.py
+# generalised to specify min pct samples as input
+def filter_lowly_expressed_genes(expression_df, min_pct=10):
+    """Remove genes with low expression in all samples
+    Input:
+    expression_df: a data frame with samples as rows and genes as columns,
+    containing normalised expression values (i.e., the average number of molecules
+    for each gene detected in each person).
+    Returns:
+    A filtered version of the input data frame, after removing columns (genes)
+    with 0 values in more than {min_pct}% of the rows (samples) - 10 by default.
+    """
+    # Remove genes with 0 expression in all samples
+    expression_df = expression_df.loc[:, (expression_df != 0).any(axis=0)]
+    genes_not_equal_zero = expression_df.iloc[:, 1:].values != 0
+    n_expr_over_zero = pd.DataFrame(genes_not_equal_zero.sum(axis=0))
+    percent_expr_over_zero = (n_expr_over_zero / len(expression_df.index)) * 100
+    percent_expr_over_zero.index = expression_df.columns[1:]
+
+    # Filter genes with less than 10 percent individuals with non-zero expression
+    atleastNpercent = percent_expr_over_zero[(percent_expr_over_zero > min_pct)[0]]
+    sample_ids = expression_df['sampleid']
+    expression_df = expression_df[atleastNpercent.index]
+    expression_df.insert(loc=0, column='sampleid', value=sample_ids)
+
+    return expression_df
+
+
+def remove_sc_outliers(df, outliers=None):
     """
     Remove outlier samples, as identified by single-cell analysis
     """
+    if outliers is None:
+        outliers = ['966_967', '88_88']
+    else:
+        outliers = outliers.extend(['966_967', '88_88'])
     df = df[-df['OneK1K_ID'].isin(outliers)]
 
     return df
 
 
 # endregion MISCELLANEOUS
+
+config = get_config()
 
 
 @click.command()
@@ -290,7 +637,7 @@ def crm_pipeline(
         )
 
     else:
-        logging.info('File already exist no need to filter')
+        logging.info('File already exists no need to filter')
         filter_job = None
 
     # grab all relevant genes across all chromosomes
@@ -319,6 +666,10 @@ def crm_pipeline(
     else:
         genes_of_interest = list(gene_dict.keys())
 
+    # processing cell types (needs to be passed as a single script for click to like it)
+    celltype_list = celltypes.split(' ')
+    logging.info(f'Cell types to run: {celltype_list}')
+
     # Setup MAX concurrency by genes
     _dependent_jobs: list[hb.job.Job] = []
 
@@ -332,8 +683,9 @@ def crm_pipeline(
 
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
+    genotype_jobs = []
     for gene in genes_of_interest:
-
+        logging.info(f'Creating plink files for {gene}')
         # final path for this gene - generate first (check syntax)
         plink_file = output_path(f'plink_files/{gene}')
         gene_dict[gene]['plink'] = plink_file
@@ -357,10 +709,90 @@ def crm_pipeline(
             window_size=window_size,
             plink_file=plink_file,
         )
+        genotype_jobs.append(plink_job)
+
+    # the next phase will be done for each cell type
+    for celltype in celltype_list:
+        expression_tsv_path = dataset_path(
+            os.path.join(
+                expression_files_prefix,
+                'expression_files',
+                f'{celltype}_expression.tsv',
+            )
+        )
+
+        genes_list = extract_genes(genes_of_interest, expression_tsv_path)
+        logging.info(f'Genes to run: {genes_list}')
+        if len(genes_list) == 0:
+            logging.info('No genes to run, exit!')
+            continue
+        gene_run_jobs = []
+        pv_files = []
+        for gene in genes_list:
+
+            pv_file = f'{celltype}/{gene}_pvals.csv'
+            if to_path(pv_file).exists():
+                logging.info(f'We already ran associations for {gene}!')
+                continue
+
+            logging.info(f'Preparing inputs for: {gene}')
+            if gene_dict[gene]['plink'] is None:
+                logging.info(f'No plink files for {gene}, exit!')
+                continue
+            plink_output_prefix = gene_dict[gene]['plink']
+            # prepare input files
+            prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
+            manage_concurrency_for_job(prepare_input_job)
+            copy_common_env(prepare_input_job)
+            prepare_input_job.depends_on(*genotype_jobs)
+            prepare_input_job.image(CELLREGMAP_IMAGE)
+            # the python_job.call only returns one object
+            # the object is a file containing y_df, geno_df, kinship_df
+            # all pickled into a file
+            input_results = prepare_input_job.call(
+                prepare_input_files,
+                gene_name=gene,
+                cell_type=celltype,
+                genotype_file_bed=plink_output_prefix + '.bed',
+                genotype_file_bim=plink_output_prefix + '.bim',
+                genotype_file_fam=plink_output_prefix + '.fam',
+                phenotype_file=expression_tsv_path,
+                kinship_file=None,  # change this to work when this file is needed
+                sample_mapping_file=sample_mapping_file_tsv,
+            )
+            logging.info(f'Running association for: {gene}')
+            # run association
+            run_job = batch.new_python_job(f'Run association for: {gene}')
+            manage_concurrency_for_job(run_job)
+            copy_common_env(run_job)
+            run_job.depends_on(prepare_input_job)
+            run_job.image(CELLREGMAP_IMAGE)
+            gene_run_jobs.append(run_job)
+            run_job.call(
+                run_gene_association,
+                gene_name=gene,
+                prepared_inputs=input_results,
+                pv_path=pv_file,
+            )
+            # append pv filename to a list of str's
+            pv_files.append(pv_file)
+
+        # combine all p-values across all chromosomes, genes (per cell type)
+        summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
+        copy_common_env(summarise_job)
+        summarise_job.depends_on(*gene_run_jobs)
+        # summarise_job.image(CELLREGMAP_IMAGE)
+        summarise_job.image(MULTIPY_IMAGE)
+        pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv'))
+        summarise_job.call(
+            summarise_association_results,
+            *pv_files,
+            pv_all_filename_str=str(pv_all_filename_csv),
+        )
 
     # set jobs running
     batch.run(wait=False)
 
 
 if __name__ == '__main__':
-    crm_pipeline()  # pylint: disable=no-value-for-parameter
+    crm_pipeline()

@@ -11,18 +11,23 @@ For simulations, the pipeline also needs to run alternative methods (including t
 
 For real data, the pipeline also needs to use Hail Query to query genetic variants and annotations stored as Hail Matrix Tables and Hail Tables.
 
-### Structure of repo:
+### Structure of repo
+
 * WDL workflow
+
   * this does not contain input files generation (does not require Hail Query) and takes pre-generated input files
   * should work for both simulated and real data (see below)
   * contains both python and R scripts as tasks (and respective Docker images)
   * returns p-values and other summary statistics for all results (original CellRegMap, new CellRegMap, R-implemented tests)
+
 * Hail Batch workflow
   * single-script end-to-end (Python) workflow from data collection / input file generation (using Hail Query) to association testing to returning summary stats (for new CellRegMap specifically, to run internally)
 * (Python) scripts to generate both real and simulated input files to feed to the WDL workflow
 
 ## Hail Batch workflow
+
 Single [python script](batch.py), key steps (implemented as distinct functions):
+
 * preselection of full WGS hail matrix table to includ only biallelic (n alleles=2) rare (freq<5%) SNVs
 * given one gene and the prefiltered WGS hail matrix table, selects relevant variants and export as plink files
 * plink files are read in and turned into genotype input files, other input files (phenotype, kinship) are processed
@@ -31,7 +36,8 @@ Single [python script](batch.py), key steps (implemented as distinct functions):
 * resulting p-values are aggregated across jobs and saved
 
 To run:
-```
+
+```shell
 analysis-runner \
     --dataset tob-wgs \
     --access-level standard \
@@ -46,6 +52,13 @@ analysis-runner \
       --celltypes B_intermediate
 ```
 
+## Next steps
+
+* include indels
+* include multi-allelic SNPs
+* expand to less expressed genes (min of 10% samples now)
+
+
 ## CellRegMap pipeline v1
 
 A WDL workflow to facilitate running [CellRegMap](https://github.com/limix/CellRegMap).
@@ -55,7 +68,8 @@ A container to run the workflow is available [on Dockerhub](https://hub.docker.c
 ## To run on a High Performance Computing (HPC) system
 
 ### PBS (Portable Batch System, qsub)
-```
+
+```shell
 java \
     -Dconfig.file=qsub.conf \
     -jar /cromwell/path/cromwell-56.jar run \
@@ -66,7 +80,8 @@ java \
 <!-- ### TO DO: SLURM (sbatch) / LFS (platform Load Sharing Facility, bsub) -->
 
 ## To run on a the Google Cloud Platform (GCP) using analysis-runner
-```
+
+```shell
 analysis-runner cromwell submit  \
     --dataset "tob-wgs" \
     --description "Run CellRegMap WDL pipeline" \

@@ -1,9 +1,12 @@
+# pylint: disable=missing-function-docstring,consider-using-enumerate,chained-comparison,consider-using-dict-items
+
 import os
+from collections import defaultdict
+from typing import Any, Dict, List
+
 import click
 import pandas as pd
 import numpy as np
-from typing import Dict, List
-from collections import defaultdict
 
 
 @click.command()
@@ -17,7 +20,7 @@ def main(file_with_filenames_1: str, file_with_filenames_2: str, output_folder: 
     # betaG
     # summarise persistent effect sizes
     # each row here is a SNP-gene pair
-    table: Dict[str, List[any]] = defaultdict(list)
+    table: Dict[str, List[Any]] = defaultdict(list)
 
     with open(file_with_filenames_1, encoding='utf-8') as f:
         list_of_files1 = [line.strip() for line in f.readlines() if line.strip()]
@@ -38,7 +41,7 @@ def main(file_with_filenames_1: str, file_with_filenames_2: str, output_folder: 
             temp['snp_id'] = df['variant'].values[i]
             temp['betaG'] = df['betaG'].values[i]
 
-        for key in temp.keys():
+        for key in temp:  # i don't understand the lint suggestion here
             table[key].append(temp[key])
 
     for key in table.keys():

@@ -1,15 +1,19 @@
-import click
+# pylint: disable=missing-function-docstring,no-value-for-parameter,too-many-locals
+
 import os
 import sys
 import logging
+
+import click
 import numpy as np
-import scanpy as sc
 import pandas as pd
+import scanpy as sc
 import xarray as xr
-from numpy import ones
-from pandas_plink import read_plink1_bin
-from numpy.linalg import cholesky
+
 from limix.qc import quantile_gaussianize
+from numpy import ones
+from numpy.linalg import cholesky
+from pandas_plink import read_plink1_bin
 
 from cellregmap import estimate_betas
 
@@ -18,7 +22,6 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 
 @click.command()
-@click.option('--chrom', required=True)
 @click.option('--gene-name', required=True)
 @click.option('--sample-mapping-file', required=True)
 @click.option('--genotype-file', required=True)
@@ -32,7 +35,6 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 @click.option('--n-contexts', required=False, type=int)
 @click.option('--maf-file', required=False)
 def main(
-    chrom: str,
     gene_name: str,
     sample_mapping_file: str,
     genotype_file: str,
@@ -45,9 +47,7 @@ def main(
     n_contexts: int = 10,
 ):
 
-    ######################################
-    ###### sample mapping file (SMF) #####
-    ######################################
+    # region SAMPLE_MAPPING_FILE
 
     ## this file will map cells to donors
     sample_mapping = pd.read_csv(
@@ -59,14 +59,14 @@ def main(
         },
         index_col=0,
     )
-    ## extract unique individuals
+    # extract unique individuals
     donors0 = sample_mapping['genotype_individual_id'].unique()
     donors0.sort()
-    logging.info('Number of unique donors: {}'.format(len(donors0)))
+    logging.info(f'Number of unique donors: {len(donors0)}')
 
-    ######################################################
-    ###### check if gene output file already exists ######
-    ######################################################
+    # endregion SAMPLE_MAPPING_FILE
+
+    # check if gene output file already exists
 
     outfilename = f'{output_folder}{gene_name}'
     outfilename_betaGxC = outfilename + '_betaGxC.csv'
@@ -75,9 +75,7 @@ def main(
         logging.info('File already exists, exiting')
         sys.exit()
 
-    ######################################
-    ############ kinship file ############
-    ######################################
+    # region KINSHIP_FILE
 
     ## read in GRM (genotype relationship matrix; kinship matrix)
     K = pd.read_csv(kinship_file, index_col=0)
@@ -91,48 +89,44 @@ def main(
     )
     K = K.sortby('sample_0').sortby('sample_1')
     donors = sorted(set(list(K.sample_0.values)).intersection(donors0))
-    logging.info('Number of donors after kinship intersection: {}'.format(len(donors)))
+    logging.info(f'Number of donors after kinship intersection: {len(donors)}')
 
-    ## subset to relevant donors
+    # subset to relevant donors
     K = K.sel(sample_0=donors, sample_1=donors)
     assert all(K.sample_0 == donors)
     assert all(K.sample_1 == donors)
 
-    ## and decompose such as K = hK @ hK.T (using Cholesky decomposition)
+    # and decompose such as K = hK @ hK.T (using Cholesky decomposition)
     hK = cholesky(K.values)
     hK = xr.DataArray(hK, dims=['sample', 'col'], coords={'sample': K.sample_0.values})
     assert all(hK.sample.values == K.sample_0.values)
 
     del K  # delete to free up memory
     logging.info(
-        'Sample mapping number of rows BEFORE intersection: {}'.format(
-            sample_mapping.shape[0]
-        )
+        f'Sample mapping number of rows BEFORE intersection: {sample_mapping.shape[0]}'
     )
-    ## subsample sample mapping file to donors in the kinship matrix
+    # subsample sample mapping file to donors in the kinship matrix
     sample_mapping = sample_mapping[
         sample_mapping['genotype_individual_id'].isin(donors)
     ]
     logging.info(
-        'Sample mapping number of rows AFTER intersection: {}'.format(
-            sample_mapping.shape[0]
-        )
+        f'Sample mapping number of rows AFTER intersection: {sample_mapping.shape[0]}'
     )
 
-    ## use sel from xarray to expand hK (using the sample mapping file)
+    # use sel from xarray to expand hK (using the sample mapping file)
     hK_expanded = hK.sel(sample=sample_mapping['genotype_individual_id'].values)
     assert all(
         hK_expanded.sample.values == sample_mapping['genotype_individual_id'].values
     )
 
-    ######################################
-    ############ genotype file ###########
-    ######################################
+    # region GENOTYPE_FILE
 
-    ## read in genotype file (plink format)
+    # read in genotype file (plink format)
     G = read_plink1_bin(genotype_file)
 
-    ## select relavant SNPs based on feature variant filter file
+    # select relevant SNPs based on feature variant filter file
+    # these are variants that were identified to have GxC effects
+    # we want to estimate single-cell effect sizes (betas) for
     fvf = pd.read_csv(beta_feature_variant_file, index_col=0)
     leads = fvf[fvf['gene'] == gene_name]['snp_id'].unique()
     G_sel = G[:, G['snp'].isin(leads)]
@@ -144,9 +138,9 @@ def main(
     del G
     del G_sel
 
-    ######################################
-    ############ context file ############
-    ######################################
+    # endregion GENOTYPE_FILE
+
+    # region CONTEXT_FILE
 
     # cells by contexts
     C = pd.read_pickle(context_file)
@@ -158,9 +152,9 @@ def main(
     C = C.sel(cell=sample_mapping['phenotype_sample_id'].values)
     assert all(C.cell.values == sample_mapping['phenotype_sample_id'].values)
 
-    ######################################
-    ########### phenotype file ###########
-    ######################################
+    # endregion CONTEXT_FILE
+
+    # region PHENOTYPE_FILE
 
     # open anndata
     adata = sc.read(phenotype_file)
@@ -182,9 +176,9 @@ def main(
     del mat
     del mat_df
 
-    ######################################
-    ########### Prepare model ############
-    ######################################
+    # endregion PHENOTYPE_FILE
+
+    # region PREPARE_MODEL
 
     n_cells = phenotype.shape[1]
     W = ones((n_cells, 1))  # just intercept as covariates
@@ -212,11 +206,11 @@ def main(
         for snp in snps:
             mafs = np.append(mafs, df_maf[df_maf['SNP'] == snp]['MAF'].values)
 
-    ##################################
-    ########### Run model ############
-    ##################################
+    # endregion PREPARE_MODEL
 
-    logging.info('Running for gene {}'.format(gene_name))
+    # region RUN_MODEL
+
+    logging.info(f'Running for gene {gene_name}')
 
     betas = estimate_betas(
         y=y, W=W, E=C.values[:, 0:n_contexts], G=GG, maf=mafs, hK=hK_expanded
@@ -236,6 +230,8 @@ def main(
 
     beta_GxC_df = pd.DataFrame(data=beta_GxC, columns=snps, index=cells)
     beta_GxC_df.to_csv(outfilename_betaGxC)
+
+    # endregion RUN_MODEL
 
 
 if __name__ == '__main__':
