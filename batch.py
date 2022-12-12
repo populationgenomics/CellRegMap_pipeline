@@ -179,7 +179,9 @@ def get_promoter_variants(
     )
 
     # export this as a Hail table for downstream analysis
-    ht_path = output_path(f'summary_hts/{gene_name}_rare_promoter_summary.ht', 'analysis')
+    ht_path = output_path(
+        f'summary_hts/{gene_name}_rare_promoter_summary.ht', 'analysis'
+    )
     ht = mt.rows()
     ht.write(ht_path, overwrite=True)
 
@@ -783,7 +785,9 @@ def crm_pipeline(
         summarise_job.depends_on(*gene_run_jobs)
         # summarise_job.image(CELLREGMAP_IMAGE)
         summarise_job.image(MULTIPY_IMAGE)
-        pv_all_filename_csv = str(output_path(f'{celltype}_all_pvalues.csv', 'analysis'))
+        pv_all_filename_csv = str(
+            output_path(f'{celltype}_all_pvalues.csv', 'analysis')
+        )
         summarise_job.call(
             summarise_association_results,
             *pv_files,
