@@ -707,7 +707,7 @@ def crm_pipeline(
             plink_job.depends_on(filter_job)
 
         plink_job.image(CELLREGMAP_IMAGE)
-        empty_plink = plink_job.call(
+        plink_job.call(
             get_promoter_variants,
             mt_path=output_mt_path,
             ht_path=anno_ht_path,
