@@ -191,11 +191,6 @@ def get_promoter_variants(
 
     export_plink(mt, plink_file, ind_id=mt.s)
 
-    # # add boolean flagging empty plink files
-    # if mt.count()[0] == 0:
-    #     return True
-    # return False
-
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
 
@@ -715,7 +710,7 @@ def crm_pipeline(
             plink_job.depends_on(filter_job)
 
         plink_job.image(CELLREGMAP_IMAGE)
-        empty_plink = plink_job.call(
+        plink_job.call(
             get_promoter_variants,
             mt_path=output_mt_path,
             ht_path=anno_ht_path,
