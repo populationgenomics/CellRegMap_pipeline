@@ -191,10 +191,10 @@ def get_promoter_variants(
 
     export_plink(mt, plink_file, ind_id=mt.s)
 
-    # add boolean flagging empty plink files
-    if mt.count()[0] == 0:
-        return True
-    return False
+    # # add boolean flagging empty plink files
+    # if mt.count()[0] == 0:
+    #     return True
+    # return False
 
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
@@ -245,6 +245,13 @@ def prepare_input_files(
     to_path(genotype_file_bed).copy('temp.bed')  # bed
     to_path(genotype_file_bim).copy('temp.bim')  # bim
     to_path(genotype_file_fam).copy('temp.fam')  # fam
+
+    with open("temp.bim") as f:
+        for line in f.readlines():
+            if line.strip() == False:
+                logging.info(f'No variants found for {gene_name}')
+                return None
+
     geno = read_plink1_bin('temp.bed')
 
     if kinship_file is not None:
@@ -716,12 +723,7 @@ def crm_pipeline(
             window_size=window_size,
             plink_file=plink_file,
         )
-        # if plink files are empty, remove gene from list
-        # and remove job from future dependencies list
-        if empty_plink:
-            genes_of_interest.remove(gene)
-        else:
-            genotype_jobs.append(plink_job)
+        genotype_jobs.append(plink_job)
 
     # the next phase will be done for each cell type
     for celltype in celltype_list:
