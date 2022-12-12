@@ -194,8 +194,7 @@ def get_promoter_variants(
     # add boolean flagging empty plink files
     if mt.count()[0] == 0:
         return True
-    else:
-        return False
+    return False
 
 
 # endregion GET_GENE_SPECIFIC_VARIANTS
