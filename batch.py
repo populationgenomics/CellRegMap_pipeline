@@ -241,7 +241,7 @@ def prepare_input_files(
     to_path(genotype_file_bim).copy('temp.bim')  # bim
     to_path(genotype_file_fam).copy('temp.fam')  # fam
 
-    with open("temp.bim") as f:
+    with open('temp.bim') as f:
         for line in f.readlines():
             if not line.strip():
                 logging.info(f'No variants found for {gene_name}')
