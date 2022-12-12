@@ -89,7 +89,7 @@ def filter_variants(
     # filter out low quality variants and consider biallelic SNPss only (no multi-allelic, no ref-only, no indels)
     mt = mt.filter_rows(  # check these filters!
         (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
-        & (hl.len(mt.alleles) == 2)    # remove hom-ref
+        & (hl.len(mt.alleles) == 2)  # remove hom-ref
         & (mt.n_unsplit_alleles == 2)  # biallelic
         & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNPs
     )
@@ -101,9 +101,7 @@ def filter_variants(
         | (mt.variant_qc.AF[1] > 0.95) & (mt.variant_qc.AF[1] < 1)
     )
     mt.write(output_mt_path, overwrite=True)
-    logging.info(
-        f'Number of rare (freq<5%) and QCed biallelic SNPs: {mt.count()[0]}'
-    )
+    logging.info(f'Number of rare (freq<5%) and QCed biallelic SNPs: {mt.count()[0]}')
 
 
 # endregion SUBSET_VARIANTS
