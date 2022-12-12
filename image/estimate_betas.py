@@ -124,7 +124,9 @@ def main(
     # read in genotype file (plink format)
     G = read_plink1_bin(genotype_file)
 
-    ## select relavant SNPs based on feature variant filter file
+    # select relevant SNPs based on feature variant filter file
+    # these are variants that were identified to have GxC effects
+    # we want to estimate single-cell effect sizes (betas) for
     fvf = pd.read_csv(beta_feature_variant_file, index_col=0)
     leads = fvf[fvf['gene'] == gene_name]['snp_id'].unique()
     G_sel = G[:, G['snp'].isin(leads)]

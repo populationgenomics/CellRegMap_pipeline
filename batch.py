@@ -86,12 +86,12 @@ def filter_variants(
     # densify
     mt = hl.experimental.densify(mt)
 
-    # filter out low quality variants and consider biallelic variants only (no multi-allelic, no ref-only)
+    # filter out low quality variants and consider biallelic SNPss only (no multi-allelic, no ref-only, no indels)
     mt = mt.filter_rows(  # check these filters!
         (hl.len(hl.or_else(mt.filters, hl.empty_set(hl.tstr))) == 0)  # QC
-        & (hl.len(mt.alleles) == 2)  # remove hom-ref
+        & (hl.len(mt.alleles) == 2)    # remove hom-ref
         & (mt.n_unsplit_alleles == 2)  # biallelic
-        & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNVs
+        & (hl.is_snp(mt.alleles[0], mt.alleles[1]))  # SNPs
     )
 
     # filter rare variants only (MAF < 5%)
@@ -102,7 +102,7 @@ def filter_variants(
     )
     mt.write(output_mt_path, overwrite=True)
     logging.info(
-        f'Number of rare (freq<5%) and QCed biallelic variants: {mt.count()[0]}'
+        f'Number of rare (freq<5%) and QCed biallelic SNPs: {mt.count()[0]}'
     )
 
 
@@ -759,7 +759,7 @@ def crm_pipeline(
                 genotype_file_bim=plink_output_prefix + '.bim',
                 genotype_file_fam=plink_output_prefix + '.fam',
                 phenotype_file=expression_tsv_path,
-                kinship_file=None,
+                kinship_file=None,  # change this to work when this file is needed
                 sample_mapping_file=sample_mapping_file_tsv,
             )
             logging.info(f'Running association for: {gene}')
