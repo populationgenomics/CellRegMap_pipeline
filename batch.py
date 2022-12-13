@@ -16,7 +16,6 @@ import re
 import click
 import logging
 
-from cloudpathlib import AnyPath
 from cpg_utils import to_path
 from cpg_utils.hail_batch import (
     copy_common_env,
@@ -225,13 +224,13 @@ def prepare_input_files(
 
     from pandas_plink import read_plink1_bin
 
-    expression_filename = AnyPath(
+    expression_filename = to_path(
         output_path(f'expression_files/{gene_name}_{cell_type}.csv')
     )
-    genotype_filename = AnyPath(
+    genotype_filename = to_path(
         output_path(f'genotype_files/{gene_name}_rare_regulatory.csv')
     )
-    kinship_filename = AnyPath(output_path(f'{gene_name}_kinship_common_samples.csv'))
+    kinship_filename = to_path(output_path(f'{gene_name}_kinship_common_samples.csv'))
 
     # read in phenotype file (tsv)
     phenotype = pd.read_csv(phenotype_file, sep='\t', index_col=0)
@@ -451,7 +450,7 @@ def run_gene_association(
         index=[gene_name],
     )
 
-    pv_filename = AnyPath(output_path(pv_path))
+    pv_filename = to_path(output_path(pv_path))
     with pv_filename.open('w') as pf:
         pv_df.to_csv(pf)
 
@@ -465,7 +464,7 @@ def run_gene_association(
 
 
 def summarise_association_results(
-    *pv_dfs: list[str],
+    pv_dfs: list[str],
     pv_all_filename_str: str,
 ):
     """Summarise results
@@ -473,14 +472,21 @@ def summarise_association_results(
     Input:
     p-values from all association tests
 
-    Ouput:
+    Output:
     one csv table per cell type,
     combining results across all genes in a single file
     """
     from multipy.fdr import qvalue
 
+    existing_pv_files = [pv_df for pv_df in pv_dfs if to_path(pv_df).exists()]
+
+    if len(existing_pv_files) == 0:
+        raise Exception('No PV files, nothing to do')
+
+    logging.info(f'running on {len(existing_pv_files)} PV files')
+
     pv_all_df = pd.concat(
-        [pd.read_csv(to_path(pv_df), index_col=0) for pv_df in pv_dfs if to_path(pv_df).exists()]
+        [pd.read_csv(to_path(pv_df), index_col=0) for pv_df in existing_pv_files]
     )
 
     # run qvalues for all tests (multiple testing correction)
@@ -499,7 +505,7 @@ def summarise_association_results(
     _, qvals = qvalue(pv_all_df['P_CRM_omnibus_comphet'])
     pv_all_df['Q_CRM_omnibus_comphet'] = list(qvals)
 
-    pv_all_filename = AnyPath(pv_all_filename_str)
+    pv_all_filename = to_path(pv_all_filename_str)
     logging.info(f'Write summary results to {pv_all_filename}')
     with pv_all_filename.open('w') as pf:
         pv_all_df.to_csv(pf)
@@ -534,7 +540,7 @@ def extract_genes(gene_list, expression_tsv_path) -> list[str]:
     Takes a list of all genes and subsets to only those
     present in the expression file of interest
     """
-    expression_df = pd.read_csv(AnyPath(expression_tsv_path), sep='\t')
+    expression_df = pd.read_csv(to_path(expression_tsv_path), sep='\t')
     expression_df = filter_lowly_expressed_genes(expression_df)
     gene_ids = set(list(expression_df.columns.values)[1:])
     genes = set(gene_list).intersection(gene_ids)
@@ -741,17 +747,18 @@ def crm_pipeline(
         if len(genes_list) == 0:
             logging.info('No genes to run, exit!')
             continue
+
         gene_run_jobs = []
         pv_files = []
         for gene in genes_list:
 
             # wrapped this with output_path
             pv_file = output_path(f'{celltype}/{gene}_pvals.csv')
+
+            # always append the file name
+            pv_files.append(pv_file)
             if to_path(pv_file).exists():
                 logging.info(f'We already ran associations for {gene}!')
-                # if we already ran this we still want the CSV appended to the list?
-                # append pv filename to a list of str's
-                pv_files.append(pv_file)
                 continue
 
             logging.info(f'Preparing inputs for: {gene}')
