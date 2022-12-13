@@ -757,6 +757,8 @@ def crm_pipeline(
 
             # always append the file name
             pv_files.append(pv_file)
+
+            # check if running is required
             if to_path(pv_file).exists():
                 logging.info(f'We already ran associations for {gene}!')
                 continue
@@ -765,6 +767,7 @@ def crm_pipeline(
             if gene_dict[gene]['plink'] is None:
                 logging.info(f'No plink files for {gene}, exit!')
                 continue
+
             plink_output_prefix = gene_dict[gene]['plink']
             # prepare input files
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
