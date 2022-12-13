@@ -483,7 +483,10 @@ def summarise_association_results(
     if len(existing_pv_files) == 0:
         raise Exception('No PV files, nothing to do')
 
-    logging.info(f'running on {len(existing_pv_files)} PV files')
+    logging.info(
+        f"Running on {len(existing_pv_files)} PV files, "
+        f"{len(pv_dfs) - len(existing_pv_files)} files didn't exist"
+    )
 
     pv_all_df = pd.concat(
         [pd.read_csv(to_path(pv_df), index_col=0) for pv_df in existing_pv_files]
