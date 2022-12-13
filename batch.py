@@ -744,10 +744,7 @@ def crm_pipeline(
             # if the plink files does not exist, generate them
             if not to_path(f'{plink_file}.bim').exists():
 
-                # for each gene, extract relevant variants (in window + with some annotation)
-                if filter_job:
-                    plink_job.depends_on(filter_job)
-
+                # for each gene, extract relevant variants (in window + with some annotations
                 plink_job = batch.new_python_job(f'Create plink files for: {gene}')
                 manage_concurrency_for_job(plink_job)
                 copy_common_env(plink_job)
