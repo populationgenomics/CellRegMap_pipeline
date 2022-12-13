@@ -634,7 +634,7 @@ def crm_pipeline(
     chromosomes: str = 'all',
     genes: str | None = None,
     window_size: int = 50000,
-    max_gene_concurrency=50,
+    max_gene_concurrency=100,
 ):
 
     sb = hb.ServiceBackend(
