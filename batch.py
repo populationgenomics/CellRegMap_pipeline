@@ -745,8 +745,6 @@ def crm_pipeline(
             )
         )
 
-        print(f'expression_tsv_path: {expression_tsv_path}')
-
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
         logging.info(f'Genes to run: {genes_list}')
         if len(genes_list) == 0:
