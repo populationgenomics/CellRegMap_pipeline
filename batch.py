@@ -219,7 +219,9 @@ def prepare_input_files(
 
     # check that variants exist for this gene, before importing
     bim_file = to_path(genotype_file_bim)
+    print(bim_file)
     if (not bim_file.exists()) or bim_file.stat().st_size == 0:
+        print(f'{bim_file} does not exist')
         return None
 
     from pandas_plink import read_plink1_bin
@@ -404,6 +406,8 @@ def run_gene_association(
     table with p-values
     """
 
+    print(prepared_inputs)
+
     # if the previous method depdency returned None, we will fail to
     # unpack dataframes from it
     if prepared_inputs is None:
@@ -481,6 +485,7 @@ def summarise_association_results(
     existing_pv_files = [pv_df for pv_df in pv_dfs if to_path(pv_df).exists()]
 
     if len(existing_pv_files) == 0:
+        print(f'tested: {pv_dfs}')
         raise Exception('No PV files, nothing to do')
 
     logging.info(
@@ -816,6 +821,8 @@ def crm_pipeline(
         pv_all_filename_csv = str(
             output_path(f'{celltype}_all_pvalues.csv', 'analysis')
         )
+        print('PV files:')
+        print(pv_files)
         summarise_job.call(
             summarise_association_results,
             pv_files,
