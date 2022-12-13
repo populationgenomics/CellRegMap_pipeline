@@ -243,10 +243,9 @@ def prepare_input_files(
 
     # the bim file records info on variants, check that it is not empty
     with open('temp.bim') as f:
-        for line in f.readlines():
-            if not line.strip():
-                logging.info(f'No variants found for {gene_name}')
-                return None
+        if not f.readline().strip():
+            logging.info(f'No variants found for {gene_name}')
+            return None
 
     geno = read_plink1_bin('temp.bed')
 
