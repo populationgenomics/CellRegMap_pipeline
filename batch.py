@@ -718,7 +718,7 @@ def crm_pipeline(
         )
 
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
-        logging.info(f'Genes to run: {genes_list}')
+        # logging.info(f'Genes to run: {genes_list}')
         if len(genes_list) == 0:
             logging.info('No genes to run, exit!')
             continue
@@ -739,10 +739,10 @@ def crm_pipeline(
 
             # genotypes
             # if they don't already exist, make plink files
-            plink_file = output_path(f'plink_files/{gene}')
+            plink_output_prefix = output_path(f'plink_files/{gene}')
 
             # if the plink files does not exist, generate them
-            if not to_path(f'{plink_file}.bim').exists():
+            if not to_path(f'{plink_output_prefix}.bim').exists():
 
                 # for each gene, extract relevant variants (in window + with some annotations
                 plink_job = batch.new_python_job(f'Create plink files for: {gene}')
@@ -758,18 +758,12 @@ def crm_pipeline(
                     ht_path=anno_ht_path,
                     gene_details=gene_dict[gene],
                     window_size=window_size,
-                    plink_file=plink_file,
+                    plink_file=plink_output_prefix,
                 )
 
             else:
                 plink_job = None
 
-            logging.info(f'Preparing inputs for: {gene}')
-            if gene_dict[gene]['plink'] is None:
-                logging.info(f'No plink files for {gene}, exit!')
-                continue
-
-            plink_output_prefix = plink_file
             # prepare input files
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             manage_concurrency_for_job(prepare_input_job)
