@@ -219,7 +219,7 @@ def prepare_input_files(
 
     # check that variants exist for this gene, before importing
     bim_file = to_path(genotype_file_bim)
-    if bim_file.stat().st_size == 0 or (not bim_file.exists()):
+    if (not bim_file.exists()) or bim_file.stat().st_size == 0:
         return None
 
     from pandas_plink import read_plink1_bin
