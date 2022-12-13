@@ -709,33 +709,33 @@ def crm_pipeline(
 
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
-    genotype_jobs = []
-    for gene in genes_of_interest:
-        logging.info(f'Creating plink files for {gene}')
-        # final path for this gene - generate first (check syntax)
-        plink_file = output_path(f'plink_files/{gene}')
-        gene_dict[gene]['plink'] = plink_file
+    # genotype_jobs = []
+    # for gene in genes_of_interest:
+        # logging.info(f'Creating plink files for {gene}')
+        # # final path for this gene - generate first (check syntax)
+        # plink_file = output_path(f'plink_files/{gene}')
+        # gene_dict[gene]['plink'] = plink_file
 
-        # if the plink output exists, do not re-generate it
-        if to_path(f'{plink_file}.bim').exists():
-            continue
+        # # if the plink output exists, do not re-generate it
+        # if to_path(f'{plink_file}.bim').exists():
+        #     continue
 
-        plink_job = batch.new_python_job(f'Create plink files for: {gene}')
-        manage_concurrency_for_job(plink_job)
-        copy_common_env(plink_job)
-        if filter_job:
-            plink_job.depends_on(filter_job)
+        # plink_job = batch.new_python_job(f'Create plink files for: {gene}')
+        # manage_concurrency_for_job(plink_job)
+        # copy_common_env(plink_job)
+        # if filter_job:
+        #     plink_job.depends_on(filter_job)
 
-        plink_job.image(CELLREGMAP_IMAGE)
-        plink_job.call(
-            get_promoter_variants,
-            mt_path=output_mt_path,
-            ht_path=anno_ht_path,
-            gene_details=gene_dict[gene],
-            window_size=window_size,
-            plink_file=plink_file,
-        )
-        genotype_jobs.append(plink_job)
+        # plink_job.image(CELLREGMAP_IMAGE)
+        # plink_job.call(
+        #     get_promoter_variants,
+        #     mt_path=output_mt_path,
+        #     ht_path=anno_ht_path,
+        #     gene_details=gene_dict[gene],
+        #     window_size=window_size,
+        #     plink_file=plink_file,
+        # )
+        # genotype_jobs.append(plink_job)
 
     # the next phase will be done for each cell type
     for celltype in celltype_list:
@@ -757,28 +757,61 @@ def crm_pipeline(
         pv_files = []
         for gene in genes_list:
 
+            # check if all of this needs running at all
             # wrapped this with output_path
             pv_file = output_path(f'{celltype}/{gene}_pvals.csv')
-
             # always append the file name
             pv_files.append(pv_file)
-
             # check if running is required
             if to_path(pv_file).exists():
                 logging.info(f'We already ran associations for {gene}!')
                 continue
+
+            # genotypes
+            # if they don't already exist, make plink files
+            plink_file = output_path(f'plink_files/{gene}')
+            # gene_dict[gene]['plink'] = plink_file  # not needed anymore?
+
+            # if the plink files does not exist, generate them
+            if not to_path(f'{plink_file}.bim').exists():
+                # continue
+
+                if filter_job:
+                    plink_job.depends_on(filter_job)
+                
+                plink_job = batch.new_python_job(f'Create plink files for: {gene}')
+                manage_concurrency_for_job(plink_job)
+                copy_common_env(plink_job)
+                if filter_job:
+                    plink_job.depends_on(filter_job)
+
+                plink_job.image(CELLREGMAP_IMAGE)
+                plink_job.call(
+                    get_promoter_variants,
+                    mt_path=output_mt_path,
+                    ht_path=anno_ht_path,
+                    gene_details=gene_dict[gene],
+                    window_size=window_size,
+                    plink_file=plink_file,
+                )
+
+            else:
+                plink_job = None
+            
 
             logging.info(f'Preparing inputs for: {gene}')
             if gene_dict[gene]['plink'] is None:
                 logging.info(f'No plink files for {gene}, exit!')
                 continue
 
-            plink_output_prefix = gene_dict[gene]['plink']
+            # plink_output_prefix = gene_dict[gene]['plink']
+            plink_output_prefix = plink_file
             # prepare input files
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             manage_concurrency_for_job(prepare_input_job)
             copy_common_env(prepare_input_job)
-            prepare_input_job.depends_on(*genotype_jobs)
+            # prepare_input_job.depends_on(*genotype_jobs)
+            prepare_input_job.depends_on(plink_job)
             prepare_input_job.image(CELLREGMAP_IMAGE)
             # the python_job.call only returns one object
             # the object is a file containing y_df, geno_df, kinship_df
