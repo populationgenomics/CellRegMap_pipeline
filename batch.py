@@ -818,7 +818,7 @@ def crm_pipeline(
         )
         summarise_job.call(
             summarise_association_results,
-            *pv_files,
+            pv_files,
             pv_all_filename_str=str(pv_all_filename_csv),
         )
 
