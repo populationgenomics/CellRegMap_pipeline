@@ -484,7 +484,7 @@ def summarise_association_results(
         raise Exception('No PV files, nothing to do')
 
     logging.info(
-        f"Running on {len(existing_pv_files)} PV files, "
+        f'Running on {len(existing_pv_files)} PV files, '
         f"{len(pv_dfs) - len(existing_pv_files)} files didn't exist"
     )
 
