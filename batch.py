@@ -695,7 +695,7 @@ def crm_pipeline(
     logging.info(f'Cell types to run: {celltype_list}')
 
     # only run this for relevant genes
-    plink_genes: List[str] = []
+    _plink_genes = set()
     for celltype in celltype_list:
         expression_tsv_path = dataset_path(
             os.path.join(
@@ -704,9 +704,8 @@ def crm_pipeline(
                 f'{celltype}_expression.tsv',
             )
         )
-        plink_genes.extend(extract_genes(genes_of_interest, expression_tsv_path))
-    plink_genes = list(sorted(set(plink_genes)))
-    print(f'Genes: {plink_genes}')
+        _plink_genes |= set(extract_genes(genes_of_interest, expression_tsv_path))
+    plink_genes = list(sorted(_plink_genes))
 
     # Setup MAX concurrency by genes
     _dependent_jobs: list[hb.job.Job] = []
@@ -724,7 +723,7 @@ def crm_pipeline(
     dependencies_dict: Dict[str, hb.job.Job] = {}
     plink_root = output_path('plink_files')
     bim_files = list(to_path(plink_root).glob('*.bim'))
-    for gene in genes_of_interest:
+    for gene in plink_genes:
 
         # final path for this gene - generate first (check syntax)
         plink_file = os.path.join(plink_root, gene)
@@ -788,11 +787,10 @@ def crm_pipeline(
 
             plink_output_prefix = gene_dict[gene]['plink']
             # prepare input files
-            run_job = batch.new_python_job(f'Run association for: {gene}, {celltype}')
+            run_job = batch.new_python_job(f'Run association for: {celltype}, {gene}')
             manage_concurrency_for_job(run_job)
             copy_common_env(run_job)
-            dependency = dependencies_dict.get(gene)
-            if dependency:
+            if dependency := dependencies_dict.get(gene):
                 run_job.depends_on(dependency)
             run_job.image(CELLREGMAP_IMAGE)
             # the python_job.call only returns one object
