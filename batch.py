@@ -491,7 +491,7 @@ def summarise_association_results(
 
     logging.info('before glob (pv files) - summarise job')
     storage_client = storage.Client()
-    bucket = get_config()['storage']['default']['default']
+    bucket = get_config()['storage']['default']['default'].replace('gs://', '')
     prefix = get_config()['workflow']['output_prefix']
     existing_pv_files = {
         filepath
@@ -747,7 +747,7 @@ def crm_pipeline(
     plink_root = output_path('plink_files')
     logging.info('before glob (bim files)')
     storage_client = storage.Client()
-    bucket = get_config()['storage']['default']['default']
+    bucket = get_config()['storage']['default']['default'].replace('gs://', '')
     prefix = f"{get_config()['workflow']['output_prefix']}/plink_files"
     bim_files = {
         filepath
