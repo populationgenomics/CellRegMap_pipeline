@@ -15,6 +15,7 @@ import re
 
 import click
 import logging
+from typing import Dict
 
 from cpg_utils import to_path
 from cpg_utils.hail_batch import (
@@ -709,6 +710,7 @@ def crm_pipeline(
 
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
+    dependencies_dict: Dict[str, hb.job.Job] = {}
     for gene in genes_of_interest:
         # final path for this gene - generate first (check syntax)
         plink_file = output_path(f'plink_files/{gene}')
@@ -716,7 +718,6 @@ def crm_pipeline(
 
         # if the plink output exists, do not re-generate it
         if to_path(f'{plink_file}.bim').exists():
-            gene_dict[gene]['plink_job'] = None
             continue
 
         plink_job = batch.new_python_job(f'Create plink files for: {gene}')
@@ -734,7 +735,7 @@ def crm_pipeline(
             window_size=window_size,
             plink_file=plink_file,
         )
-        gene_dict[gene]['plink_job'] = plink_job
+        dependencies_dict[gene] = plink_job
 
     # the next phase will be done for each cell type
     for celltype in celltype_list:
@@ -776,8 +777,9 @@ def crm_pipeline(
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             manage_concurrency_for_job(prepare_input_job)
             copy_common_env(prepare_input_job)
-            if gene_dict[gene]['plink_job'] is not None:
-                prepare_input_job.depends_on(gene_dict[gene]['plink_job'])
+            dependency = dependencies_dict.get(gene)
+            if dependency:
+                prepare_input_job.depends_on(dependency)
             prepare_input_job.image(CELLREGMAP_IMAGE)
             # the python_job.call only returns one object
             # the object is a file containing y_df, geno_df, kinship_df
