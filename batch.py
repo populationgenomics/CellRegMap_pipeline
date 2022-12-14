@@ -15,7 +15,7 @@ import re
 
 import click
 import logging
-from typing import Dict
+from typing import Dict, List
 
 from cpg_utils import to_path
 from cpg_utils.hail_batch import (
@@ -695,7 +695,7 @@ def crm_pipeline(
     logging.info(f'Cell types to run: {celltype_list}')
 
     # only run this for relevant genes
-    plink_genes = list()
+    plink_genes: List[str] = []
     # for celltype in celltype_list:
     #     expression_tsv_path = dataset_path(
     #         os.path.join(
