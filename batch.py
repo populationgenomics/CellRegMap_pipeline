@@ -481,11 +481,11 @@ def summarise_association_results(
     """
     from multipy.fdr import qvalue
 
-    existing_pv_files = to_path(pv_folder).glob('*_pvals.csv')
-    
-    print(len(list(existing_pv_files)))
+    existing_pv_files = list(to_path(pv_folder).glob('*_pvals.csv'))
 
-    if len(list(existing_pv_files)) == 0:
+    print(f'Number of files: {len(existing_pv_files)}')
+
+    if len(existing_pv_files) == 0:
         raise Exception('No PV files, nothing to do')
 
     pv_all_df = pd.concat(
