@@ -475,7 +475,7 @@ def run_gene_association(
 
 def summarise_association_results(
     # pv_dfs: list[str],
-    pv_folder: str,
+    celltype: str,
     pv_all_filename_str: str,
 ):
     """Summarise results
@@ -492,7 +492,7 @@ def summarise_association_results(
     logging.info('before glob (pv files) - summarise job')
     storage_client = storage.Client()
     bucket = get_config()['storage']['default']['default'].replace('gs://', '')
-    prefix = get_config()['workflow']['output_prefix']
+    prefix = f"{get_config()['workflow']['output_prefix']}/{celltype}"
     existing_pv_files = {
         filepath
         for filepath in map(
@@ -502,8 +502,6 @@ def summarise_association_results(
         if filepath.endswith('_pvals.csv')
     }
     logging.info(f'after glob - {len(existing_pv_files)} pv files to summarise')
-
-    print(f'Number of files: {len(existing_pv_files)}')
 
     if len(existing_pv_files) == 0:
         raise Exception('No PV files, nothing to do')
@@ -868,7 +866,7 @@ def crm_pipeline(
         )
         summarise_job.call(
             summarise_association_results,
-            pv_folder=output_path(celltype),
+            celltype=celltype,
             pv_all_filename_str=str(pv_all_filename_csv),
         )
 
