@@ -709,7 +709,7 @@ def crm_pipeline(
 
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
-    dependencies_dict: Dict[str,hb.job.Job] = {}
+    dependencies_dict: Dict[str, hb.job.Job] = {}
     for gene in genes_of_interest:
         # final path for this gene - generate first (check syntax)
         plink_file = output_path(f'plink_files/{gene}')
