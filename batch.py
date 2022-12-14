@@ -18,6 +18,8 @@ import click
 import logging
 from typing import Dict
 
+from google.cloud import storage
+
 from cpg_utils import to_path
 from cpg_utils.hail_batch import (
     copy_common_env,
@@ -488,7 +490,17 @@ def summarise_association_results(
     from multipy.fdr import qvalue
 
     logging.info('before glob (pv files) - summarise job')
-    existing_pv_files = list(to_path(pv_folder).glob('*_pvals.csv'))
+    storage_client = storage.Client()
+    bucket = get_config()['storage']['default']['default']
+    prefix = get_config()['workflow']['output_prefix']
+    existing_pv_files = {
+        filepath
+        for filepath in map(
+            lambda x: f'gs://{bucket}/{x.name}',
+            storage_client.list_blobs(bucket, prefix=prefix),
+        )
+        if filepath.endswith('_pvals.csv')
+    }
     logging.info(f'after glob - {len(existing_pv_files)} pv files to summarise')
 
     print(f'Number of files: {len(existing_pv_files)}')
@@ -734,7 +746,17 @@ def crm_pipeline(
     dependencies_dict: Dict[str, hb.job.Job] = {}
     plink_root = output_path('plink_files')
     logging.info('before glob (bim files)')
-    bim_files = list(to_path(plink_root).glob('*.bim'))
+    storage_client = storage.Client()
+    bucket = get_config()['storage']['default']['default']
+    prefix = f"{get_config()['workflow']['output_prefix']}/plink_files"
+    bim_files = {
+        filepath
+        for filepath in map(
+            lambda x: f'gs://{bucket}/{x.name}',
+            storage_client.list_blobs(bucket, prefix=prefix),
+        )
+        if filepath.endswith('bim')
+    }
     logging.info(f'after glob: {len(bim_files)} bim files already exist')
     for gene in plink_genes:
 
