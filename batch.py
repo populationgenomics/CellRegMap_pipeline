@@ -634,7 +634,7 @@ def crm_pipeline(
     chromosomes: str = 'all',
     genes: str | None = None,
     window_size: int = 50000,
-    max_gene_concurrency=50,
+    max_gene_concurrency=100,
 ):
 
     sb = hb.ServiceBackend(
@@ -710,13 +710,13 @@ def crm_pipeline(
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
     for gene in genes_of_interest:
-        logging.info(f'Creating plink files for {gene}')
         # final path for this gene - generate first (check syntax)
         plink_file = output_path(f'plink_files/{gene}')
         gene_dict[gene]['plink'] = plink_file
 
         # if the plink output exists, do not re-generate it
         if to_path(f'{plink_file}.bim').exists():
+            gene_dict[gene]['plink_job'] = None
             continue
 
         plink_job = batch.new_python_job(f'Create plink files for: {gene}')
@@ -767,7 +767,6 @@ def crm_pipeline(
                 logging.info(f'We already ran associations for {gene}!')
                 continue
 
-            logging.info(f'Preparing inputs for: {gene}')
             if gene_dict[gene]['plink'] is None:
                 logging.info(f'No plink files for {gene}, exit!')
                 continue
