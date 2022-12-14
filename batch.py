@@ -731,7 +731,9 @@ def crm_pipeline(
     # submit a job for each gene (export genotypes to plink)
     dependencies_dict: Dict[str, hb.job.Job] = {}
     plink_root = output_path('plink_files')
+    logging.info('before glob (bim files)')
     bim_files = list(to_path(plink_root).glob('*.bim'))
+    logging.info('after glob (bim files)')
     for gene in plink_genes:
 
         # final path for this gene - generate first (check syntax)
@@ -779,7 +781,9 @@ def crm_pipeline(
         gene_run_jobs = []
 
         cell_type_root = output_path(celltype)
+        logging.info('before glob (pv files)')
         existing_files = list(to_path(cell_type_root).glob('*_pvals.csv'))
+        logging.info('after glob (pv files)')
 
         for gene in genes_list:
 
