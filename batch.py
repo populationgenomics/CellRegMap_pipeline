@@ -723,7 +723,7 @@ def crm_pipeline(
     dependencies_dict: Dict[str, hb.job.Job] = {}
     plink_root = output_path('plink_files')
     bim_files = list(to_path(plink_root).glob('*.bim'))
-    for gene in plink_genes:
+    for gene in genes_of_interest:
 
         # final path for this gene - generate first (check syntax)
         plink_file = os.path.join(plink_root, gene)
