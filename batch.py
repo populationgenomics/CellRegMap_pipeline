@@ -487,7 +487,9 @@ def summarise_association_results(
     """
     from multipy.fdr import qvalue
 
+    logging.info('before glob (pv files) - summarise job')
     existing_pv_files = list(to_path(pv_folder).glob('*_pvals.csv'))
+    logging.info('after glob (pv files) - summarise job')
 
     print(f'Number of files: {len(existing_pv_files)}')
 
