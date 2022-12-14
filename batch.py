@@ -717,7 +717,6 @@ def crm_pipeline(
 
         # if the plink output exists, do not re-generate it
         if to_path(f'{plink_file}.bim').exists():
-            dependencies_dict[gene]['plink_job'] = None
             continue
 
         plink_job = batch.new_python_job(f'Create plink files for: {gene}')
