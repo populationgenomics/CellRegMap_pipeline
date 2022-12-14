@@ -772,9 +772,13 @@ def crm_pipeline(
                 f'{celltype}_expression.tsv',
             )
         )
-        logging.info(f'before extracting {celltype}-expressed genes to run association for')
+        logging.info(
+            f'before extracting {celltype}-expressed genes to run association for'
+        )
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
-        logging.info(f'after extracting {celltype}-expressed genes: run association for {len(genes_list)} genes')
+        logging.info(
+            f'after extracting {celltype}-expressed genes: run association for {len(genes_list)} genes'
+        )
         # logging.info(f'Genes to run: {genes_list}')
         if len(genes_list) == 0:
             logging.info('No genes to run, exit!')
@@ -783,9 +787,9 @@ def crm_pipeline(
         gene_run_jobs = []
 
         cell_type_root = output_path(celltype)
-        logging.info('before glob (pv files)')
+        logging.info(f'before glob: pv files for {celltype}')
         existing_files = list(to_path(cell_type_root).glob('*_pvals.csv'))
-        logging.info('after glob (pv files)')
+        logging.info(f'after glob: {len(existing_files)} pv files for {celltype}')
 
         for gene in genes_list:
 
