@@ -482,16 +482,9 @@ def summarise_association_results(
     from multipy.fdr import qvalue
 
     existing_pv_files = to_path(pv_folder).glob('*_pvals.csv')
-    # existing_pv_files = [pv_df for pv_df in pv_dfs if to_path(pv_df).exists()]
 
     if len(str(existing_pv_files)) == 0:
-        # logging.info(f'tested: {pv_dfs}')
         raise Exception('No PV files, nothing to do')
-
-    # logging.info(
-    #     f'Running on {len(existing_pv_files)} PV files, '
-    #     f"{len(pv_dfs) - len(existing_pv_files)} files didn't exist"
-    # )
 
     pv_all_df = pd.concat(
         [pd.read_csv(to_path(pv_df), index_col=0) for pv_df in existing_pv_files]
@@ -756,14 +749,10 @@ def crm_pipeline(
             continue
 
         gene_run_jobs = []
-        # pv_files = []
         for gene in genes_list:
 
             # wrapped this with output_path
             pv_file = output_path(f'{celltype}/{gene}_pvals.csv')
-
-            # always append the file name
-            # pv_files.append(pv_file)
 
             # check if running is required
             if to_path(pv_file).exists():
@@ -810,14 +799,12 @@ def crm_pipeline(
         summarise_job = batch.new_python_job(f'Summarise all results for {celltype}')
         copy_common_env(summarise_job)
         summarise_job.depends_on(*gene_run_jobs)
-        # summarise_job.image(CELLREGMAP_IMAGE)
         summarise_job.image(MULTIPY_IMAGE)
         pv_all_filename_csv = str(
             output_path(f'{celltype}_all_pvalues.csv', 'analysis')
         )
         summarise_job.call(
             summarise_association_results,
-            # pv_files,
             pv_folder=output_path(celltype),
             pv_all_filename_str=str(pv_all_filename_csv),
         )
