@@ -15,7 +15,7 @@ import re
 
 import click
 import logging
-from typing import Dict, List
+from typing import Dict
 
 from cpg_utils import to_path
 from cpg_utils.hail_batch import (
