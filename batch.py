@@ -708,13 +708,16 @@ def crm_pipeline(
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
     dependencies_dict: Dict[str, hb.job.Job] = {}
+    plink_root = output_path('plink_files')
+    bim_files = list(to_path(plink_root).glob('*.bim'))
     for gene in genes_of_interest:
+
         # final path for this gene - generate first (check syntax)
-        plink_file = output_path(f'plink_files/{gene}')
+        plink_file = os.path.join(plink_root, gene)
         gene_dict[gene]['plink'] = plink_file
 
         # if the plink output exists, do not re-generate it
-        if to_path(f'{plink_file}.bim').exists():
+        if f'{plink_file}.bim' in bim_files:
             continue
 
         plink_job = batch.new_python_job(f'Create plink files for: {gene}')
@@ -751,13 +754,17 @@ def crm_pipeline(
             continue
 
         gene_run_jobs = []
+
+        cell_type_root = output_path(celltype)
+        existing_files = list(to_path(cell_type_root).glob('*_pvals.csv'))
+
         for gene in genes_list:
 
             # wrapped this with output_path
             pv_file = output_path(f'{celltype}/{gene}_pvals.csv')
 
             # check if running is required
-            if to_path(pv_file).exists():
+            if pv_file in existing_files:
                 logging.info(f'We already ran associations for {gene}!')
                 continue
 
