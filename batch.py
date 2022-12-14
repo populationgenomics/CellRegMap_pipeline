@@ -711,11 +711,11 @@ def crm_pipeline(
     plink_root = output_path('plink_files')
     bim_files = list(to_path(plink_root).glob('*.bim'))
     for gene in genes_of_interest:
-    
+
         # final path for this gene - generate first (check syntax)
         plink_file = os.path.join(plink_root, gene)
         gene_dict[gene]['plink'] = plink_file
-        
+
         # if the plink output exists, do not re-generate it
         if f'{plink_file}.bim' in bim_files:
             continue
@@ -754,10 +754,10 @@ def crm_pipeline(
             continue
 
         gene_run_jobs = []
-        
+
         cell_type_root = output_path(celltype)
         existing_files = list(to_path(cell_type_root).glob('*_pvals.csv'))
-        
+
         for gene in genes_list:
 
             # wrapped this with output_path
