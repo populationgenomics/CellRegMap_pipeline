@@ -695,7 +695,7 @@ def crm_pipeline(
     logging.info(f'Cell types to run: {celltype_list}')
 
     # only run this for relevant genes
-    plink_genes = []
+    plink_genes = list()
     # for celltype in celltype_list:
     #     expression_tsv_path = dataset_path(
     #         os.path.join(
@@ -706,6 +706,7 @@ def crm_pipeline(
     #     )
     #     plink_genes.append(extract_genes(genes_of_interest, expression_tsv_path))
     # plink_genes = list(set(plink_genes))  # only consider unique genes
+    plink_genes.append('geneA')
     print(f'Genes: {plink_genes}')
 
     # Setup MAX concurrency by genes
