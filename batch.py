@@ -691,21 +691,21 @@ def crm_pipeline(
         genes_of_interest = list(gene_dict.keys())
 
     # processing cell types (needs to be passed as a single script for click to like it)
-    celltype_list = celltypes.split(' ')
-    logging.info(f'Cell types to run: {celltype_list}')
+    # celltype_list = celltypes.split(' ')
+    # logging.info(f'Cell types to run: {celltype_list}')
 
-    # only run this for relevant genes
-    plink_genes = []
-    for celltype in celltype_list:
-        expression_tsv_path = dataset_path(
-            os.path.join(
-                expression_files_prefix,
-                'expression_files',
-                f'{celltype}_expression.tsv',
-            )
-        )
-        plink_genes.append(extract_genes(genes_of_interest, expression_tsv_path))
-    plink_genes = list(set(plink_genes))  # only consider unique genes
+    # # only run this for relevant genes
+    # plink_genes = []
+    # for celltype in celltype_list:
+    #     expression_tsv_path = dataset_path(
+    #         os.path.join(
+    #             expression_files_prefix,
+    #             'expression_files',
+    #             f'{celltype}_expression.tsv',
+    #         )
+    #     )
+    #     plink_genes.append(extract_genes(genes_of_interest, expression_tsv_path))
+    # plink_genes = list(set(plink_genes))  # only consider unique genes
 
     # Setup MAX concurrency by genes
     _dependent_jobs: list[hb.job.Job] = []
