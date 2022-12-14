@@ -776,7 +776,8 @@ def crm_pipeline(
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             manage_concurrency_for_job(prepare_input_job)
             copy_common_env(prepare_input_job)
-            prepare_input_job.depends_on(gene_dict[gene]['plink_job'])
+            if gene_dict[gene]['plink_job'] is not None:
+                prepare_input_job.depends_on(gene_dict[gene]['plink_job'])
             prepare_input_job.image(CELLREGMAP_IMAGE)
             # the python_job.call only returns one object
             # the object is a file containing y_df, geno_df, kinship_df
@@ -792,7 +793,6 @@ def crm_pipeline(
                 kinship_file=None,  # change this to work when this file is needed
                 sample_mapping_file=sample_mapping_file_tsv,
             )
-            logging.info(f'Running association for: {gene}')
             # run association in the same python env
             gene_run_jobs.append(prepare_input_job)
             prepare_input_job.call(
