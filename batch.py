@@ -706,6 +706,7 @@ def crm_pipeline(
         )
         _plink_genes |= set(extract_genes(genes_of_interest, expression_tsv_path))
     plink_genes = list(sorted(_plink_genes))
+    logging.info(f'Done selecting genes, total number: {len(plink_genes)}')
 
     # Setup MAX concurrency by genes
     _dependent_jobs: list[hb.job.Job] = []
@@ -761,7 +762,7 @@ def crm_pipeline(
         )
 
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
-        logging.info(f'Genes to run: {genes_list}')
+        # logging.info(f'Genes to run: {genes_list}')
         if len(genes_list) == 0:
             logging.info('No genes to run, exit!')
             continue
