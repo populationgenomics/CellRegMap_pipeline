@@ -755,6 +755,8 @@ def crm_pipeline(
 
         gene_run_jobs = []
         pv_files = []
+        cell_type_root = output_path(celltype)
+        existing_files = list(to_path(cell_type_root).glob('*_pvals.csv')
         for gene in genes_list:
 
             # wrapped this with output_path
@@ -764,7 +766,7 @@ def crm_pipeline(
             pv_files.append(pv_file)
 
             # check if running is required
-            if to_path(pv_file).exists():
+            if pv_file in existing_files:
                 logging.info(f'We already ran associations for {gene}!')
                 continue
 
