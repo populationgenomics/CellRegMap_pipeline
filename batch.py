@@ -12,6 +12,7 @@ Hail Batch workflow for the rare-variant association analysis, including:
 # import python modules
 import os
 import re
+import sys
 
 import click
 import logging
@@ -44,7 +45,12 @@ from cellregmap import (  # figure out how to import this from github
 )
 
 # use logging to print statements, display at info level
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    stream=sys.stderr,
+)
 
 DEFAULT_JOINT_CALL_MT = dataset_path('mt/v7.mt')
 DEFAULT_ANNOTATION_HT = dataset_path(
@@ -481,7 +487,9 @@ def summarise_association_results(
     """
     from multipy.fdr import qvalue
 
+    logging.info('before glob (pv files) - summarise job')
     existing_pv_files = list(to_path(pv_folder).glob('*_pvals.csv'))
+    logging.info(f'after glob - {len(existing_pv_files)} pv files to summarise')
 
     print(f'Number of files: {len(existing_pv_files)}')
 
@@ -704,8 +712,11 @@ def crm_pipeline(
                 f'{celltype}_expression.tsv',
             )
         )
+        logging.info(f'before extracting {celltype}-expressed genes - plink files')
         _plink_genes |= set(extract_genes(genes_of_interest, expression_tsv_path))
+        logging.info(f'after extracting {celltype}-expressed genes - plink files')
     plink_genes = list(sorted(_plink_genes))
+    logging.info(f'Done selecting genes, total number: {len(plink_genes)}')
 
     # Setup MAX concurrency by genes
     _dependent_jobs: list[hb.job.Job] = []
@@ -722,7 +733,9 @@ def crm_pipeline(
     # submit a job for each gene (export genotypes to plink)
     dependencies_dict: Dict[str, hb.job.Job] = {}
     plink_root = output_path('plink_files')
+    logging.info('before glob (bim files)')
     bim_files = list(to_path(plink_root).glob('*.bim'))
+    logging.info(f'after glob: {len(bim_files)} bim files already exist')
     for gene in plink_genes:
 
         # final path for this gene - generate first (check syntax)
@@ -759,17 +772,24 @@ def crm_pipeline(
                 f'{celltype}_expression.tsv',
             )
         )
-
+        logging.info(
+            f'before extracting {celltype}-expressed genes to run association for'
+        )
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
-        logging.info(f'Genes to run: {genes_list}')
-        if len(genes_list) == 0:
+        logging.info(
+            f'after extracting {celltype}-expressed genes: run association for {len(genes_list)} genes'
+        )
+        # logging.info(f'Genes to run: {genes_list}')
+        if not genes_list:
             logging.info('No genes to run, exit!')
             continue
 
         gene_run_jobs = []
 
         cell_type_root = output_path(celltype)
+        logging.info(f'before glob: pv files for {celltype}')
         existing_files = list(to_path(cell_type_root).glob('*_pvals.csv'))
+        logging.info(f'after glob: {len(existing_files)} pv files for {celltype}')
 
         for gene in genes_list:
 
