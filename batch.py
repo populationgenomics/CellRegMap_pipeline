@@ -704,7 +704,8 @@ def crm_pipeline(
                 f'{celltype}_expression.tsv',
             )
         )
-        plink_genes.append(extract_genes(genes_of_interest, expression_tsv_path))
+        celltype_genes = list(extract_genes(genes_of_interest, expression_tsv_path))
+        plink_genes.append(celltype_genes)
     plink_genes = list(set(plink_genes))  # only consider unique genes
     print(f'Genes: {plink_genes}')
 
