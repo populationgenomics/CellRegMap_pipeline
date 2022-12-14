@@ -709,7 +709,6 @@ def crm_pipeline(
 
     # for each gene, extract relevant variants (in window + with some annotation)
     # submit a job for each gene (export genotypes to plink)
-    # genotype_jobs = []
     for gene in genes_of_interest:
         logging.info(f'Creating plink files for {gene}')
         # final path for this gene - generate first (check syntax)
@@ -735,7 +734,6 @@ def crm_pipeline(
             window_size=window_size,
             plink_file=plink_file,
         )
-        # genotype_jobs.append(plink_job)
         gene_dict[gene]['plink_job'] = plink_job
 
     # the next phase will be done for each cell type
@@ -779,7 +777,6 @@ def crm_pipeline(
             prepare_input_job = batch.new_python_job(f'Prepare inputs for: {gene}')
             manage_concurrency_for_job(prepare_input_job)
             copy_common_env(prepare_input_job)
-            # prepare_input_job.depends_on(*genotype_jobs)
             prepare_input_job.depends_on(gene_dict[gene]['plink_job'])
             prepare_input_job.image(CELLREGMAP_IMAGE)
             # the python_job.call only returns one object
