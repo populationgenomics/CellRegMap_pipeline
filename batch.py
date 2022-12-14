@@ -704,9 +704,8 @@ def crm_pipeline(
                 f'{celltype}_expression.tsv',
             )
         )
-        celltype_genes = list(extract_genes(genes_of_interest, expression_tsv_path))
-        plink_genes.append(celltype_genes)
-    plink_genes = list(set(plink_genes))  # only consider unique genes
+        plink_genes.extend(extract_genes(genes_of_interest, expression_tsv_path))
+    plink_genes = list(sorted(set(plink_genes)))  
     print(f'Genes: {plink_genes}')
 
     # Setup MAX concurrency by genes
