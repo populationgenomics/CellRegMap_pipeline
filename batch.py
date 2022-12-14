@@ -12,6 +12,7 @@ Hail Batch workflow for the rare-variant association analysis, including:
 # import python modules
 import os
 import re
+import sys
 
 import click
 import logging
@@ -44,7 +45,12 @@ from cellregmap import (  # figure out how to import this from github
 )
 
 # use logging to print statements, display at info level
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(module)s:%(lineno)d - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    stream=sys.stderr,
+)
 
 DEFAULT_JOINT_CALL_MT = dataset_path('mt/v7.mt')
 DEFAULT_ANNOTATION_HT = dataset_path(
