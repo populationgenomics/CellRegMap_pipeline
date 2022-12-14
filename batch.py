@@ -780,7 +780,7 @@ def crm_pipeline(
             f'after extracting {celltype}-expressed genes: run association for {len(genes_list)} genes'
         )
         # logging.info(f'Genes to run: {genes_list}')
-        if len(genes_list) == 0:
+        if not genes_list:
             logging.info('No genes to run, exit!')
             continue
 
