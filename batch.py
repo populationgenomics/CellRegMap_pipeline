@@ -484,7 +484,7 @@ def summarise_association_results(
     existing_pv_files = to_path(pv_folder).glob('*_pvals.csv')
     # existing_pv_files = [pv_df for pv_df in pv_dfs if to_path(pv_df).exists()]
 
-    if len(existing_pv_files) == 0:
+    if len(str(existing_pv_files)) == 0:
         # logging.info(f'tested: {pv_dfs}')
         raise Exception('No PV files, nothing to do')
 
