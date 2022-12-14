@@ -705,7 +705,7 @@ def crm_pipeline(
             )
         )
         plink_genes.extend(extract_genes(genes_of_interest, expression_tsv_path))
-    plink_genes = list(sorted(set(plink_genes)))  
+    plink_genes = list(sorted(set(plink_genes)))
     print(f'Genes: {plink_genes}')
 
     # Setup MAX concurrency by genes
