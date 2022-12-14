@@ -489,7 +489,7 @@ def summarise_association_results(
 
     logging.info('before glob (pv files) - summarise job')
     existing_pv_files = list(to_path(pv_folder).glob('*_pvals.csv'))
-    logging.info('after glob (pv files) - summarise job')
+    logging.info(f'after glob - {len(existing_pv_files)} pv files to summarise')
 
     print(f'Number of files: {len(existing_pv_files)}')
 
@@ -735,7 +735,7 @@ def crm_pipeline(
     plink_root = output_path('plink_files')
     logging.info('before glob (bim files)')
     bim_files = list(to_path(plink_root).glob('*.bim'))
-    logging.info('after glob (bim files)')
+    logging.info(f'after glob: {len(bim_files)} bim files already exist')
     for gene in plink_genes:
 
         # final path for this gene - generate first (check syntax)
@@ -772,9 +772,9 @@ def crm_pipeline(
                 f'{celltype}_expression.tsv',
             )
         )
-        logging.info(f'before extracting {celltype}-expressed genes - run association')
+        logging.info(f'before extracting {celltype}-expressed genes to run association for')
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
-        logging.info(f'after extracting {celltype}-expressed genes - run association')
+        logging.info(f'after extracting {celltype}-expressed genes: run association for {len(genes_list)} genes')
         # logging.info(f'Genes to run: {genes_list}')
         if len(genes_list) == 0:
             logging.info('No genes to run, exit!')
