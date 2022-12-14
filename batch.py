@@ -15,6 +15,7 @@ import re
 
 import click
 import logging
+from csv import Dict
 
 from cpg_utils import to_path
 from cpg_utils.hail_batch import (
