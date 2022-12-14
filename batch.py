@@ -710,7 +710,9 @@ def crm_pipeline(
                 f'{celltype}_expression.tsv',
             )
         )
+        logging.info(f'before extracting {celltype}-expressed genes - plink files')
         _plink_genes |= set(extract_genes(genes_of_interest, expression_tsv_path))
+        logging.info(f'after extracting {celltype}-expressed genes - plink files')
     plink_genes = list(sorted(_plink_genes))
     logging.info(f'Done selecting genes, total number: {len(plink_genes)}')
 
@@ -766,8 +768,9 @@ def crm_pipeline(
                 f'{celltype}_expression.tsv',
             )
         )
-
+        logging.info(f'before extracting {celltype}-expressed genes - run association')
         genes_list = extract_genes(genes_of_interest, expression_tsv_path)
+        logging.info(f'after extracting {celltype}-expressed genes - run association')
         # logging.info(f'Genes to run: {genes_list}')
         if len(genes_list) == 0:
             logging.info('No genes to run, exit!')
