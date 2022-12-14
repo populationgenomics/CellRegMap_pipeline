@@ -735,7 +735,7 @@ def crm_pipeline(
             window_size=window_size,
             plink_file=plink_file,
         )
-        dependencies_dict[gene]['plink_job'] = plink_job
+        dependencies_dict[gene] = plink_job
 
     # the next phase will be done for each cell type
     for celltype in celltype_list:
