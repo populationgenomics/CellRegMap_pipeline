@@ -753,15 +753,11 @@ def crm_pipeline(
     prefix = os.path.join(get_config()['workflow']['output_prefix'], 'plink_files/')
 
     bim_files = set(
-        map(
-            lambda x: f'gs://{bucket}/{x}',
-            [
-                filepath.name
-                for filepath in storage_client.list_blobs(
-                    bucket, prefix=prefix, delimiter='/'
-                )
-                if filepath.name.endswith('fam')
-            ],
+            f'gs://{bucket}/{filepath.name}',
+            for filepath in storage_client.list_blobs(
+                bucket, prefix=prefix, delimiter='/'
+            )
+            if filepath.name.endswith('fam')
         )
     )
     logging.info(f'after glob: {len(bim_files)} bim files already exist')
