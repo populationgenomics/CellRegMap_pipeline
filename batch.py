@@ -810,7 +810,9 @@ def crm_pipeline(
         prefix = f"{get_config()['workflow']['output_prefix']}/{celltype}/"
         existing_files = set(
             f'gs://{bucket}/{filepath.name}'
-            for filepath in storage_client.list_blobs(bucket, prefix=prefix, delimiter='/')
+            for filepath in storage_client.list_blobs(
+                bucket, prefix=prefix, delimiter='/'
+            )
             if filepath.name.endswith('_pvals.csv')
         )
         # existing_files = list(to_path(cell_type_root).glob('*_pvals.csv'))
