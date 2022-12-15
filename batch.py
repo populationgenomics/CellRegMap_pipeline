@@ -492,7 +492,7 @@ def summarise_association_results(
     logging.info('before glob (pv files) - summarise job')
     storage_client = storage.Client()
     bucket = get_config()['storage']['default']['default'].removeprefix('gs://', '')
-    prefix = f"{get_config()['workflow']['output_prefix']}/{celltype}"
+    prefix = f"{get_config()['workflow']['output_prefix']}/{celltype}/"
     existing_pv_files = set(
         map(
             lambda x: f'gs://{bucket}/{x}',
@@ -750,17 +750,15 @@ def crm_pipeline(
     logging.info('before glob (bim files)')
     storage_client = storage.Client()
     bucket = get_config()['storage']['default']['default'].removeprefix('gs://', '')
-    prefix = os.path.join(get_config()['workflow']['output_prefix'], 'plink_files')
+    prefix = os.path.join(get_config()['workflow']['output_prefix'], 'plink_files/')
 
     bim_files = set(
         map(
             lambda x: f'gs://{bucket}/{x}',
             [
                 filepath.name
-                for filepath in storage_client.list_blobs(
-                    bucket, prefix=prefix, delimiter='/'
-                )
-                if filepath.name.endswith('bim')
+                for filepath in storage_client.list_blobs(bucket, prefix=prefix, delimiter='/')
+                if filepath.name.endswith('fam')
             ],
         )
     )
