@@ -748,7 +748,7 @@ def crm_pipeline(
     bim_files = set(
         f'gs://{bucket}/{filepath.name}'
         for filepath in storage_client.list_blobs(bucket, prefix=prefix, delimiter='/')
-        if filepath.name.endswith('fam')
+        if filepath.name.endswith('bim')
     )
 
     logging.info(f'after glob: {len(bim_files)} bim files already exist')
