@@ -493,14 +493,18 @@ def summarise_association_results(
     storage_client = storage.Client()
     bucket = get_config()['storage']['default']['default'].replace('gs://', '')
     prefix = f"{get_config()['workflow']['output_prefix']}/{celltype}"
-    existing_pv_files = {
-        filepath
-        for filepath in map(
-            lambda x: f'gs://{bucket}/{x.name}',
-            storage_client.list_blobs(bucket, prefix=prefix, delimiter='/'),
+    existing_pv_files = set(
+        map(
+            lambda x: f'gs://{bucket}/{x}',
+            [
+                filepath.name
+                for filepath in storage_client.list_blobs(
+                    bucket, prefix=prefix, delimiter='/'
+                )
+                if filepath.name.endswith('_pvals.csv')
+            ],
         )
-        if filepath.endswith('_pvals.csv')
-    }
+    )
     logging.info(f'after glob - {len(existing_pv_files)} pv files to summarise')
 
     if len(existing_pv_files) == 0:
