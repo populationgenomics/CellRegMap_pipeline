@@ -803,9 +803,19 @@ def crm_pipeline(
 
         gene_run_jobs = []
 
-        cell_type_root = output_path(celltype)
+        # cell_type_root = output_path(celltype)
         logging.info(f'before glob: pv files for {celltype}')
-        existing_files = list(to_path(cell_type_root).glob('*_pvals.csv'))
+        storage_client = storage.Client()
+        bucket = get_config()['storage']['default']['default'].removeprefix('gs://')
+        prefix = f"{get_config()['workflow']['output_prefix']}/{celltype}/"
+        existing_files = set(
+            f'gs://{bucket}/{filepath.name}'
+            for filepath in storage_client.list_blobs(
+                bucket, prefix=prefix, delimiter='/'
+            )
+            if filepath.name.endswith('_pvals.csv')
+        )
+        # existing_files = list(to_path(cell_type_root).glob('*_pvals.csv'))
         logging.info(f'after glob: {len(existing_files)} pv files for {celltype}')
 
         for gene in genes_list:
