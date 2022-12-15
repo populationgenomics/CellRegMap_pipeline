@@ -757,7 +757,9 @@ def crm_pipeline(
             lambda x: f'gs://{bucket}/{x}',
             [
                 filepath.name
-                for filepath in storage_client.list_blobs(bucket, prefix=prefix, delimiter='/')
+                for filepath in storage_client.list_blobs(
+                    bucket, prefix=prefix, delimiter='/'
+                )
                 if filepath.name.endswith('fam')
             ],
         )
