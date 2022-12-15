@@ -746,7 +746,7 @@ def crm_pipeline(
     logging.info('before glob (bim files)')
     storage_client = storage.Client()
     bucket = get_config()['storage']['default']['default'].replace('gs://', '')
-    prefix = f"{get_config()['workflow']['output_prefix']}/plink_files"
+    prefix = os.path.join(get_config()['workflow']['output_prefix'], 'plink_files')
     bim_files = {
         filepath
         for filepath in map(
