@@ -494,16 +494,10 @@ def summarise_association_results(
     bucket = get_config()['storage']['default']['default'].removeprefix('gs://')
     prefix = f"{get_config()['workflow']['output_prefix']}/{celltype}/"
     existing_pv_files = set(
-        map(
-            lambda x: f'gs://{bucket}/{x}',
-            [
-                filepath.name
-                for filepath in storage_client.list_blobs(
-                    bucket, prefix=prefix, delimiter='/'
-                )
-                if filepath.name.endswith('_pvals.csv')
-            ],
-        )
+        f'gs://{bucket}/{filepath.name}' 
+        for filepath in storage_client.list_blobs(
+            bucket, prefix=prefix, delimiter='/'
+        ) if filepath.name.endswith('_pvals.csv')
     )
     logging.info(f'after glob - {len(existing_pv_files)} pv files to summarise')
 
@@ -753,7 +747,7 @@ def crm_pipeline(
     prefix = os.path.join(get_config()['workflow']['output_prefix'], 'plink_files/')
 
     bim_files = set(
-            f'gs://{bucket}/{filepath.name}',
+            f'gs://{bucket}/{filepath.name}'
             for filepath in storage_client.list_blobs(
                 bucket, prefix=prefix, delimiter='/'
             )
