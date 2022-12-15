@@ -497,7 +497,7 @@ def summarise_association_results(
         filepath
         for filepath in map(
             lambda x: f'gs://{bucket}/{x.name}',
-            storage_client.list_blobs(bucket, prefix=prefix),
+            storage_client.list_blobs(bucket, prefix=prefix, delimiter='/'),
         )
         if filepath.endswith('_pvals.csv')
     }
