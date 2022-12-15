@@ -491,7 +491,7 @@ def summarise_association_results(
 
     logging.info('before glob (pv files) - summarise job')
     storage_client = storage.Client()
-    bucket = get_config()['storage']['default']['default'].replace('gs://', '')
+    bucket = get_config()['storage']['default']['default'].removeprefix('gs://', '')
     prefix = f"{get_config()['workflow']['output_prefix']}/{celltype}"
     existing_pv_files = set(
         map(
@@ -749,17 +749,23 @@ def crm_pipeline(
     plink_root = output_path('plink_files')
     logging.info('before glob (bim files)')
     storage_client = storage.Client()
-    bucket = get_config()['storage']['default']['default'].replace('gs://', '')
+    bucket = get_config()['storage']['default']['default'].removeprefix('gs://', '')
     prefix = os.path.join(get_config()['workflow']['output_prefix'], 'plink_files')
-    bim_files = {
-        filepath
-        for filepath in map(
-            lambda x: f'gs://{bucket}/{x.name}',
-            storage_client.list_blobs(bucket, prefix=prefix),
+
+    bim_files = set(
+        map(
+            lambda x: f'gs://{bucket}/{x}',
+            [
+                filepath.name
+                for filepath in storage_client.list_blobs(
+                    bucket, prefix=prefix, delimiter='/'
+                )
+                if filepath.name.endswith('bim')
+            ],
         )
-        if filepath.endswith('bim')
-    }
+    )
     logging.info(f'after glob: {len(bim_files)} bim files already exist')
+
     for gene in plink_genes:
 
         # final path for this gene - generate first (check syntax)
